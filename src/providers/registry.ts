@@ -1,11 +1,11 @@
-import { claudeCodeStubProvider } from './claudeCodeStub';
+import { claudeCodeProvider } from './claudeCode';
 import { deterministicProvider } from './deterministic';
 import { localOpenAIProvider } from './localOpenAI';
 import type { Provider, ProviderId } from './types';
 
 const ACTIVE_PROVIDER_STORAGE_KEY = 'designme.activeProviderId';
 
-const providers: Provider[] = [deterministicProvider, localOpenAIProvider, claudeCodeStubProvider];
+const providers: Provider[] = [deterministicProvider, localOpenAIProvider, claudeCodeProvider];
 
 function canUseLocalStorage(): boolean {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';

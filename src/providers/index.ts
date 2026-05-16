@@ -1,4 +1,5 @@
-export { claudeCodeStubProvider } from './claudeCodeStub';
+export { claudeCodeProvider } from './claudeCode';
+export { buildClaudeCodePrompt, extractHtmlFromClaudeCodeOutput } from './claudeCodeOutput';
 export { deterministicProvider } from './deterministic';
 export { createLocalOpenAIProvider, localOpenAIProvider } from './localOpenAI';
 export {

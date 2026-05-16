@@ -2,8 +2,17 @@ const { clipboard, ipcMain, shell } = require('electron');
 const fs = require('node:fs/promises');
 const { writeExportBundle } = require('./exportBundle.cjs');
 const { exportDirectory, timestampedExportPath } = require('./paths.cjs');
+const { createProviderRunManager } = require('./providerRuns.cjs');
+const { detectClaudeCode } = require('./providers/claude-code.cjs');
 const { isAllowedAppUrl } = require('./security.cjs');
-const { validateClipboardText, validateExportBundlePayload, validateExportHtmlPayload } = require('./validators.cjs');
+const {
+  validateClipboardText,
+  validateExportBundlePayload,
+  validateExportHtmlPayload,
+  validateProviderStartPayload,
+  validateProviderStatusPayload,
+  validateProviderStopPayload,
+} = require('./validators.cjs');
 
 function assertTrustedSender(event, isDev) {
   const frameUrl = event.senderFrame?.url || event.sender.getURL();
@@ -13,6 +22,8 @@ function assertTrustedSender(event, isDev) {
 }
 
 function registerIpcHandlers(app, isDev) {
+  const providerRuns = createProviderRunManager();
+
   ipcMain.handle('designme:export-html', async (event, payload) => {
     assertTrustedSender(event, isDev);
     validateExportHtmlPayload(payload);
@@ -41,6 +52,35 @@ function registerIpcHandlers(app, isDev) {
     assertTrustedSender(event, isDev);
     validateClipboardText(text);
     clipboard.writeText(text);
+  });
+
+  ipcMain.handle('designme:provider-start', async (event, payload) => {
+    assertTrustedSender(event, isDev);
+    validateProviderStartPayload(payload);
+    return providerRuns.start(event.sender, payload);
+  });
+
+  ipcMain.handle('designme:provider-stop', async (event, payload) => {
+    assertTrustedSender(event, isDev);
+    validateProviderStopPayload(payload);
+    return providerRuns.stop(event.sender, payload.runId);
+  });
+
+  ipcMain.handle('designme:provider-status', async (event, payload) => {
+    assertTrustedSender(event, isDev);
+    validateProviderStatusPayload(payload);
+
+    if (payload.providerId !== 'claude-code') {
+      return { providerId: payload.providerId, status: 'error', detail: 'Provider status is not available in desktop IPC.' };
+    }
+
+    const detection = await detectClaudeCode({ checkStatus: true });
+    return {
+      providerId: payload.providerId,
+      status: detection.available && !detection.statusError ? 'ready' : 'error',
+      version: detection.version,
+      detail: detection.status || detection.statusError || detection.error,
+    };
   });
 }
 

@@ -3,7 +3,12 @@ const { contextBridge, ipcRenderer } = require('electron');
 const MAX_HTML_BYTES = 5 * 1024 * 1024;
 const MAX_TEXT_BYTES = 1024 * 1024;
 const MAX_BUNDLE_FILE_BYTES = 5 * 1024 * 1024;
+const MAX_PROVIDER_PROMPT_BYTES = 128 * 1024;
+const MAX_PROVIDER_TEXT_BYTES = 1024 * 1024;
+const MAX_PROVIDER_JSON_BYTES = 1024 * 1024;
 const BUNDLE_FILE_NAMES = ['index.html', 'styles.css', 'script.js', 'designme.json', 'handoff.md', 'README.md'];
+const PROVIDER_IDS = new Set(['deterministic', 'local-openai', 'claude-code', 'codex']);
+const PROVIDER_EVENT_TYPES = new Set(['started', 'token', 'tool-call', 'tool-result', 'final', 'error', 'stopped']);
 
 function byteLength(value) {
   return new TextEncoder().encode(String(value)).length;
@@ -12,6 +17,32 @@ function byteLength(value) {
 function assertPlainObject(value, message) {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     throw new Error(message);
+  }
+}
+
+function jsonByteLength(value, message) {
+  try {
+    return byteLength(JSON.stringify(value));
+  } catch (error) {
+    throw new Error(message, { cause: error });
+  }
+}
+
+function assertString(value, message, maxBytes = MAX_PROVIDER_TEXT_BYTES) {
+  if (typeof value !== 'string') {
+    throw new Error(message);
+  }
+  if (byteLength(value) > maxBytes) {
+    throw new Error(`${message} is too large`);
+  }
+}
+
+function assertOptionalPlainObject(value, message) {
+  if (value !== undefined) {
+    assertPlainObject(value, message);
+    if (jsonByteLength(value, message) > MAX_PROVIDER_JSON_BYTES) {
+      throw new Error(`${message} is too large`);
+    }
   }
 }
 
@@ -64,6 +95,89 @@ function validateClipboardText(text) {
   }
 }
 
+function validateProviderRunId(runId) {
+  assertString(runId, 'Provider runId must be a string', 128);
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(runId)) {
+    throw new Error('Provider runId is invalid');
+  }
+}
+
+function validateProviderId(providerId) {
+  assertString(providerId, 'Provider id must be a string', 64);
+  if (!PROVIDER_IDS.has(providerId)) {
+    throw new Error('Provider id is invalid');
+  }
+}
+
+function validateProviderStartPayload(payload) {
+  assertPlainObject(payload, 'Invalid provider start payload');
+  validateProviderId(payload.providerId);
+  assertString(payload.prompt, 'Provider prompt must be a string', MAX_PROVIDER_PROMPT_BYTES);
+  assertString(payload.artifactType, 'Provider artifact type must be a string', 64);
+  assertString(payload.directionId, 'Provider direction id must be a string', 64);
+  assertPlainObject(payload.tweaks, 'Provider tweaks must be an object');
+  assertOptionalPlainObject(payload.brief, 'Provider brief must be an object');
+  assertOptionalPlainObject(payload.intent, 'Provider intent must be an object');
+}
+
+function validateProviderStopPayload(payload) {
+  assertPlainObject(payload, 'Invalid provider stop payload');
+  validateProviderRunId(payload.runId);
+}
+
+function validateProviderStatusPayload(payload) {
+  assertPlainObject(payload, 'Invalid provider status payload');
+  validateProviderId(payload.providerId);
+}
+
+function validateProviderEventPayload(payload) {
+  assertPlainObject(payload, 'Invalid provider event payload');
+  validateProviderRunId(payload.runId);
+
+  if (!PROVIDER_EVENT_TYPES.has(payload.type)) {
+    throw new Error('Invalid provider event type');
+  }
+
+  if (payload.type === 'token') {
+    assertString(payload.text, 'Provider token text must be a string');
+    return;
+  }
+
+  if (payload.type === 'tool-call') {
+    assertString(payload.name, 'Provider tool name must be a string', 256);
+    if (payload.args !== undefined && jsonByteLength(payload.args, 'Provider tool args are invalid') > MAX_PROVIDER_JSON_BYTES) {
+      throw new Error('Provider tool args are too large');
+    }
+    return;
+  }
+
+  if (payload.type === 'tool-result') {
+    assertString(payload.name, 'Provider tool name must be a string', 256);
+    if (
+      payload.result !== undefined &&
+      jsonByteLength(payload.result, 'Provider tool result is invalid') > MAX_PROVIDER_JSON_BYTES
+    ) {
+      throw new Error('Provider tool result is too large');
+    }
+    return;
+  }
+
+  if (payload.type === 'final') {
+    assertString(payload.html, 'Provider final html must be a string', MAX_HTML_BYTES);
+    if (payload.output !== undefined && jsonByteLength(payload.output, 'Provider output is invalid') > MAX_PROVIDER_JSON_BYTES) {
+      throw new Error('Provider output is too large');
+    }
+    if (payload.notes !== undefined) {
+      assertString(payload.notes, 'Provider notes must be a string', MAX_PROVIDER_TEXT_BYTES);
+    }
+    return;
+  }
+
+  if (payload.type === 'error') {
+    assertString(payload.message, 'Provider error message must be a string', 4096);
+  }
+}
+
 contextBridge.exposeInMainWorld('designme', {
   exportBundle: (payload) => {
     validateExportBundlePayload(payload);
@@ -77,5 +191,32 @@ contextBridge.exposeInMainWorld('designme', {
   copyText: (text) => {
     validateClipboardText(text);
     return ipcRenderer.invoke('designme:copy-text', text);
+  },
+  providerStart: (payload) => {
+    validateProviderStartPayload(payload);
+    return ipcRenderer.invoke('designme:provider-start', payload);
+  },
+  providerStop: (payload) => {
+    validateProviderStopPayload(payload);
+    return ipcRenderer.invoke('designme:provider-stop', payload);
+  },
+  providerStatus: (payload) => {
+    validateProviderStatusPayload(payload);
+    return ipcRenderer.invoke('designme:provider-status', payload);
+  },
+  onProviderEvent: (listener) => {
+    if (typeof listener !== 'function') {
+      throw new Error('Provider event listener must be a function');
+    }
+
+    const wrappedListener = (_event, payload) => {
+      validateProviderEventPayload(payload);
+      listener(payload);
+    };
+
+    ipcRenderer.on('designme:provider-event', wrappedListener);
+    return () => {
+      ipcRenderer.removeListener('designme:provider-event', wrappedListener);
+    };
   },
 });
