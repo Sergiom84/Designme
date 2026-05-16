@@ -42,8 +42,24 @@ ${renderArtifactCss()}
     <button type="button" data-scheme-toggle title="Scheme">S</button>
   </div>
   <script>
-    const savedDensity = localStorage.getItem('designme-density');
-    const savedScheme = localStorage.getItem('designme-scheme');
+    const designmeStorage = {
+      get(key) {
+        try {
+          return window.localStorage?.getItem(key);
+        } catch {
+          return null;
+        }
+      },
+      set(key, value) {
+        try {
+          window.localStorage?.setItem(key, value);
+        } catch {
+          // Sandboxed previews may not have storage access.
+        }
+      },
+    };
+    const savedDensity = designmeStorage.get('designme-density');
+    const savedScheme = designmeStorage.get('designme-scheme');
     if (savedDensity) document.body.dataset.density = savedDensity;
     if (savedScheme) document.body.dataset.scheme = savedScheme;
     document.querySelector('[data-density-toggle]')?.addEventListener('click', () => {
@@ -51,12 +67,12 @@ ${renderArtifactCss()}
       const current = document.body.dataset.density || 'balanced';
       const next = order[(order.indexOf(current) + 1) % order.length];
       document.body.dataset.density = next;
-      localStorage.setItem('designme-density', next);
+      designmeStorage.set('designme-density', next);
     });
     document.querySelector('[data-scheme-toggle]')?.addEventListener('click', () => {
       const next = document.body.dataset.scheme === 'contrast' ? 'light' : 'contrast';
       document.body.dataset.scheme = next;
-      localStorage.setItem('designme-scheme', next);
+      designmeStorage.set('designme-scheme', next);
     });
     document.querySelectorAll('[data-screen]').forEach((button) => {
       button.addEventListener('click', () => {

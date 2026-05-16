@@ -26,7 +26,7 @@ export function PreviewStage({ previewMode, html, compareHtml, compareName, zoom
 function PreviewFrame({ title, html }: { title: string; html: string }) {
   return (
     <div className="iframe-shell">
-      <iframe title={title} srcDoc={html} sandbox="allow-scripts allow-same-origin" />
+      <iframe title={title} srcDoc={html} sandbox="allow-scripts" referrerPolicy="no-referrer" />
     </div>
   );
 }

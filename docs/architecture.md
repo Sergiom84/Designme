@@ -33,7 +33,8 @@ Designme is a local-first design studio built around a deterministic generator. 
 - No mandatory external API.
 - No cloud workspace assumption.
 - Generated HTML remains standalone.
-- Electron IPC accepts only narrow, validated payloads.
+- Electron IPC accepts only narrow, validated payloads from trusted app frames.
+- Preview iframes allow scripts only, without same-origin, forms, popups or top navigation.
 
 ## Quality Pass
 

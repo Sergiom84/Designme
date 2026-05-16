@@ -57,6 +57,10 @@ function parseVersions(value: string): VersionSnapshot[] {
   }
 }
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Error desconocido';
+}
+
 export default function App() {
   const [prompt, setPrompt] = useLocalStorageState('designme.prompt', initialPrompt, {
     serialize: (value) => value,
@@ -135,21 +139,25 @@ export default function App() {
   }
 
   async function writeClipboard(text: string): Promise<boolean> {
-    if (window.designme?.copyText) {
-      await window.designme.copyText(text);
-      return true;
-    }
+    try {
+      if (window.designme?.copyText) {
+        await window.designme.copyText(text);
+        return true;
+      }
 
-    const scratch = document.createElement('textarea');
-    scratch.value = text;
-    scratch.setAttribute('readonly', 'true');
-    scratch.style.position = 'fixed';
-    scratch.style.left = '-9999px';
-    document.body.appendChild(scratch);
-    scratch.select();
-    const ok = document.execCommand('copy');
-    scratch.remove();
-    return ok;
+      const scratch = document.createElement('textarea');
+      scratch.value = text;
+      scratch.setAttribute('readonly', 'true');
+      scratch.style.position = 'fixed';
+      scratch.style.left = '-9999px';
+      document.body.appendChild(scratch);
+      scratch.select();
+      const ok = document.execCommand('copy');
+      scratch.remove();
+      return ok;
+    } catch {
+      return false;
+    }
   }
 
   async function copyHandoff() {
@@ -175,64 +183,76 @@ export default function App() {
   }
 
   async function exportHtml() {
-    if (window.designme) {
-      const result = await window.designme.exportHtml({
-        name: output.exportName,
-        html: output.html,
-      });
-      setExportPath(result.filePath);
-      setStatus('HTML exportado');
-      return;
-    }
+    try {
+      if (window.designme) {
+        const result = await window.designme.exportHtml({
+          name: output.exportName,
+          html: output.html,
+        });
+        setExportPath(result.filePath);
+        setStatus('HTML exportado');
+        return;
+      }
 
-    const blob = new Blob([output.html], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${output.exportName}.html`;
-    link.click();
-    URL.revokeObjectURL(url);
-    setStatus('HTML descargado');
+      const blob = new Blob([output.html], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${output.exportName}.html`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setStatus('HTML descargado');
+    } catch (error) {
+      setStatus(`No se pudo exportar HTML: ${errorMessage(error)}`);
+    }
   }
 
   async function exportBundle() {
-    const bundle = buildExportBundle({
-      output,
-      input: {
-        prompt,
-        artifactType,
-        directionId,
-        tweaks,
-      },
-    });
-
-    if (window.designme) {
-      const result = await window.designme.exportBundle({
-        name: bundle.name,
-        files: bundle.files,
+    try {
+      const bundle = buildExportBundle({
+        output,
+        input: {
+          prompt,
+          artifactType,
+          directionId,
+          tweaks,
+        },
       });
-      setExportPath(result.filePath);
-      setStatus('Bundle exportado');
-      return;
-    }
 
-    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${bundle.name}-bundle.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-    setStatus('Bundle descargado como JSON');
+      if (window.designme) {
+        const result = await window.designme.exportBundle({
+          name: bundle.name,
+          files: bundle.files,
+        });
+        setExportPath(result.filePath);
+        setStatus('Bundle exportado');
+        return;
+      }
+
+      const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${bundle.name}-bundle.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setStatus('Bundle descargado como JSON');
+    } catch (error) {
+      setStatus(`No se pudo exportar bundle: ${errorMessage(error)}`);
+    }
   }
 
   async function openExports() {
-    if (!window.designme) {
-      setStatus('La carpeta de exports está disponible en modo escritorio');
-      return;
+    try {
+      if (!window.designme) {
+        setStatus('La carpeta de exports está disponible en modo escritorio');
+        return;
+      }
+      const result = await window.designme.openExports();
+      setStatus(`Carpeta abierta: ${result.directory}`);
+    } catch (error) {
+      setStatus(`No se pudo abrir exports: ${errorMessage(error)}`);
     }
-    const result = await window.designme.openExports();
-    setStatus(`Carpeta abierta: ${result.directory}`);
   }
 
   function resetView() {

@@ -31,7 +31,7 @@ async function createWindow() {
   }
 }
 
-registerIpcHandlers(app);
+registerIpcHandlers(app, isDev);
 
 app.whenReady().then(createWindow);
 
