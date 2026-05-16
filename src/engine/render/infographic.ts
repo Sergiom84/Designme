@@ -1,6 +1,7 @@
 import type { UXIntent } from '../intent/types';
 import type { DerivedBrief } from '../types';
 import { escapeHtml } from '../utils';
+import { renderNumberedCard } from './components';
 
 export function renderInfographic(brief: DerivedBrief, intent: UXIntent): string {
   return `
@@ -12,15 +13,7 @@ export function renderInfographic(brief: DerivedBrief, intent: UXIntent): string
         <section class="poster-grid">
           ${intent.modules
             .slice(0, 4)
-            .map(
-              (module, index) => `
-                <article>
-                  <span>${String(index + 1).padStart(2, '0')}</span>
-                  <strong>${escapeHtml(module.label)}</strong>
-                  <p>${escapeHtml(module.purpose)}</p>
-                </article>
-              `,
-            )
+            .map((module, index) => renderNumberedCard(index, module.label, module.purpose))
             .join('')}
         </section>
       </main>

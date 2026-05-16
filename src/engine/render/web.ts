@@ -1,16 +1,13 @@
 import type { UXIntent } from '../intent/types';
 import type { DerivedBrief } from '../types';
 import { escapeHtml } from '../utils';
+import { renderButton, renderNav } from './components';
 import { renderMetricCards } from './partials';
 
 export function renderWeb(brief: DerivedBrief, intent: UXIntent): string {
   return `
     <div class="artifact-shell web-shell">
-      <nav class="site-nav">
-        <strong>${escapeHtml(brief.name)}</strong>
-        <span>Product</span><span>Proof</span><span>Workflow</span>
-        <button>Request demo</button>
-      </nav>
+      ${renderNav(brief.name, ['Product', 'Proof', 'Workflow'], 'Request demo')}
       <main class="web-main">
         <section class="web-hero">
           <div>
@@ -18,8 +15,8 @@ export function renderWeb(brief: DerivedBrief, intent: UXIntent): string {
             <h1>${escapeHtml(brief.objective)}.</h1>
             <p>${escapeHtml(brief.topic)}</p>
             <div class="hero-actions">
-              <button class="primary-action">${escapeHtml(intent.primaryAction)}</button>
-              <button class="ghost-action">${escapeHtml(intent.secondaryAction ?? 'View system')}</button>
+              ${renderButton({ label: intent.primaryAction, variant: 'primary' })}
+              ${renderButton({ label: intent.secondaryAction ?? 'View system', variant: 'ghost' })}
             </div>
           </div>
           <div class="product-shot" aria-label="Generated product preview">

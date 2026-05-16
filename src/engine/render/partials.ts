@@ -1,5 +1,9 @@
 import type { DerivedBrief } from '../types';
-import { escapeHtml } from '../utils';
+import {
+  renderFeatureList as renderFeatureItems,
+  renderMetricCard,
+  renderTimeline as renderTimelineItems,
+} from './components';
 
 export function renderMetricCards(brief: DerivedBrief): string {
   const metrics = [
@@ -9,42 +13,14 @@ export function renderMetricCards(brief: DerivedBrief): string {
   ];
 
   return metrics
-    .map(
-      ([label, value, caption]) => `
-        <article class="metric-card">
-          <span>${escapeHtml(label)}</span>
-          <strong>${escapeHtml(value)}</strong>
-          <small>${escapeHtml(caption)} for ${escapeHtml(brief.name)}</small>
-        </article>
-      `,
-    )
+    .map(([label, value, caption]) => renderMetricCard(label, value, `${caption} for ${brief.name}`))
     .join('');
 }
 
 export function renderFeatureList(brief: DerivedBrief): string {
-  return brief.features
-    .slice(0, 5)
-    .map(
-      (feature, index) => `
-        <li>
-          <span class="index">${String(index + 1).padStart(2, '0')}</span>
-          <span>${escapeHtml(feature)}</span>
-        </li>
-      `,
-    )
-    .join('');
+  return renderFeatureItems(brief.features);
 }
 
 export function renderTimeline(brief: DerivedBrief): string {
-  return brief.sections
-    .slice(0, 5)
-    .map(
-      (section, index) => `
-        <button class="step-button ${index === 0 ? 'is-active' : ''}" data-screen="${index}">
-          <span>${escapeHtml(section)}</span>
-          <small>${index === 0 ? 'live' : 'queued'}</small>
-        </button>
-      `,
-    )
-    .join('');
+  return renderTimelineItems(brief.sections);
 }

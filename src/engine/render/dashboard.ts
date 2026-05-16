@@ -1,7 +1,8 @@
 import type { UXIntent } from '../intent/types';
 import type { DerivedBrief } from '../types';
 import { escapeHtml } from '../utils';
-import { renderFeatureList, renderMetricCards } from './partials';
+import { renderCard, renderChartBars, renderFeatureList, renderSegmentedControl } from './components';
+import { renderMetricCards } from './partials';
 
 export function renderDashboard(brief: DerivedBrief, intent: UXIntent): string {
   return `
@@ -12,31 +13,21 @@ export function renderDashboard(brief: DerivedBrief, intent: UXIntent): string {
             <p class="eyebrow">Decision dashboard</p>
             <h1>${escapeHtml(brief.name)}</h1>
           </div>
-          <div class="segmented">
-            <button class="active">Week</button>
-            <button>Month</button>
-            <button>Quarter</button>
-          </div>
+          ${renderSegmentedControl('Time range', ['Week', 'Month', 'Quarter'])}
         </header>
         <section class="metric-grid">${renderMetricCards(brief)}</section>
         <section class="analytics-grid">
-          <article class="module chart-module">
-            <div class="module-head">
-              <span>${escapeHtml(brief.objective)}</span>
-              <strong>${escapeHtml(intent.secondaryAction ?? 'Signal trend')}</strong>
-            </div>
-            <div class="bars">
-              <i style="height: 46%"></i><i style="height: 68%"></i><i style="height: 58%"></i>
-              <i style="height: 83%"></i><i style="height: 74%"></i><i style="height: 91%"></i>
-            </div>
-          </article>
-          <article class="module">
-            <div class="module-head">
-              <span>Owner queue</span>
-              <strong>Next actions</strong>
-            </div>
-            <ul class="feature-list">${renderFeatureList(brief)}</ul>
-          </article>
+          ${renderCard({
+            className: 'chart-module',
+            eyebrow: brief.objective,
+            title: intent.secondaryAction ?? 'Signal trend',
+            children: renderChartBars(),
+          })}
+          ${renderCard({
+            eyebrow: 'Owner queue',
+            title: 'Next actions',
+            children: `<ul class="feature-list">${renderFeatureList(brief.features)}</ul>`,
+          })}
         </section>
       </main>
     </div>
