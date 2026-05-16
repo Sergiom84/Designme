@@ -9,6 +9,7 @@ Local-first designer for apps, software screens, dashboards, decks, infographics
 - Visual directions backed by shared design tokens.
 - Tweaks for density, tone, motion, radius, and device framing.
 - Critique panel with a growing quality rubric and contrast-aware scoring.
+- Local quality analyzer for accessibility, hierarchy, layout, copy, contrast, and export readiness.
 - HTML export plus a clean handoff prompt for Codex, Claude, or another agent.
 
 ## Run
@@ -62,6 +63,7 @@ Baseline prompts and acceptance checks live under [`docs/quality/`](docs/quality
 - `src/engine/render/styles/` owns shared generated CSS and artifact-specific layout CSS.
 - `src/engine/render/` owns standalone HTML rendering by artifact type.
 - `src/engine/critique.ts` and `src/engine/handoff.ts` keep quality review and agent handoff separate from rendering.
+- `src/quality/` analyzes generated HTML and turns measurable issues into critique scores.
 - `src/design-system/tokens/` owns themes, palettes, CSS variables, and contrast helpers.
 
 More detail: [`docs/architecture.md`](docs/architecture.md).

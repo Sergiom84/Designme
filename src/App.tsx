@@ -39,6 +39,7 @@ import {
   type Motion,
   type Tone,
 } from './engine';
+import type { QualityIssue, Severity } from './quality';
 
 type PreviewMode = 'desktop' | 'tablet' | 'mobile';
 type SideTab = 'directions' | 'tweaks' | 'critique' | 'handoff';
@@ -199,6 +200,23 @@ export default function App() {
   async function copyHandoff() {
     const copied = await writeClipboard(output.handoffPrompt);
     setStatus(copied ? 'Handoff copiado' : 'No se pudo acceder al portapapeles');
+  }
+
+  async function copyCritique() {
+    const lines = [
+      `Quality score: ${output.critique.total}/10`,
+      '',
+      'Scores:',
+      ...output.critique.scores.map((score) => `- ${score.label}: ${score.value}/10`),
+      '',
+      'Issues:',
+      ...output.critique.issues.map((issue) => `- [${issue.severity}] ${issue.title}: ${issue.suggestedFix}`),
+      '',
+      'Fix:',
+      ...output.critique.fix.map((item) => `- ${item}`),
+    ];
+    const copied = await writeClipboard(lines.join('\n'));
+    setStatus(copied ? 'Crítica copiada' : 'No se pudo acceder al portapapeles');
   }
 
   async function exportHtml() {
@@ -551,6 +569,15 @@ export default function App() {
                 </div>
               ))}
             </div>
+            <div className="issue-summary">
+              <strong>{output.critique.issues.length}</strong>
+              <span>issues detectados por reglas locales</span>
+              <button type="button" className="command-button" onClick={copyCritique}>
+                <Copy size={16} aria-hidden />
+                <span>Copiar crítica</span>
+              </button>
+            </div>
+            <QualityIssueList issues={output.critique.issues} />
             <CritiqueBlock title="Keep" items={output.critique.keep} />
             <CritiqueBlock title="Fix" items={output.critique.fix} />
             <CritiqueBlock title="Quick wins" items={output.critique.quickWins} />
@@ -625,6 +652,39 @@ function CritiqueBlock({ title, items }: { title: string; items: string[] }) {
           <li key={item}>{item}</li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+const severityLabels: Record<Severity, string> = {
+  error: 'Error',
+  warning: 'Warning',
+  info: 'Info',
+};
+
+function QualityIssueList({ issues }: { issues: QualityIssue[] }) {
+  if (issues.length === 0) {
+    return (
+      <div className="issue-empty">
+        <strong>No blocking issues</strong>
+        <span>La pasada determinista no ha encontrado problemas de calidad.</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="issue-list">
+      {issues.slice(0, 8).map((issue) => (
+        <article key={issue.id} className={`issue-card ${issue.severity}`}>
+          <div>
+            <span>{severityLabels[issue.severity]}</span>
+            <small>{issue.category}</small>
+          </div>
+          <strong>{issue.title}</strong>
+          <p>{issue.detail}</p>
+          <em>{issue.suggestedFix}</em>
+        </article>
+      ))}
     </div>
   );
 }

@@ -17,7 +17,7 @@ export function buildDesignProject(input: BuildInput): DesignOutput {
   const intent = resolveIntent(brief, input.artifactType);
   const enrichedBrief = applyIntentToBrief(brief, intent);
   const html = buildHtml(enrichedBrief, input.artifactType, direction, input.tweaks, intent);
-  const critique = buildCritique(enrichedBrief, direction, input.tweaks, intent);
+  const critique = buildCritique(enrichedBrief, input.artifactType, direction, input.tweaks, intent, html);
   return {
     name: enrichedBrief.name,
     exportName: slugify(`${enrichedBrief.name}-${input.artifactType}`),

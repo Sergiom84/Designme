@@ -1,5 +1,6 @@
 import type { ThemeId } from '../design-system/tokens/types';
 import type { UXIntent } from './intent/types';
+import type { QualityIssue } from '../quality/types';
 
 export type ArtifactType = 'web' | 'software' | 'dashboard' | 'mobile' | 'deck' | 'infographic';
 export type DirectionId = 'systems' | 'editorial' | 'kinetic';
@@ -40,6 +41,7 @@ export interface BuildInput {
 export interface Critique {
   total: number;
   scores: Array<{ label: string; value: number }>;
+  issues: QualityIssue[];
   keep: string[];
   fix: string[];
   quickWins: string[];

@@ -584,6 +584,87 @@ meter {
   height: 10px;
 }
 
+.issue-summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface-muted);
+}
+
+.issue-summary strong {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.issue-summary span {
+  color: var(--app-text-muted);
+  line-height: 1.35;
+}
+
+.issue-summary .command-button {
+  grid-column: 1 / -1;
+}
+
+.issue-list {
+  display: grid;
+  gap: 10px;
+}
+
+.issue-card,
+.issue-empty {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface);
+}
+
+.issue-card > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+
+.issue-card span,
+.issue-card small {
+  color: var(--app-text-muted);
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.issue-card p,
+.issue-card em,
+.issue-empty span {
+  margin: 0;
+  color: #48443d;
+  font-size: 13px;
+  line-height: 1.42;
+}
+
+.issue-card em {
+  color: var(--app-text);
+  font-style: normal;
+}
+
+.issue-card.error {
+  border-color: rgba(163, 61, 53, 0.38);
+}
+
+.issue-card.warning {
+  border-color: rgba(166, 111, 31, 0.4);
+}
+
+.issue-card.info {
+  border-color: rgba(15, 118, 110, 0.26);
+}
+
 .critique-block {
   display: grid;
   gap: 8px;
