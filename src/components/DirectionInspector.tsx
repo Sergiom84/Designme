@@ -11,7 +11,7 @@ interface DirectionInspectorProps {
 
 export function DirectionInspector({ output, directionId, onDirectionChange }: DirectionInspectorProps) {
   return (
-    <section id="panel-directions" role="tabpanel" aria-labelledby="tab-directions" className="inspector-section">
+    <section id="panel-directions" role="tabpanel" aria-labelledby="tab-directions" className="inspector-section" tabIndex={0}>
       <div className="section-heading">
         <Layers size={18} aria-hidden />
         <div>
@@ -35,7 +35,7 @@ export function DirectionInspector({ output, directionId, onDirectionChange }: D
           ))}
         </ul>
       </div>
-      <div className="direction-list">
+      <div className="direction-list" role="group" aria-label="Direcciones visuales">
         {designDirections.map((direction) => {
           const theme = getThemeById(direction.themeId);
           return (

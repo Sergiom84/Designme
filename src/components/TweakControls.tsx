@@ -9,7 +9,7 @@ interface TweakControlsProps {
 
 export function TweakControls({ tweaks, onPatch, onReset }: TweakControlsProps) {
   return (
-    <section id="panel-tweaks" role="tabpanel" aria-labelledby="tab-tweaks" className="inspector-section">
+    <section id="panel-tweaks" role="tabpanel" aria-labelledby="tab-tweaks" className="inspector-section" tabIndex={0}>
       <div className="section-heading">
         <SlidersHorizontal size={18} aria-hidden />
         <div>
@@ -38,13 +38,14 @@ export function TweakControls({ tweaks, onPatch, onReset }: TweakControlsProps) 
       />
 
       <label className="range-control">
-        <span>Radius {tweaks.radius}px</span>
+        <span id="radius-label">Radius {tweaks.radius}px</span>
         <input
           type="range"
           min="0"
           max="12"
           step="1"
           value={tweaks.radius}
+          aria-labelledby="radius-label"
           onChange={(event) => onPatch({ radius: Number(event.target.value) })}
         />
       </label>
@@ -76,13 +77,14 @@ interface TweakSegmentProps<T extends string> {
 function TweakSegment<T extends string>({ label, value, options, onChange }: TweakSegmentProps<T>) {
   return (
     <div className="tweak-group">
-      <span>{label}</span>
-      <div className="segmented-control">
+      <span id={`tweak-${label.toLowerCase()}-label`}>{label}</span>
+      <div className="segmented-control" role="group" aria-labelledby={`tweak-${label.toLowerCase()}-label`}>
         {options.map((option) => (
           <button
             key={option}
             type="button"
             className={value === option ? 'active' : ''}
+            aria-pressed={value === option}
             onClick={() => onChange(option)}
           >
             {option}

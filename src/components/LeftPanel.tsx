@@ -51,17 +51,21 @@ export function LeftPanel({
         </div>
       </header>
 
-      <section className="input-section">
-        <label htmlFor="prompt">Brief</label>
+      <section className="input-section" aria-labelledby="brief-heading">
+        <label id="brief-heading" htmlFor="prompt">Brief</label>
         <textarea
           id="prompt"
           value={prompt}
           onChange={(event) => onPromptChange(event.target.value)}
           spellCheck={false}
+          aria-describedby="prompt-help"
         />
-        <div className="preset-list">
+        <p id="prompt-help" className="sr-only">
+          Describe el producto, audiencia, objetivo y formato que quieres generar.
+        </p>
+        <div className="preset-list" role="group" aria-label="Prompts predefinidos">
           {promptPresets.map((preset) => (
-            <button key={preset} type="button" onClick={() => onPromptChange(preset)}>
+            <button key={preset} type="button" aria-label={`Usar preset: ${preset}`} onClick={() => onPromptChange(preset)}>
               <Wand2 size={14} aria-hidden />
               <span>{preset}</span>
             </button>
@@ -69,9 +73,9 @@ export function LeftPanel({
         </div>
       </section>
 
-      <section className="input-section">
-        <label>Artefacto</label>
-        <div className="artifact-grid">
+      <section className="input-section" aria-labelledby="artifact-heading">
+        <span id="artifact-heading" className="section-label">Artefacto</span>
+        <div className="artifact-grid" role="group" aria-labelledby="artifact-heading">
           {artifactOptions.map((option) => {
             const Icon = artifactIcons[option.id];
             return (
@@ -79,6 +83,7 @@ export function LeftPanel({
                 key={option.id}
                 type="button"
                 className={classNames('artifact-button', artifactType === option.id && 'is-selected')}
+                aria-pressed={artifactType === option.id}
                 onClick={() => onArtifactTypeChange(option.id)}
               >
                 <Icon size={18} aria-hidden />
@@ -90,9 +95,9 @@ export function LeftPanel({
         </div>
       </section>
 
-      <section className="input-section versions-section">
+      <section className="input-section versions-section" aria-labelledby="versions-heading">
         <div className="section-title-row">
-          <label>Versiones</label>
+          <span id="versions-heading" className="section-label">Versiones</span>
           <button
             type="button"
             className="icon-button"
@@ -106,14 +111,20 @@ export function LeftPanel({
         {versions.length === 0 ? (
           <p className="empty-copy">Guarda una versión para comparar decisiones sin perder el camino.</p>
         ) : (
-          <div className="version-list">
+          <div className="version-list" role="list" aria-label="Versiones guardadas">
             {versions.map((snapshot) => (
-              <article key={snapshot.id} className={classNames('version-item', compareVersionId === snapshot.id && 'is-selected')}>
-                <button type="button" onClick={() => onRestoreVersion(snapshot)}>
+              <article key={snapshot.id} role="listitem" className={classNames('version-item', compareVersionId === snapshot.id && 'is-selected')}>
+                <button type="button" aria-label={`Restaurar versión ${snapshot.name}`} onClick={() => onRestoreVersion(snapshot)}>
                   <span>{snapshot.name}</span>
                   <small>{formatTime(snapshot.at)}</small>
                 </button>
-                <button type="button" className="compare-button" onClick={() => onCompareVersion(snapshot)}>
+                <button
+                  type="button"
+                  className="compare-button"
+                  aria-pressed={compareVersionId === snapshot.id}
+                  aria-label={`${compareVersionId === snapshot.id ? 'Cerrar comparación con' : 'Comparar con'} ${snapshot.name}`}
+                  onClick={() => onCompareVersion(snapshot)}
+                >
                   {compareVersionId === snapshot.id ? 'Comparando' : 'Comparar'}
                 </button>
               </article>

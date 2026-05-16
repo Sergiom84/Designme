@@ -44,8 +44,8 @@ export function CanvasToolbar({
         <h1>{title}</h1>
         <p>{summary}</p>
       </div>
-      <div className="toolbar-actions">
-        <div className="icon-segment" aria-label="Modo de preview">
+      <div className="toolbar-actions" role="toolbar" aria-label="Controles de preview y exportación">
+        <div className="icon-segment" role="group" aria-label="Modo de preview">
           <button
             type="button"
             title="Desktop"
@@ -78,13 +78,14 @@ export function CanvasToolbar({
           </button>
         </div>
 
-        <div className="zoom-segment" aria-label="Zoom de preview">
+        <div className="zoom-segment" role="group" aria-label="Zoom de preview">
           {(['fit', '50', '75', '100'] as PreviewZoom[]).map((zoom) => (
             <button
               key={zoom}
               type="button"
               className={previewZoom === zoom ? 'active' : ''}
               aria-pressed={previewZoom === zoom}
+              aria-label={zoom === 'fit' ? 'Ajustar preview al espacio disponible' : `Zoom ${zoom} por ciento`}
               onClick={() => onPreviewZoomChange(zoom)}
             >
               {zoom === 'fit' ? 'Fit' : `${zoom}%`}

@@ -44,6 +44,10 @@ The quality pass is deterministic and local. It emits categorized issues with se
 
 The shell is split into brief, preview and inspector components. CSS lives under `src/styles/` by responsibility. Large screens keep three columns, laptop widths move the inspector below the main row, and mobile stacks panels without global horizontal scrolling.
 
+## Accessibility
+
+The app favors native controls first. Inspector tabs implement keyboard navigation, grouped controls expose selected state, live status feedback is polite, meters are labelled, and icon-only buttons carry explicit accessible names.
+
 ## Export
 
 Desktop exports are handled through validated Electron IPC. Single-file HTML remains available, and the bundle writer creates a folder with browser-ready `index.html`, extracted assets, `designme.json`, `handoff.md`, and a short README.

@@ -9,7 +9,7 @@ interface CritiqueInspectorProps {
 
 export function CritiqueInspector({ critique, onCopyCritique }: CritiqueInspectorProps) {
   return (
-    <section id="panel-critique" role="tabpanel" aria-labelledby="tab-critique" className="inspector-section">
+    <section id="panel-critique" role="tabpanel" aria-labelledby="tab-critique" className="inspector-section" tabIndex={0}>
       <div className="score-lockup">
         <ClipboardCheck size={22} aria-hidden />
         <strong>{critique.total}/10</strong>
@@ -19,7 +19,7 @@ export function CritiqueInspector({ critique, onCopyCritique }: CritiqueInspecto
         {critique.scores.map((score) => (
           <div key={score.label}>
             <span>{score.label}</span>
-            <meter min="0" max="10" value={score.value} />
+            <meter min="0" max="10" value={score.value} aria-label={`${score.label}: ${score.value} de 10`} />
             <strong>{score.value}</strong>
           </div>
         ))}

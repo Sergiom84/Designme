@@ -8,7 +8,7 @@ interface HandoffInspectorProps {
 
 export function HandoffInspector({ handoffPrompt, onCopyHandoff, onOpenExports }: HandoffInspectorProps) {
   return (
-    <section id="panel-handoff" role="tabpanel" aria-labelledby="tab-handoff" className="inspector-section handoff-section">
+    <section id="panel-handoff" role="tabpanel" aria-labelledby="tab-handoff" className="inspector-section handoff-section" tabIndex={0}>
       <div className="section-heading">
         <FileCode2 size={18} aria-hidden />
         <div>
@@ -16,7 +16,8 @@ export function HandoffInspector({ handoffPrompt, onCopyHandoff, onOpenExports }
           <span>Para Codex, Claude o cualquier agente que ya pagas.</span>
         </div>
       </div>
-      <textarea readOnly value={handoffPrompt} />
+      <label className="sr-only" htmlFor="handoff-prompt">Prompt de handoff</label>
+      <textarea id="handoff-prompt" readOnly value={handoffPrompt} />
       <div className="handoff-actions">
         <button type="button" className="command-button" onClick={onCopyHandoff}>
           <Copy size={17} aria-hidden />

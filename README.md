@@ -14,6 +14,7 @@ Local-first designer for apps, software screens, dashboards, decks, infographics
 - HTML export plus a clean handoff prompt for Codex, Claude, or another agent.
 - Bundle export with `index.html`, `styles.css`, `script.js`, `designme.json`, `handoff.md`, and README.
 - Hardened Electron shell with CSP, sender-checked IPC, and a stricter preview sandbox.
+- Accessible React shell with keyboard inspector tabs, named controls, labelled meters, and polite status updates.
 
 ## Run
 
@@ -70,6 +71,7 @@ Baseline prompts and acceptance checks live under [`docs/quality/`](docs/quality
 - `src/components/`, `src/hooks/`, and `src/styles/` keep the responsive app shell modular.
 - `src/export/` builds standalone HTML and structured export bundles.
 - `src/design-system/tokens/` owns themes, palettes, CSS variables, and contrast helpers.
+- Accessibility notes: [`docs/accessibility.md`](docs/accessibility.md).
 - Security notes: [`docs/security.md`](docs/security.md).
 
 More detail: [`docs/architecture.md`](docs/architecture.md).
