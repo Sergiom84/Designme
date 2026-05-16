@@ -12,7 +12,8 @@ Designme is a local-first design studio built around a deterministic generator. 
 6. `src/engine/render/` renders the standalone HTML artifact by artifact type.
 7. `src/quality/` analyzes the generated HTML for accessibility, contrast, hierarchy, layout, copy, interaction, and export issues.
 8. `src/design-system/tokens/` provides palettes, themes, CSS variables, and contrast helpers.
-9. The React app previews the generated HTML inside a sandboxed iframe and exposes export/handoff controls.
+9. `src/components/`, `src/hooks/`, and `src/styles/` compose the responsive app shell, preview controls, inspector and local persistence.
+10. The React app previews the generated HTML inside a sandboxed iframe and exposes export/handoff controls.
 
 ## Current Intent Domains
 
@@ -36,3 +37,7 @@ Designme is a local-first design studio built around a deterministic generator. 
 ## Quality Pass
 
 The quality pass is deterministic and local. It emits categorized issues with severity, suggested fixes, score buckets, keep notes, fix notes, and quick wins. The app shows those results in the Crítica tab, and the handoff remains available for deeper follow-up in Codex or Claude.
+
+## Responsive Shell
+
+The shell is split into brief, preview and inspector components. CSS lives under `src/styles/` by responsibility. Large screens keep three columns, laptop widths move the inspector below the main row, and mobile stacks panels without global horizontal scrolling.

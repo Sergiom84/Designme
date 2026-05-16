@@ -1,0 +1,121 @@
+.canvas-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(25, 27, 31, 0.12);
+  background: rgba(247, 243, 234, 0.8);
+}
+
+.canvas-toolbar h1 {
+  margin: 2px 0;
+  font-size: clamp(20px, 2vw, 24px);
+  line-height: 1.1;
+}
+
+.canvas-toolbar p {
+  margin: 0;
+  color: var(--app-text-subtle);
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.icon-segment,
+.zoom-segment {
+  min-height: 42px;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface);
+}
+
+.icon-segment button {
+  width: 34px;
+  border: 0;
+  border-radius: var(--app-radius-sm);
+  background: transparent;
+  cursor: pointer;
+}
+
+.zoom-segment button {
+  min-width: 42px;
+  border: 0;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.preview-stage {
+  --preview-scale: 1;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  overflow: auto;
+}
+
+.preview-stage.is-comparing {
+  grid-template-columns: repeat(2, minmax(360px, 1fr));
+  align-items: stretch;
+}
+
+.iframe-shell {
+  width: calc(100% * var(--preview-scale));
+  height: calc(100% * var(--preview-scale));
+  min-height: 520px;
+  overflow: hidden;
+  border: 1px solid var(--app-border-strong);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-lg);
+}
+
+.mode-tablet .iframe-shell {
+  width: min(calc(900px * var(--preview-scale)), 100%);
+}
+
+.mode-mobile .iframe-shell {
+  width: min(calc(430px * var(--preview-scale)), 100%);
+}
+
+iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #f8f4ec;
+}
+
+@media (max-width: 1180px) {
+  .canvas-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .toolbar-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 760px) {
+  .preview-stage {
+    padding: 12px;
+  }
+
+  .preview-stage.is-comparing {
+    grid-template-columns: 1fr;
+  }
+
+  .iframe-shell {
+    min-height: 460px;
+  }
+}

@@ -1,0 +1,90 @@
+.preset-list button,
+.version-list button,
+.command-button,
+.icon-button,
+.tab-row button,
+.artifact-button,
+.direction-card,
+.segmented-control button,
+.zoom-segment button {
+  border: 1px solid rgba(25, 27, 31, 0.14);
+  border-radius: var(--app-radius-md);
+  background: rgba(255, 253, 248, 0.92);
+  cursor: pointer;
+}
+
+.is-selected,
+.tab-row .active,
+.icon-segment .active,
+.zoom-segment .active,
+.segmented-control .active,
+.direction-card.is-selected {
+  border-color: var(--app-accent-border);
+  background: var(--app-accent-soft);
+}
+
+.icon-button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+}
+
+.command-button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  font-weight: 800;
+}
+
+.command-button.primary {
+  color: #fff8e8;
+  border-color: var(--app-text-strong);
+  background: var(--app-text-strong);
+}
+
+.segmented-control {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.segmented-control button {
+  min-height: 38px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.range-control {
+  display: grid;
+  gap: 8px;
+}
+
+.range-control span,
+.tweak-group > span {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #796145;
+}
+
+.range-control input {
+  width: 100%;
+  accent-color: var(--app-accent);
+}
+
+.check-control {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 8px;
+  align-items: start;
+  color: #48443d;
+  line-height: 1.35;
+}
+
+.check-control input {
+  accent-color: var(--app-accent);
+}

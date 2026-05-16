@@ -1,0 +1,63 @@
+:root {
+  --app-bg: #f4efe6;
+  --app-bg-muted: #ede6d9;
+  --app-surface: #fffdf8;
+  --app-surface-muted: #f7f3ea;
+  --app-text: #191b1f;
+  --app-text-strong: #17191c;
+  --app-text-muted: #6b655b;
+  --app-text-subtle: #625d54;
+  --app-border: rgba(25, 27, 31, 0.13);
+  --app-border-soft: rgba(25, 27, 31, 0.1);
+  --app-border-strong: rgba(25, 27, 31, 0.18);
+  --app-accent: #0f766e;
+  --app-accent-soft: rgba(15, 118, 110, 0.1);
+  --app-accent-border: rgba(15, 118, 110, 0.55);
+  --app-focus: rgba(15, 118, 110, 0.45);
+  --app-radius-sm: 6px;
+  --app-radius-md: 8px;
+  --app-shadow-lg: 0 24px 80px rgba(20, 20, 20, 0.12);
+  color: var(--app-text);
+  background: var(--app-bg);
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-width: 0;
+  overflow: auto;
+}
+
+button,
+textarea,
+input {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+textarea:focus,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--app-focus);
+  outline-offset: 2px;
+}

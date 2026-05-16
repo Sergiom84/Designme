@@ -6,6 +6,7 @@ Local-first designer for apps, software screens, dashboards, decks, infographics
 
 - Local deterministic generator: no mandatory API key, cloud workspace, or model provider.
 - Live preview for desktop, tablet, and mobile canvases.
+- Responsive app shell with zoom, canvas-only mode, and saved-version comparison.
 - Visual directions backed by shared design tokens.
 - Tweaks for density, tone, motion, radius, and device framing.
 - Critique panel with a growing quality rubric and contrast-aware scoring.
@@ -64,6 +65,7 @@ Baseline prompts and acceptance checks live under [`docs/quality/`](docs/quality
 - `src/engine/render/` owns standalone HTML rendering by artifact type.
 - `src/engine/critique.ts` and `src/engine/handoff.ts` keep quality review and agent handoff separate from rendering.
 - `src/quality/` analyzes generated HTML and turns measurable issues into critique scores.
+- `src/components/`, `src/hooks/`, and `src/styles/` keep the responsive app shell modular.
 - `src/design-system/tokens/` owns themes, palettes, CSS variables, and contrast helpers.
 
 More detail: [`docs/architecture.md`](docs/architecture.md).

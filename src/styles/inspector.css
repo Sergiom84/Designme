@@ -1,0 +1,258 @@
+.tab-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--app-border-soft);
+}
+
+.tab-row button {
+  min-height: 54px;
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+  font-size: 11px;
+}
+
+.inspector-section {
+  display: grid;
+  gap: 14px;
+  padding: 16px 0 24px;
+}
+
+.section-heading {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.section-heading strong {
+  display: block;
+}
+
+.direction-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  text-align: left;
+}
+
+.direction-card p,
+.intent-card p,
+.intent-card ul,
+.issue-card p,
+.issue-card em,
+.issue-empty span,
+.critique-block ul {
+  color: #48443d;
+  line-height: 1.42;
+}
+
+.intent-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md);
+  background: var(--app-accent-soft);
+}
+
+.intent-card > div {
+  display: grid;
+  gap: 4px;
+}
+
+.intent-card span {
+  color: var(--app-text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.intent-card p,
+.intent-card ul {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.intent-card ul {
+  display: grid;
+  gap: 6px;
+  padding-left: 18px;
+}
+
+.direction-card p {
+  margin: 0;
+}
+
+.swatches {
+  display: flex;
+  gap: 5px;
+}
+
+.swatches i {
+  width: 26px;
+  height: 18px;
+  display: block;
+  border: 1px solid var(--app-border);
+  border-radius: 4px;
+}
+
+.assumption-list div {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 8px;
+  align-items: start;
+  padding: 10px;
+  border: 1px solid var(--app-border-soft);
+  border-radius: var(--app-radius-md);
+  background: rgba(255, 253, 248, 0.66);
+}
+
+.assumption-list svg {
+  color: var(--app-accent);
+}
+
+.tweak-group {
+  display: grid;
+  gap: 8px;
+}
+
+.score-lockup {
+  display: grid;
+  grid-template-columns: 32px auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(25, 27, 31, 0.12);
+  border-radius: var(--app-radius-md);
+  background: var(--app-text-strong);
+  color: #fff8e8;
+}
+
+.score-lockup strong {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.score-lockup span {
+  color: rgba(255, 248, 232, 0.72);
+}
+
+.score-list > div {
+  display: grid;
+  grid-template-columns: 84px 1fr 28px;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+
+meter {
+  width: 100%;
+  height: 10px;
+}
+
+.issue-summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface-muted);
+}
+
+.issue-summary strong {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.issue-summary span {
+  color: var(--app-text-muted);
+  line-height: 1.35;
+}
+
+.issue-summary .command-button {
+  grid-column: 1 / -1;
+}
+
+.issue-list {
+  display: grid;
+  gap: 10px;
+}
+
+.issue-card,
+.issue-empty {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface);
+}
+
+.issue-card > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+
+.issue-card span,
+.issue-card small {
+  color: var(--app-text-muted);
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.issue-card p,
+.issue-card em,
+.issue-empty span {
+  margin: 0;
+  font-size: 13px;
+}
+
+.issue-card em {
+  color: var(--app-text);
+  font-style: normal;
+}
+
+.issue-card.error {
+  border-color: rgba(163, 61, 53, 0.38);
+}
+
+.issue-card.warning {
+  border-color: rgba(166, 111, 31, 0.4);
+}
+
+.issue-card.info {
+  border-color: rgba(15, 118, 110, 0.26);
+}
+
+.critique-block {
+  display: grid;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.critique-block ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.handoff-section textarea {
+  min-height: 430px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+}
+
+.handoff-actions {
+  grid-template-columns: 1fr 1fr;
+}

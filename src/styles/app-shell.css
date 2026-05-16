@@ -1,0 +1,135 @@
+.app-shell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  background:
+    linear-gradient(90deg, rgba(15, 118, 110, 0.06), transparent 30%),
+    linear-gradient(180deg, var(--app-surface-muted), var(--app-bg-muted));
+}
+
+.left-panel,
+.right-panel {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  border-color: var(--app-border);
+  background: rgba(255, 253, 248, 0.86);
+}
+
+.left-panel {
+  border-bottom: 1px solid var(--app-border);
+  padding: 16px;
+}
+
+.right-panel {
+  border-top: 1px solid var(--app-border);
+  padding: 14px;
+}
+
+.center-panel {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.canvas-only .left-panel,
+.canvas-only .right-panel {
+  display: none;
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(25, 27, 31, 0.12);
+}
+
+.brand-row strong {
+  display: block;
+  font-size: 17px;
+}
+
+.brand-row span,
+.canvas-toolbar > div:first-child > span,
+.section-heading span,
+.empty-copy,
+.status-row,
+.direction-card small,
+.artifact-button span,
+.version-list small {
+  color: var(--app-text-muted);
+}
+
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--app-radius-md);
+  color: #fff8e8;
+  background: var(--app-text-strong);
+}
+
+.status-row {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 8px 18px;
+  border-top: 1px solid rgba(25, 27, 31, 0.12);
+  background: rgba(255, 253, 248, 0.72);
+  font-size: 12px;
+}
+
+.status-row code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 1280px) {
+  body {
+    overflow: hidden;
+  }
+
+  .app-shell {
+    height: 100dvh;
+    grid-template-columns: 350px minmax(0, 1fr) 360px;
+    overflow: hidden;
+  }
+
+  .left-panel {
+    border-right: 1px solid var(--app-border);
+    border-bottom: 0;
+    padding: 18px;
+  }
+
+  .right-panel {
+    border-left: 1px solid var(--app-border);
+    border-top: 0;
+    padding: 14px;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .app-shell {
+    grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
+  }
+
+  .right-panel {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .left-panel {
+    max-height: none;
+  }
+}
