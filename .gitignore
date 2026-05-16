@@ -1,0 +1,9 @@
+node_modules/
+dist/
+release/
+exports/
+artifacts/
+.refs/
+*.log
+.DS_Store
+Thumbs.db
