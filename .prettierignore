@@ -7,7 +7,5 @@ artifacts/
 coverage/
 test-results/
 playwright-report/
-/plan_mejoras_designme.md
-*.log
-.DS_Store
-Thumbs.db
+.claude/
+package-lock.json
