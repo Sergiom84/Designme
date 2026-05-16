@@ -1,4 +1,4 @@
-import type { Density, DesignTweaks } from '../../engine';
+import type { Density, DesignTweaks } from '../../engine/types';
 import type { DesignTheme } from './types';
 
 function densityGap(density: Density): string {

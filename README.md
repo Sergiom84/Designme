@@ -52,6 +52,15 @@ Baseline prompts and acceptance checks live under [`docs/quality/`](docs/quality
 4. Responsive app shell.
 5. Safer Electron IPC and preview boundaries.
 
+## Architecture Snapshot
+
+- `src/engine.ts` is a compatibility barrel.
+- `src/engine/brief.ts` turns prompts into a derived brief.
+- `src/engine/options.ts` owns artifact options, directions, and default tweaks.
+- `src/engine/render/` owns standalone HTML rendering by artifact type.
+- `src/engine/critique.ts` and `src/engine/handoff.ts` keep quality review and agent handoff separate from rendering.
+- `src/design-system/tokens/` owns themes, palettes, CSS variables, and contrast helpers.
+
 ## What It Borrows Conceptually
 
 - From Open CoDesign: local-first workflow, explicit sessions, live preview, real file exports, no forced cloud lock-in.
