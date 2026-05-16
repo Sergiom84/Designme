@@ -1,5 +1,6 @@
 import { Columns2, Copy, Download, Maximize2, Monitor, RotateCcw, Smartphone, Tablet } from 'lucide-react';
 import type { PreviewMode, PreviewZoom } from '../types/app';
+import { es } from '../i18n';
 
 interface CanvasToolbarProps {
   title: string;
@@ -35,7 +36,11 @@ export function CanvasToolbar({
   onExportBundle,
 }: CanvasToolbarProps) {
   const previewSizeLabel =
-    previewMode === 'desktop' ? 'Canvas desktop' : previewMode === 'tablet' ? 'Canvas tablet' : 'Canvas móvil';
+    previewMode === 'desktop'
+      ? es.toolbar.titleByMode.desktop
+      : previewMode === 'tablet'
+        ? es.toolbar.titleByMode.tablet
+        : es.toolbar.titleByMode.mobile;
 
   return (
     <header className="canvas-toolbar">
@@ -44,12 +49,12 @@ export function CanvasToolbar({
         <h1>{title}</h1>
         <p>{summary}</p>
       </div>
-      <div className="toolbar-actions" role="toolbar" aria-label="Controles de preview y exportación">
-        <div className="icon-segment" role="group" aria-label="Modo de preview">
+      <div className="toolbar-actions" role="toolbar" aria-label={es.toolbar.controlsLabel}>
+        <div className="icon-segment" role="group" aria-label={es.toolbar.previewModeLabel}>
           <button
             type="button"
             title="Desktop"
-            aria-label="Preview desktop"
+            aria-label={es.toolbar.previewDesktop}
             aria-pressed={previewMode === 'desktop'}
             className={previewMode === 'desktop' ? 'active' : ''}
             onClick={() => onPreviewModeChange('desktop')}
@@ -59,7 +64,7 @@ export function CanvasToolbar({
           <button
             type="button"
             title="Tablet"
-            aria-label="Preview tablet"
+            aria-label={es.toolbar.previewTablet}
             aria-pressed={previewMode === 'tablet'}
             className={previewMode === 'tablet' ? 'active' : ''}
             onClick={() => onPreviewModeChange('tablet')}
@@ -69,7 +74,7 @@ export function CanvasToolbar({
           <button
             type="button"
             title="Móvil"
-            aria-label="Preview móvil"
+            aria-label={es.toolbar.previewMobile}
             aria-pressed={previewMode === 'mobile'}
             className={previewMode === 'mobile' ? 'active' : ''}
             onClick={() => onPreviewModeChange('mobile')}
@@ -78,29 +83,29 @@ export function CanvasToolbar({
           </button>
         </div>
 
-        <div className="zoom-segment" role="group" aria-label="Zoom de preview">
+        <div className="zoom-segment" role="group" aria-label={es.toolbar.zoomLabel}>
           {(['fit', '50', '75', '100'] as PreviewZoom[]).map((zoom) => (
             <button
               key={zoom}
               type="button"
               className={previewZoom === zoom ? 'active' : ''}
               aria-pressed={previewZoom === zoom}
-              aria-label={zoom === 'fit' ? 'Ajustar preview al espacio disponible' : `Zoom ${zoom} por ciento`}
+              aria-label={zoom === 'fit' ? es.toolbar.zoomFitLabel : `Zoom ${zoom} por ciento`}
               onClick={() => onPreviewZoomChange(zoom)}
             >
-              {zoom === 'fit' ? 'Fit' : `${zoom}%`}
+              {zoom === 'fit' ? es.toolbar.zoomFit : `${zoom}%`}
             </button>
           ))}
         </div>
 
-        <button type="button" className="icon-button" title="Reset view" aria-label="Reset view" onClick={onResetView}>
+        <button type="button" className="icon-button" title={es.toolbar.resetView} aria-label={es.toolbar.resetView} onClick={onResetView}>
           <RotateCcw size={17} aria-hidden />
         </button>
         <button
           type="button"
           className="icon-button"
-          title={canvasOnly ? 'Mostrar paneles' : 'Solo canvas'}
-          aria-label={canvasOnly ? 'Mostrar paneles' : 'Solo canvas'}
+          title={canvasOnly ? es.toolbar.showPanels : es.toolbar.canvasOnly}
+          aria-label={canvasOnly ? es.toolbar.showPanels : es.toolbar.canvasOnly}
           aria-pressed={canvasOnly}
           onClick={onToggleCanvasOnly}
         >
@@ -109,20 +114,20 @@ export function CanvasToolbar({
         {hasCompare ? (
           <button type="button" className="command-button" onClick={onClearCompare}>
             <Columns2 size={17} aria-hidden />
-            <span>Salir compare</span>
+            <span>{es.toolbar.closeCompare}</span>
           </button>
         ) : null}
         <button type="button" className="command-button" onClick={onCopyHandoff}>
           <Copy size={17} aria-hidden />
-          <span>Copy handoff</span>
+          <span>{es.toolbar.copyHandoff}</span>
         </button>
         <button type="button" className="command-button primary" onClick={onExportHtml}>
           <Download size={17} aria-hidden />
-          <span>Export HTML</span>
+          <span>{es.toolbar.exportHtml}</span>
         </button>
         <button type="button" className="command-button" onClick={onExportBundle}>
           <Download size={17} aria-hidden />
-          <span>Export bundle</span>
+          <span>{es.toolbar.exportBundle}</span>
         </button>
       </div>
     </header>

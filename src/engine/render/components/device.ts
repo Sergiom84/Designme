@@ -45,7 +45,7 @@ export function renderPhoneFrame({
             .join('')}
         </div>
       </main>
-      <nav class="phone-nav" aria-label="Mobile sections">
+      <nav class="phone-nav" aria-label="Secciones móviles">
         ${navItems
           .slice(0, 4)
           .map((item, index) =>

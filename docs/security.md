@@ -1,47 +1,68 @@
-# Security
+# Seguridad
 
-Designme is local-first, but Electron still needs strict boundaries because the renderer can export files and access the clipboard through IPC.
+Designme es local-first, pero Electron mezcla navegador, sistema de archivos e IPC. La app mantiene una superficie pequeña y validada.
 
-## Electron Window
+## Ventana Electron
 
-- `contextIsolation: true`
-- `nodeIntegration: false`
-- `sandbox: true`
-- `webSecurity: true`
-- external navigation is blocked
-- `window.open` is denied
-- `<webview>` attachment is denied
+`electron/main.cjs` crea la ventana con:
+
+- `contextIsolation: true`;
+- `nodeIntegration: false`;
+- `sandbox: true`;
+- `webSecurity: true`;
+- navegación externa bloqueada;
+- `window.open` denegado;
+- `<webview>` denegado.
 
 ## CSP
 
-`electron/security.cjs` injects a Content Security Policy through `webRequest.onHeadersReceived`.
+`electron/security.cjs` inyecta Content Security Policy con `webRequest.onHeadersReceived`.
 
-- Production allows local app assets only.
-- Development allows Vite on `127.0.0.1:5173` and its websocket.
-- `object-src` is always `none`.
-- `base-uri` is restricted to `self`.
+- Producción permite solo assets locales de la app.
+- Desarrollo permite Vite en `127.0.0.1:5173` y su websocket.
+- `object-src` es siempre `none`.
+- `base-uri` queda restringido a `self`.
 
 ## IPC
 
-The renderer only receives four methods:
+El preload expone una API mínima:
 
-- `exportHtml`
-- `exportBundle`
-- `openExports`
-- `copyText`
+- `exportHtml`;
+- `exportBundle`;
+- `openExports`;
+- `copyText`.
 
-Payloads are validated in both `preload.cjs` and `electron/validators.cjs`. IPC handlers also reject senders whose frame URL is not the trusted app URL.
+Los payloads se validan en `electron/preload.cjs` y `electron/validators.cjs`. Los handlers en `electron/ipc.cjs` también rechazan emisores cuyo frame URL no sea de confianza.
 
 ## Preview Iframe
 
-The generated preview iframe uses:
+La app muestra el prototipo en:
 
 ```tsx
 sandbox="allow-scripts"
 ```
 
-Scripts are required for the standalone tweak dock and prototype state toggles. The iframe intentionally does not allow same-origin, forms, popups, downloads, modals, pointer lock, or top navigation. Generated prototype storage uses guarded access so sandboxed previews do not crash when `localStorage` is unavailable.
+Los scripts son necesarios para el dock standalone y los toggles de estado. El iframe no permite same-origin, formularios, popups, descargas, modales, pointer lock ni top navigation.
 
-## Exports
+## Exportaciones
 
-Desktop exports never accept arbitrary output paths from the renderer. File and bundle names are sanitized, paths are resolved inside the configured export directory, and bundle exports only write the expected file list.
+- El renderer no envía rutas de salida.
+- Los nombres se sanitizan.
+- Las rutas se resuelven dentro del directorio seguro de exports.
+- El paquete solo puede escribir la lista esperada de archivos.
+
+## Referencias E IA
+
+- Las referencias de fase 13 se guardan como texto/metadata en localStorage.
+- No se almacenan imágenes grandes, blobs ni base64.
+- La mejora de brief activa por defecto es local y determinista.
+- No hay llamadas externas ni API keys obligatorias.
+- Cualquier proveedor remoto futuro debe ser opt-in y enseñar el payload antes de enviarlo.
+
+## Auditoría
+
+```bash
+npm run security:audit
+```
+
+El audit se ejecuta con `--omit=dev`, porque las herramientas de test/build no forman parte del runtime de producción.

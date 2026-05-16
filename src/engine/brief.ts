@@ -26,7 +26,7 @@ function extractName(prompt: string, type: ArtifactType): string {
   );
   if (named?.[1]) {
     const cleaned = named[1].split(/[,.!?;:]/)[0];
-    if (!/^(apps?|software|webs?|sitio|producto|herramienta|dashboard|panel)\b/i.test(cleaned)) {
+    if (!/^(apps?|software|webs?|sitio|producto|herramienta|dashboard|panel|ver|presentar|explicar|mostrar|convertir|crear)\b/i.test(cleaned)) {
       return titleCase(cleaned);
     }
   }

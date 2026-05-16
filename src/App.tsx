@@ -6,18 +6,26 @@ import { DirectionInspector } from './components/DirectionInspector';
 import { HandoffInspector } from './components/HandoffInspector';
 import { InspectorPanel } from './components/InspectorPanel';
 import { LeftPanel } from './components/LeftPanel';
+import { ReferenceInspector } from './components/ReferenceInspector';
 import { TweakControls } from './components/TweakControls';
+import { enhancePrompt } from './ai';
 import {
   buildDesignProject,
   defaultTweaks,
   type ArtifactType,
   type DesignTweaks,
   type DirectionId,
-} from './engine';
+} from './engine/index';
 import { buildExportBundle } from './export';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useLocalStorageState } from './hooks/useLocalStorageState';
 import { usePreviewZoom } from './hooks/usePreviewZoom';
+import {
+  analyzeReferenceNotes,
+  emptyReferenceState,
+  parseReferenceState,
+  type StoredReferenceState,
+} from './references';
 import type { PreviewMode, SideTab, VersionSnapshot } from './types/app';
 
 const initialPrompt =
@@ -80,13 +88,23 @@ export default function App() {
   const [versions, setVersions] = useLocalStorageState<VersionSnapshot[]>('designme.versions', [], {
     deserialize: parseVersions,
   });
+  const [referenceState, setReferenceState] = useLocalStorageState<StoredReferenceState>(
+    'designme.references',
+    emptyReferenceState,
+    {
+      deserialize: parseReferenceState,
+    },
+  );
   const [previewMode, setPreviewMode] = useState<PreviewMode>('desktop');
   const [sideTab, setSideTab] = useState<SideTab>('directions');
   const [status, setStatus] = useState('Listo');
   const [exportPath, setExportPath] = useState('');
   const [canvasOnly, setCanvasOnly] = useState(false);
   const [compareVersionId, setCompareVersionId] = useState('');
+  const [aiUsed, setAiUsed] = useState(false);
   const { previewZoom, setPreviewZoom, zoomScale, resetPreviewZoom } = usePreviewZoom();
+
+  const referenceAnalysis = useMemo(() => analyzeReferenceNotes(referenceState.notes), [referenceState.notes]);
 
   const output = useMemo(
     () => buildDesignProject({ prompt, artifactType, directionId, tweaks }),
@@ -109,6 +127,33 @@ export default function App() {
 
   function patchTweaks(patch: Partial<DesignTweaks>) {
     setTweaks((current) => ({ ...current, ...patch }));
+  }
+
+  function changeReferenceNotes(notes: string) {
+    setReferenceState((current) => ({ ...current, notes }));
+  }
+
+  function applyReferencePreferences() {
+    if (referenceAnalysis.preferences.directionId) {
+      setDirectionId(referenceAnalysis.preferences.directionId);
+    }
+    if (Object.keys(referenceAnalysis.preferences.tweaksPatch).length > 0) {
+      patchTweaks(referenceAnalysis.preferences.tweaksPatch);
+    }
+    setReferenceState((current) => ({ ...current, lastAppliedAt: new Date().toISOString() }));
+    setStatus('Preferencias de referencia aplicadas');
+  }
+
+  async function enhancePromptWithReferences() {
+    const result = await enhancePrompt({ prompt, referenceAnalysis });
+    if (result.applied.length === 0) {
+      setStatus(result.disclosure);
+      return;
+    }
+    setPrompt(result.prompt);
+    setAiUsed(true);
+    setReferenceState((current) => ({ ...current, lastAppliedAt: new Date().toISOString() }));
+    setStatus('Brief mejorado localmente con referencias');
   }
 
   function saveVersion() {
@@ -167,15 +212,15 @@ export default function App() {
 
   async function copyCritique() {
     const lines = [
-      `Quality score: ${output.critique.total}/10`,
+      `Puntuación de calidad: ${output.critique.total}/10`,
       '',
-      'Scores:',
+      'Puntuaciones:',
       ...output.critique.scores.map((score) => `- ${score.label}: ${score.value}/10`),
       '',
-      'Issues:',
+      'Incidencias:',
       ...output.critique.issues.map((issue) => `- [${issue.severity}] ${issue.title}: ${issue.suggestedFix}`),
       '',
-      'Fix:',
+      'Corregir:',
       ...output.critique.fix.map((item) => `- ${item}`),
     ];
     const copied = await writeClipboard(lines.join('\n'));
@@ -216,6 +261,12 @@ export default function App() {
           artifactType,
           directionId,
           tweaks,
+          references: referenceAnalysis,
+          ai: {
+            providerId: 'local',
+            used: aiUsed,
+            localOnly: true,
+          },
         },
       });
 
@@ -225,7 +276,7 @@ export default function App() {
           files: bundle.files,
         });
         setExportPath(result.filePath);
-        setStatus('Bundle exportado');
+        setStatus('Paquete exportado');
         return;
       }
 
@@ -236,16 +287,16 @@ export default function App() {
       link.download = `${bundle.name}-bundle.json`;
       link.click();
       URL.revokeObjectURL(url);
-      setStatus('Bundle descargado como JSON');
+      setStatus('Paquete descargado como JSON');
     } catch (error) {
-      setStatus(`No se pudo exportar bundle: ${errorMessage(error)}`);
+      setStatus(`No se pudo exportar el paquete: ${errorMessage(error)}`);
     }
   }
 
   async function openExports() {
     try {
       if (!window.designme) {
-        setStatus('La carpeta de exports está disponible en modo escritorio');
+        setStatus('La carpeta de exportaciones está disponible en modo escritorio');
         return;
       }
       const result = await window.designme.openExports();
@@ -275,6 +326,14 @@ export default function App() {
       <DirectionInspector output={output} directionId={directionId} onDirectionChange={setDirectionId} />
     ) : sideTab === 'tweaks' ? (
       <TweakControls tweaks={tweaks} onPatch={patchTweaks} onReset={setTweaks} />
+    ) : sideTab === 'references' ? (
+      <ReferenceInspector
+        referenceState={referenceState}
+        analysis={referenceAnalysis}
+        onNotesChange={changeReferenceNotes}
+        onApplyPreferences={applyReferencePreferences}
+        onEnhancePrompt={() => void enhancePromptWithReferences()}
+      />
     ) : sideTab === 'critique' ? (
       <CritiqueInspector critique={output.critique} onCopyCritique={copyCritique} />
     ) : (

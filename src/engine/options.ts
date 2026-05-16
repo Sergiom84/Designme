@@ -1,12 +1,12 @@
 import type { ArtifactOption, DesignDirection, DesignTweaks, DirectionId } from './types';
 
 export const artifactOptions: ArtifactOption[] = [
-  { id: 'software', label: 'Software', hint: 'B2B, SaaS, CRM, ops tools' },
-  { id: 'web', label: 'Web', hint: 'Homepage, docs, product page' },
-  { id: 'dashboard', label: 'Dashboard', hint: 'Metrics, pipelines, monitoring' },
-  { id: 'mobile', label: 'App', hint: 'iOS or Android prototype' },
-  { id: 'deck', label: 'Slides', hint: 'Pitch, keynote, sales deck' },
-  { id: 'infographic', label: 'Info', hint: 'Explainer, report, visual data' },
+  { id: 'software', label: 'Software', hint: 'B2B, SaaS, CRM, herramientas ops' },
+  { id: 'web', label: 'Web', hint: 'Home, docs, página de producto' },
+  { id: 'dashboard', label: 'Dashboard', hint: 'Métricas, pipelines, monitorización' },
+  { id: 'mobile', label: 'App', hint: 'Prototipo iOS o Android' },
+  { id: 'deck', label: 'Slides', hint: 'Pitch, keynote, deck comercial' },
+  { id: 'infographic', label: 'Info', hint: 'Explicador, informe, datos visuales' },
 ];
 
 export const designDirections: DesignDirection[] = [

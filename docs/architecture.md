@@ -1,22 +1,49 @@
-# Architecture
+# Arquitectura
 
-Designme is a local-first design studio built around a deterministic generator. The generator is intentionally split into stages so quality can improve without requiring a model API.
+Designme Studio es una herramienta local-first construida alrededor de un generador determinista. La app no necesita un modelo externo para producir un primer prototipo: parsea el brief, resuelve intención UX, renderiza HTML autónomo, analiza calidad y prepara un handoff para continuar en otro agente.
 
-## Flow
+## Flujo Principal
 
-1. `src/engine/brief.ts` normalizes the raw prompt into a `DerivedBrief`.
-2. `src/engine/intent/intentResolver.ts` detects domain, UX goal, states, risks, and required modules.
-3. `src/engine/index.ts` applies the intent back into the brief, then builds HTML, critique, and handoff output.
-4. `src/engine/render/components/` provides reusable HTML string components for buttons, cards, navigation, lists, charts, states, and device frames.
-5. `src/engine/render/styles/` provides shared generated CSS plus artifact-specific layout CSS.
-6. `src/engine/render/` renders the standalone HTML artifact by artifact type.
-7. `src/quality/` analyzes the generated HTML for accessibility, contrast, hierarchy, layout, copy, interaction, and export issues.
-8. `src/export/` turns the output into standalone HTML or a structured bundle.
-9. `src/design-system/tokens/` provides palettes, themes, CSS variables, and contrast helpers.
-10. `src/components/`, `src/hooks/`, and `src/styles/` compose the responsive app shell, preview controls, inspector and local persistence.
-11. The React app previews the generated HTML inside a sandboxed iframe and exposes export/handoff controls.
+1. `src/App.tsx` mantiene prompt, artefacto, dirección visual, ajustes, versiones y estado de exportación.
+2. `src/engine/brief.ts` normaliza el prompt y deriva nombre, audiencia, objetivo, secciones y features.
+3. `src/engine/intent/intentResolver.ts` detecta dominio, objetivo UX, estados, riesgos y módulos requeridos.
+4. `src/engine/index.ts` enriquece el brief, construye HTML, crítica y handoff.
+5. `src/engine/render/` elige el renderizador por tipo de artefacto.
+6. `src/engine/render/components/` aporta botones, cards, navegación, listas, charts, estados y marcos de dispositivo.
+7. `src/engine/render/styles/` concentra CSS generado común y layouts por artefacto.
+8. `src/quality/` analiza accesibilidad, contraste, jerarquía, layout, copy, interacción y exportación.
+9. `src/export/` crea HTML standalone o paquete estructurado.
+10. `electron/` valida IPC, rutas y seguridad para exportar desde escritorio.
 
-## Current Intent Domains
+## Módulos Clave
+
+```txt
+src/
+  components/          Shell React: brief, canvas, inspector, status.
+  design-system/       Tokens, temas, paletas y contraste.
+  engine/              Brief, intención, render, crítica y handoff.
+  export/              HTML standalone, bundle y manifest.
+  hooks/               Estado local, shortcuts y zoom.
+  references/          Referencias locales convertidas en preferencias.
+  ai/                  Proveedores opcionales de mejora de prompt.
+  quality/             Reglas deterministas de análisis.
+  styles/              CSS de app por responsabilidad.
+tests/
+  unit/                Motor, brief, contraste y manifest.
+  e2e/                 Flujo principal, export web y Axe.
+electron/              Ventana, seguridad, IPC, rutas y export bundle.
+```
+
+## Tipos De Artefacto
+
+- `software`
+- `web`
+- `dashboard`
+- `mobile`
+- `deck`
+- `infographic`
+
+## Dominios De Intención
 
 - CRM / ventas
 - Finanzas
@@ -26,28 +53,71 @@ Designme is a local-first design studio built around a deterministic generator. 
 - Diseño
 - Operaciones
 - Productividad
-- General fallback
+- General
 
-## Boundaries
+## Contratos
 
-- No mandatory external API.
-- No cloud workspace assumption.
-- Generated HTML remains standalone.
-- Electron IPC accepts only narrow, validated payloads from trusted app frames.
-- Preview iframes allow scripts only, without same-origin, forms, popups or top navigation.
+- No hay API externa obligatoria.
+- El HTML generado debe seguir siendo autónomo.
+- El handoff debe contener brief, intención, dirección, ajustes y módulos.
+- El preview vive en un iframe sandboxed con scripts, sin same-origin.
+- Electron no acepta rutas arbitrarias desde el renderer.
+- Los tests de fase 10 protegen motor, exportación, flujo principal y accesibilidad básica.
 
-## Quality Pass
+## Electron
 
-The quality pass is deterministic and local. It emits categorized issues with severity, suggested fixes, score buckets, keep notes, fix notes, and quick wins. The app shows those results in the Crítica tab, and the handoff remains available for deeper follow-up in Codex or Claude.
+La app de escritorio vive en `electron/`:
 
-## Responsive Shell
+- `main.cjs`: crea la ventana y decide dev/prod.
+- `security.cjs`: CSP, navegación permitida, bloqueo de `window.open` y `webview`.
+- `preload.cjs`: expone una API mínima en `window.designme`.
+- `ipc.cjs`: registra handlers para exportar, abrir exports y copiar texto.
+- `validators.cjs`: valida payloads de IPC.
+- `paths.cjs`: resuelve directorios seguros y nombres saneados.
+- `exportBundle.cjs`: escribe el paquete estructurado.
 
-The shell is split into brief, preview and inspector components. CSS lives under `src/styles/` by responsibility. Large screens keep three columns, laptop widths move the inspector below the main row, and mobile stacks panels without global horizontal scrolling.
+El renderer no recibe acceso directo a Node ni rutas arbitrarias.
 
-## Accessibility
+## App Shell
 
-The app favors native controls first. Inspector tabs implement keyboard navigation, grouped controls expose selected state, live status feedback is polite, meters are labelled, and icon-only buttons carry explicit accessible names.
+La interfaz React tiene tres zonas:
 
-## Export
+- `LeftPanel`: brief, presets, artefactos y versiones.
+- `CenterPanel`: toolbar, preview, comparación y status.
+- `InspectorPanel`: direcciones, ajustes, referencias, crítica y handoff.
 
-Desktop exports are handled through validated Electron IPC. Single-file HTML remains available, and the bundle writer creates a folder with browser-ready `index.html`, extracted assets, `designme.json`, `handoff.md`, and a short README.
+Los datos persistentes usan localStorage mediante hooks tipados. El preview usa `iframe srcDoc` con `sandbox="allow-scripts"`.
+
+## Referencias E IA Opcional
+
+La fase 13 añade una capa previa al motor, no un reemplazo del motor:
+
+1. El usuario escribe notas de referencia en la pestaña `Referencias`.
+2. `src/references/styleReference.ts` detecta señales como editorial, sistemas, cinético, contraste, calma o radios suaves.
+3. Esas señales se convierten en `directionId`, `tweaksPatch`, hints de prompt, notas visuales y riesgos.
+4. El usuario aplica estilo o mejora el brief de forma explícita.
+5. `src/ai/providers/local.ts` mejora el brief con una función determinista local.
+
+No hay proveedor externo activo por defecto. Si en el futuro se añade un proveedor remoto, debe ser opt-in y mostrar qué payload se envía.
+
+## Tests Y CI
+
+- Unit tests: `tests/unit/` con Vitest y jsdom.
+- E2E: `tests/e2e/` con Playwright.
+- Accesibilidad: Axe sobre la shell, excluyendo el iframe generado.
+- CI: `.github/workflows/ci.yml` instala dependencias, Chromium, corre `npm run check` y `npm run e2e`.
+
+## Límites Actuales
+
+- La generación es determinista: no intenta competir con un modelo generativo completo.
+- La crítica es heurística local: útil para regresiones y avisos, no reemplaza una revisión humana.
+- La internacionalización es un diccionario tipado simple en `src/i18n/`, no una librería i18n completa.
+- Las referencias son notas/metadatos. No se guardan imágenes grandes ni blobs en localStorage.
+
+## Dónde Cambiar Cada Cosa
+
+- Nuevo tipo de artefacto: `src/engine/types.ts`, `src/engine/options.ts`, `src/engine/render/`, tests unitarios.
+- Nuevo dominio: `src/engine/intent/domainRules.ts`, `modulePlanner.ts`, tests de intent/engine.
+- Nueva métrica de calidad: `src/quality/`, `src/quality/scoring.ts`, tests unitarios.
+- Nuevo formato de export: `src/export/`, `electron/exportBundle.cjs`, `electron/validators.cjs`.
+- Cambio visual de app: `src/components/`, `src/styles/`, `src/i18n/`.

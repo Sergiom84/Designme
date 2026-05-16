@@ -1,7 +1,7 @@
 import { CanvasToolbar } from './CanvasToolbar';
 import { PreviewStage } from './PreviewStage';
 import { StatusRow } from './StatusRow';
-import type { DesignOutput } from '../engine';
+import type { DesignOutput } from '../engine/index';
 import type { PreviewMode, PreviewZoom } from '../types/app';
 
 interface CenterPanelProps {

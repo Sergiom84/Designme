@@ -21,7 +21,7 @@ export function buildDesignProject(input: BuildInput): DesignOutput {
   return {
     name: enrichedBrief.name,
     exportName: slugify(`${enrichedBrief.name}-${input.artifactType}`),
-    briefSummary: `${enrichedBrief.objective} for ${enrichedBrief.audience}.`,
+    briefSummary: `${enrichedBrief.objective} para ${enrichedBrief.audience}.`,
     brief: {
       rawPrompt: enrichedBrief.rawPrompt,
       topic: enrichedBrief.topic,

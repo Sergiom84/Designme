@@ -8,6 +8,11 @@ const genericPhrases = [
   'brief coverage',
   'items to resolve',
   'Generated product preview',
+  'Ver sistema',
+  'Siguientes acciones',
+  'cobertura del brief',
+  'temas por resolver',
+  'Vista previa del producto generado',
 ];
 
 const weakActions = ['view', 'open', 'see', 'check', 'explore', 'ver', 'abrir', 'revisar'];
@@ -33,9 +38,9 @@ export function analyzeCopy(context: QualityContext): QualityIssue[] {
       issue(
         'copy-generic-phrases',
         'warning',
-        'Some copy is still generic',
-        `Found generic phrase(s): ${foundGeneric.join(', ')}.`,
-        'Replace generic labels with vocabulary from the product domain and user task.',
+        'Parte del copy sigue siendo genérico',
+        `Se encontraron frases genéricas: ${foundGeneric.join(', ')}.`,
+        'Sustituye esos textos por vocabulario del dominio y de la tarea del usuario.',
       ),
     );
   }
@@ -46,9 +51,9 @@ export function analyzeCopy(context: QualityContext): QualityIssue[] {
       issue(
         'copy-weak-primary-action',
         'info',
-        'Primary action can be more decisive',
-        `"${intent.primaryAction}" starts with a low-intent verb.`,
-        'Use a verb that commits the user to a concrete outcome.',
+        'La acción primaria puede ser más decidida',
+        `"${intent.primaryAction}" empieza con un verbo de baja intención.`,
+        'Usa un verbo que comprometa al usuario con un resultado concreto.',
         '.primary-action',
       ),
     );
@@ -59,9 +64,9 @@ export function analyzeCopy(context: QualityContext): QualityIssue[] {
       issue(
         'copy-name-specificity',
         'info',
-        'Product name is not specific yet',
-        `"${brief.name}" works for exploration but will feel generic in a handoff.`,
-        'Rename the concept with a domain-specific product name before shipping.',
+        'El nombre del producto aún no es específico',
+        `"${brief.name}" sirve para explorar, pero sonará genérico en un handoff.`,
+        'Renombra el concepto con un nombre más propio del dominio antes de entregarlo.',
       ),
     );
   }
@@ -71,9 +76,9 @@ export function analyzeCopy(context: QualityContext): QualityIssue[] {
       issue(
         'copy-primary-action-missing',
         'error',
-        'Primary action is missing from the artifact',
-        `The planned action "${intent.primaryAction}" is not visible in the generated HTML.`,
-        'Render the planned primary action in the hero, toolbar, or main task module.',
+        'La acción primaria no aparece en el artefacto',
+        `La acción planificada "${intent.primaryAction}" no es visible en el HTML generado.`,
+        'Muestra la acción primaria en el hero, la barra de acciones o el módulo principal.',
       ),
     );
   }

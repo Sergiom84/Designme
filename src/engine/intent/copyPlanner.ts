@@ -25,7 +25,7 @@ export function secondaryActionFor(domain: Domain): string {
     education: 'Ver progreso',
     marketing: 'Ver prueba',
     design: 'Abrir crítica',
-    operations: 'Filtrar owners',
+    operations: 'Filtrar responsables',
     productivity: 'Ajustar rutina',
     generic: 'Ver detalles',
   };

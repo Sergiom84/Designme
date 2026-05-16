@@ -1,5 +1,6 @@
 import { RotateCcw, SlidersHorizontal } from 'lucide-react';
-import { defaultTweaks, type Density, type DesignTweaks, type Motion, type Tone } from '../engine';
+import { defaultTweaks, type Density, type DesignTweaks, type Motion, type Tone } from '../engine/index';
+import { es } from '../i18n';
 
 interface TweakControlsProps {
   tweaks: DesignTweaks;
@@ -13,32 +14,32 @@ export function TweakControls({ tweaks, onPatch, onReset }: TweakControlsProps) 
       <div className="section-heading">
         <SlidersHorizontal size={18} aria-hidden />
         <div>
-          <strong>Tweak surface</strong>
-          <span>Controles pequeños, decisiones reales.</span>
+          <strong>{es.inspector.tweaks.title}</strong>
+          <span>{es.inspector.tweaks.subtitle}</span>
         </div>
       </div>
 
       <TweakSegment<Density>
-        label="Density"
+        label={es.inspector.tweaks.density}
         value={tweaks.density}
         options={['calm', 'balanced', 'dense']}
         onChange={(density) => onPatch({ density })}
       />
       <TweakSegment<Tone>
-        label="Tone"
+        label={es.inspector.tweaks.tone}
         value={tweaks.tone}
         options={['light', 'contrast', 'ink']}
         onChange={(tone) => onPatch({ tone })}
       />
       <TweakSegment<Motion>
-        label="Motion"
+        label={es.inspector.tweaks.motion}
         value={tweaks.motion}
         options={['still', 'measured', 'expressive']}
         onChange={(motion) => onPatch({ motion })}
       />
 
       <label className="range-control">
-        <span id="radius-label">Radius {tweaks.radius}px</span>
+        <span id="radius-label">{es.inspector.tweaks.radius} {tweaks.radius}px</span>
         <input
           type="range"
           min="0"
@@ -56,12 +57,12 @@ export function TweakControls({ tweaks, onPatch, onReset }: TweakControlsProps) 
           checked={tweaks.showDevice}
           onChange={(event) => onPatch({ showDevice: event.target.checked })}
         />
-        <span>Show device frame for mobile prototypes</span>
+        <span>{es.inspector.tweaks.showDevice}</span>
       </label>
 
       <button type="button" className="command-button" onClick={() => onReset(defaultTweaks)}>
         <RotateCcw size={17} aria-hidden />
-        <span>Reset tweaks</span>
+        <span>{es.inspector.tweaks.reset}</span>
       </button>
     </section>
   );
@@ -75,6 +76,8 @@ interface TweakSegmentProps<T extends string> {
 }
 
 function TweakSegment<T extends string>({ label, value, options, onChange }: TweakSegmentProps<T>) {
+  const labels = es.inspector.tweaks.options as Record<string, string>;
+
   return (
     <div className="tweak-group">
       <span id={`tweak-${label.toLowerCase()}-label`}>{label}</span>
@@ -87,7 +90,7 @@ function TweakSegment<T extends string>({ label, value, options, onChange }: Twe
             aria-pressed={value === option}
             onClick={() => onChange(option)}
           >
-            {option}
+            {labels[option] ?? option}
           </button>
         ))}
       </div>

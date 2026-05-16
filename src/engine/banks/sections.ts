@@ -1,10 +1,10 @@
 import type { ArtifactType } from '../types';
 
 export const sectionBank: Record<ArtifactType, string[]> = {
-  software: ['Command center', 'Work queue', 'Insight panel', 'Action drawer', 'Audit trail'],
-  web: ['First viewport', 'Product proof', 'Use cases', 'Workflow', 'Conversion rail'],
-  dashboard: ['Overview', 'Signal board', 'Pipeline', 'Alerts', 'Decision log'],
-  mobile: ['Home', 'Capture', 'Detail', 'Progress', 'Settings'],
-  deck: ['Opening claim', 'Market tension', 'Solution', 'Proof', 'Next step'],
-  infographic: ['Core thesis', 'Data spine', 'Comparison', 'Implications', 'Action box'],
+  software: ['Centro de mando', 'Cola de trabajo', 'Panel de señales', 'Cajón de acciones', 'Trazabilidad'],
+  web: ['Primer pantallazo', 'Prueba de producto', 'Casos de uso', 'Flujo', 'Carril de conversión'],
+  dashboard: ['Resumen', 'Panel de señales', 'Pipeline', 'Alertas', 'Registro de decisiones'],
+  mobile: ['Inicio', 'Captura', 'Detalle', 'Progreso', 'Ajustes'],
+  deck: ['Apertura', 'Tensión de mercado', 'Solución', 'Prueba', 'Siguiente paso'],
+  infographic: ['Tesis central', 'Eje de datos', 'Comparativa', 'Implicaciones', 'Caja de acción'],
 };

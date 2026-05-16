@@ -22,7 +22,7 @@ const domainModules: Record<Domain, ModuleRequirement[]> = {
       blockedDeals: 'number',
     }),
     moduleRequirement('blocked-deals', 'Deals bloqueados', 'Priorizar oportunidades que necesitan intervención.', 1, ['default', 'empty', 'review'], {
-      owner: 'string',
+      responsable: 'string',
       daysIdle: 'number',
       nextAction: 'string',
     }),
@@ -98,7 +98,7 @@ function goalModule(goal: UserGoal): ModuleRequirement {
     convert: moduleRequirement('conversion-cta', 'CTA de conversión', 'Cerrar con una acción clara y medible.', 1, ['default', 'success']),
     monitor: moduleRequirement('monitoring-loop', 'Loop de monitorización', 'Pasar de señal a decisión y seguimiento.', 1),
     explain: moduleRequirement('explanation-ladder', 'Escalera explicativa', 'Ir de concepto simple a implicación accionable.', 1),
-    coordinate: moduleRequirement('ownership-lanes', 'Líneas de responsabilidad', 'Unir tarea, owner, estado y deadline.', 1),
+    coordinate: moduleRequirement('ownership-lanes', 'Líneas de responsabilidad', 'Unir tarea, responsable, estado y fecha límite.', 1),
     decide: moduleRequirement('decision-support', 'Soporte de decisión', 'Comparar opciones, riesgo y recomendación.', 1, ['default', 'review']),
     learn: moduleRequirement('learning-feedback', 'Feedback de aprendizaje', 'Mostrar avance y siguiente práctica.', 2),
     prototype: moduleRequirement('prototype-flow', 'Flujo prototipable', 'Hacer visibles estados y navegación principal.', 1),

@@ -1,6 +1,6 @@
 .tab-row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--app-border-soft);
@@ -255,4 +255,57 @@ meter {
 
 .handoff-actions {
   grid-template-columns: 1fr 1fr;
+}
+
+.reference-section textarea {
+  min-height: 170px;
+  resize: vertical;
+}
+
+.reference-field {
+  display: grid;
+  gap: 8px;
+}
+
+.reference-summary {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface-muted);
+}
+
+.reference-summary span,
+.reference-notes-list {
+  color: var(--app-text-muted);
+  line-height: 1.4;
+}
+
+.reference-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.reference-tags span {
+  padding: 5px 8px;
+  border: 1px solid var(--app-border);
+  border-radius: 999px;
+  background: var(--app-accent-soft);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.reference-notes-list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.reference-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }

@@ -19,7 +19,7 @@ export function buildHtml(
   const dataScheme = tweaks.tone === 'light' ? 'light' : 'contrast';
 
   return `<!doctype html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -37,9 +37,9 @@ ${renderArtifactCss()}
 </head>
 <body data-density="${tweaks.density}" data-scheme="${dataScheme}" data-ux-domain="${intent.domain}" data-ux-goal="${intent.goal}">
   ${artifact}
-  <div class="tweak-dock" aria-label="Standalone tweaks">
-    <button type="button" data-density-toggle title="Density">D</button>
-    <button type="button" data-scheme-toggle title="Scheme">S</button>
+  <div class="tweak-dock" aria-label="Ajustes autónomos">
+    <button type="button" data-density-toggle title="Densidad">D</button>
+    <button type="button" data-scheme-toggle title="Modo">M</button>
   </div>
   <script>
     const designmeStorage = {

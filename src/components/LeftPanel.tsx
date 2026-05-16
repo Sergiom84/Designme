@@ -1,6 +1,7 @@
 import { AppWindow, ChartPie, Globe2, LayoutDashboard, Presentation, Save, Smartphone, Sparkles, Wand2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { artifactOptions, type ArtifactType } from '../engine';
+import { artifactOptions, type ArtifactType } from '../engine/index';
+import { es } from '../i18n';
 import type { VersionSnapshot } from '../types/app';
 import { classNames } from '../utils/classNames';
 import { formatTime } from '../utils/format';
@@ -47,7 +48,7 @@ export function LeftPanel({
         </div>
         <div>
           <strong>Designme Studio</strong>
-          <span>Local-first design agent</span>
+          <span>{es.app.brandSubtitle}</span>
         </div>
       </header>
 

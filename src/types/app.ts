@@ -1,9 +1,9 @@
 import type { LucideIcon } from 'lucide-react';
-import type { ArtifactType, DesignTweaks, DirectionId } from '../engine';
+import type { ArtifactType, DesignTweaks, DirectionId } from '../engine/index';
 
 export type PreviewMode = 'desktop' | 'tablet' | 'mobile';
 export type PreviewZoom = 'fit' | '50' | '75' | '100';
-export type SideTab = 'directions' | 'tweaks' | 'critique' | 'handoff';
+export type SideTab = 'directions' | 'tweaks' | 'references' | 'critique' | 'handoff';
 
 export interface VersionSnapshot {
   id: string;

@@ -15,6 +15,7 @@ export function PreviewStage({ previewMode, html, compareHtml, compareName, zoom
     <section
       className={classNames('preview-stage', `mode-${previewMode}`, compareHtml && 'is-comparing')}
       aria-label="Vista previa"
+      tabIndex={0}
       style={{ '--preview-scale': String(zoomScale) } as CSSProperties}
     >
       <PreviewFrame title="Vista previa del diseño" html={html} />

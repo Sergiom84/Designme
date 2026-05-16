@@ -6,6 +6,26 @@ export function renderArtifactCss(): string {
       gap: var(--gap);
       color: var(--ink);
     }
+    .variation-lane-board {
+      --gap: clamp(16px, 2vw, 24px);
+    }
+    .variation-narrative-stack .hero-strip,
+    .variation-narrative-stack .web-hero,
+    .variation-narrative-stack .slide-stage {
+      align-content: start;
+    }
+    .variation-command-center .metric-grid {
+      order: -1;
+    }
+    .variation-lane-board .split-grid,
+    .variation-lane-board .analytics-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .variation-narrative-stack .split-grid,
+    .variation-narrative-stack .analytics-grid,
+    .variation-narrative-stack .web-hero {
+      grid-template-columns: minmax(0, 1fr);
+    }
     .software-shell { grid-template-columns: 220px minmax(0, 1fr); }
     .dashboard-shell, .web-shell, .infographic-shell { grid-template-columns: 1fr; }
     .mobile-shell { grid-template-columns: minmax(320px, 430px) minmax(260px, 1fr); align-items: center; justify-content: center; }

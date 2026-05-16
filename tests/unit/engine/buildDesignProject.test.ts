@@ -7,7 +7,7 @@ import {
   type ArtifactType,
   type BuildInput,
   type DirectionId,
-} from '../../../src/engine';
+} from '../../../src/engine/index';
 import { escapeHtml, slugify } from '../../../src/engine/utils';
 
 const crmPrompt = 'Dashboard para un CRM de ventas B2B con pipeline, riesgos, deals bloqueados y siguientes acciones.';
