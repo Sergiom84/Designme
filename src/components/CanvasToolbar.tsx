@@ -15,6 +15,7 @@ interface CanvasToolbarProps {
   onResetView(): void;
   onCopyHandoff(): void;
   onExportHtml(): void;
+  onExportBundle(): void;
 }
 
 export function CanvasToolbar({
@@ -31,6 +32,7 @@ export function CanvasToolbar({
   onResetView,
   onCopyHandoff,
   onExportHtml,
+  onExportBundle,
 }: CanvasToolbarProps) {
   const previewSizeLabel =
     previewMode === 'desktop' ? 'Canvas desktop' : previewMode === 'tablet' ? 'Canvas tablet' : 'Canvas móvil';
@@ -116,6 +118,10 @@ export function CanvasToolbar({
         <button type="button" className="command-button primary" onClick={onExportHtml}>
           <Download size={17} aria-hidden />
           <span>Export HTML</span>
+        </button>
+        <button type="button" className="command-button" onClick={onExportBundle}>
+          <Download size={17} aria-hidden />
+          <span>Export bundle</span>
         </button>
       </div>
     </header>

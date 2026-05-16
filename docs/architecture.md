@@ -11,9 +11,10 @@ Designme is a local-first design studio built around a deterministic generator. 
 5. `src/engine/render/styles/` provides shared generated CSS plus artifact-specific layout CSS.
 6. `src/engine/render/` renders the standalone HTML artifact by artifact type.
 7. `src/quality/` analyzes the generated HTML for accessibility, contrast, hierarchy, layout, copy, interaction, and export issues.
-8. `src/design-system/tokens/` provides palettes, themes, CSS variables, and contrast helpers.
-9. `src/components/`, `src/hooks/`, and `src/styles/` compose the responsive app shell, preview controls, inspector and local persistence.
-10. The React app previews the generated HTML inside a sandboxed iframe and exposes export/handoff controls.
+8. `src/export/` turns the output into standalone HTML or a structured bundle.
+9. `src/design-system/tokens/` provides palettes, themes, CSS variables, and contrast helpers.
+10. `src/components/`, `src/hooks/`, and `src/styles/` compose the responsive app shell, preview controls, inspector and local persistence.
+11. The React app previews the generated HTML inside a sandboxed iframe and exposes export/handoff controls.
 
 ## Current Intent Domains
 
@@ -41,3 +42,7 @@ The quality pass is deterministic and local. It emits categorized issues with se
 ## Responsive Shell
 
 The shell is split into brief, preview and inspector components. CSS lives under `src/styles/` by responsibility. Large screens keep three columns, laptop widths move the inspector below the main row, and mobile stacks panels without global horizontal scrolling.
+
+## Export
+
+Desktop exports are handled through validated Electron IPC. Single-file HTML remains available, and the bundle writer creates a folder with browser-ready `index.html`, extracted assets, `designme.json`, `handoff.md`, and a short README.

@@ -20,6 +20,7 @@ interface CenterPanelProps {
   onResetView(): void;
   onCopyHandoff(): void;
   onExportHtml(): void;
+  onExportBundle(): void;
 }
 
 export function CenterPanel({
@@ -38,6 +39,7 @@ export function CenterPanel({
   onResetView,
   onCopyHandoff,
   onExportHtml,
+  onExportBundle,
 }: CenterPanelProps) {
   return (
     <main className="center-panel">
@@ -55,6 +57,7 @@ export function CenterPanel({
         onResetView={onResetView}
         onCopyHandoff={onCopyHandoff}
         onExportHtml={onExportHtml}
+        onExportBundle={onExportBundle}
       />
       <PreviewStage
         previewMode={previewMode}

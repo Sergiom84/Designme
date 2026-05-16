@@ -1,7 +1,8 @@
 const { clipboard, ipcMain, shell } = require('electron');
 const fs = require('node:fs/promises');
+const { writeExportBundle } = require('./exportBundle.cjs');
 const { exportDirectory, timestampedExportPath } = require('./paths.cjs');
-const { validateClipboardText, validateExportHtmlPayload } = require('./validators.cjs');
+const { validateClipboardText, validateExportBundlePayload, validateExportHtmlPayload } = require('./validators.cjs');
 
 function registerIpcHandlers(app) {
   ipcMain.handle('designme:export-html', async (_event, payload) => {
@@ -11,6 +12,11 @@ function registerIpcHandlers(app) {
     await fs.mkdir(dir, { recursive: true });
     await fs.writeFile(filePath, payload.html, 'utf8');
     return { filePath, directory: dir };
+  });
+
+  ipcMain.handle('designme:export-bundle', async (_event, payload) => {
+    validateExportBundlePayload(payload);
+    return writeExportBundle(app, payload);
   });
 
   ipcMain.handle('designme:open-exports', async () => {

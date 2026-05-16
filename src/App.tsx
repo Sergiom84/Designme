@@ -14,6 +14,7 @@ import {
   type DesignTweaks,
   type DirectionId,
 } from './engine';
+import { buildExportBundle } from './export';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useLocalStorageState } from './hooks/useLocalStorageState';
 import { usePreviewZoom } from './hooks/usePreviewZoom';
@@ -194,6 +195,37 @@ export default function App() {
     setStatus('HTML descargado');
   }
 
+  async function exportBundle() {
+    const bundle = buildExportBundle({
+      output,
+      input: {
+        prompt,
+        artifactType,
+        directionId,
+        tweaks,
+      },
+    });
+
+    if (window.designme) {
+      const result = await window.designme.exportBundle({
+        name: bundle.name,
+        files: bundle.files,
+      });
+      setExportPath(result.filePath);
+      setStatus('Bundle exportado');
+      return;
+    }
+
+    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${bundle.name}-bundle.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setStatus('Bundle descargado como JSON');
+  }
+
   async function openExports() {
     if (!window.designme) {
       setStatus('La carpeta de exports está disponible en modo escritorio');
@@ -263,6 +295,7 @@ export default function App() {
           onResetView={resetView}
           onCopyHandoff={copyHandoff}
           onExportHtml={exportHtml}
+          onExportBundle={exportBundle}
         />
       }
       right={

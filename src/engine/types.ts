@@ -51,6 +51,7 @@ export interface DesignOutput {
   name: string;
   exportName: string;
   briefSummary: string;
+  brief: Pick<DerivedBrief, 'rawPrompt' | 'topic' | 'audience' | 'objective'>;
   assumptions: string[];
   sections: string[];
   features: string[];
