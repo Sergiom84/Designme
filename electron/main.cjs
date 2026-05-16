@@ -22,7 +22,7 @@ async function createWindow() {
     },
   });
 
-  configureWindowSecurity(win, isDev);
+  configureWindowSecurity(win, isDev, { allowLocalProvider: true });
 
   if (isDev) {
     await win.loadURL('http://127.0.0.1:5173');

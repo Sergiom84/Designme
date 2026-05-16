@@ -130,6 +130,83 @@
   background: #991b1b;
 }
 
+.local-openai-settings {
+  position: relative;
+}
+
+.local-openai-settings summary {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(25, 27, 31, 0.14);
+  border-radius: var(--app-radius-md);
+  padding: 0 12px;
+  background: rgba(255, 253, 248, 0.92);
+  cursor: pointer;
+  font-weight: 800;
+  list-style: none;
+}
+
+.local-openai-settings summary::-webkit-details-marker {
+  display: none;
+}
+
+.local-openai-settings-grid {
+  position: absolute;
+  z-index: 10;
+  right: 0;
+  top: calc(100% + 8px);
+  width: min(360px, calc(100vw - 32px));
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md);
+  padding: 12px;
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-lg);
+}
+
+.local-openai-settings-grid label {
+  display: grid;
+  gap: 6px;
+}
+
+.local-openai-settings-grid span {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #796145;
+}
+
+.local-openai-settings-grid input {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid rgba(25, 27, 31, 0.16);
+  border-radius: var(--app-radius-sm);
+  padding: 0 10px;
+  background: var(--app-surface-muted);
+  color: var(--app-text);
+}
+
+.local-openai-key-field {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(25, 27, 31, 0.16);
+  border-radius: var(--app-radius-sm);
+  padding: 0 9px;
+  background: var(--app-surface-muted);
+}
+
+.local-openai-key-field input {
+  min-height: 36px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
 .segmented-control {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -177,5 +254,15 @@
   .provider-picker {
     grid-template-columns: 1fr;
     align-items: stretch;
+  }
+
+  .local-openai-settings,
+  .local-openai-settings summary {
+    width: 100%;
+  }
+
+  .local-openai-settings-grid {
+    left: 0;
+    right: auto;
   }
 }

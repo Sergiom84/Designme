@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AppShell } from './components/AppShell';
 import { CenterPanel } from './components/CenterPanel';
 import { CritiqueInspector } from './components/CritiqueInspector';
@@ -6,6 +6,7 @@ import { DirectionInspector } from './components/DirectionInspector';
 import { HandoffInspector } from './components/HandoffInspector';
 import { InspectorPanel } from './components/InspectorPanel';
 import { LeftPanel } from './components/LeftPanel';
+import { LocalOpenAISettings } from './components/LocalOpenAISettings';
 import { ProviderPicker, type ProviderPickerOption } from './components/ProviderPicker';
 import { ReferenceInspector } from './components/ReferenceInspector';
 import { TweakControls } from './components/TweakControls';
@@ -23,7 +24,7 @@ import { useGenerate } from './hooks/useGenerate';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useLocalStorageState } from './hooks/useLocalStorageState';
 import { usePreviewZoom } from './hooks/usePreviewZoom';
-import { getActiveProviderId, listProviders, setActiveProviderId, type ProviderId } from './providers';
+import { getActiveProviderId, listProviders, setActiveProviderId, type ProviderId, type ProviderStatus } from './providers';
 import {
   analyzeReferenceNotes,
   emptyReferenceState,
@@ -107,6 +108,7 @@ export default function App() {
   const [compareVersionId, setCompareVersionId] = useState('');
   const [aiUsed, setAiUsed] = useState(false);
   const [activeProviderId, setActiveProviderIdState] = useState<ProviderId>(() => getActiveProviderId());
+  const [providerStatuses, setProviderStatuses] = useState<Record<string, ProviderStatus>>({});
   const { previewZoom, setPreviewZoom, zoomScale, resetPreviewZoom } = usePreviewZoom();
 
   const referenceAnalysis = useMemo(() => analyzeReferenceNotes(referenceState.notes), [referenceState.notes]);
@@ -116,9 +118,9 @@ export default function App() {
       providerList.map((provider) => ({
         id: provider.id,
         label: provider.label,
-        status: 'ready',
+        status: providerStatuses[provider.id] ?? 'idle',
       })),
-    [providerList],
+    [providerList, providerStatuses],
   );
   const activeProvider = providerList.find((provider) => provider.id === activeProviderId) ?? providerList[0];
   const generationInput = useMemo<BuildInput>(
@@ -152,6 +154,21 @@ export default function App() {
       : generationRunning
         ? `Generando con ${activeProvider?.label ?? activeProviderId}`
         : status;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    for (const provider of providerList) {
+      void provider.status().then((providerStatus) => {
+        if (cancelled) return;
+        setProviderStatuses((current) => ({ ...current, [provider.id]: providerStatus }));
+      });
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [providerList, activeProviderId]);
 
   function patchTweaks(patch: Partial<DesignTweaks>) {
     setTweaks((current) => ({ ...current, ...patch }));
@@ -409,13 +426,16 @@ export default function App() {
           status={visibleStatus}
           exportPath={exportPath}
           providerPicker={
-            <ProviderPicker
-              providers={providerOptions}
-              activeProviderId={activeProviderId}
-              running={generationRunning}
-              onProviderChange={changeProvider}
-              onStop={stopGeneration}
-            />
+            <>
+              <ProviderPicker
+                providers={providerOptions}
+                activeProviderId={activeProviderId}
+                running={generationRunning}
+                onProviderChange={changeProvider}
+                onStop={stopGeneration}
+              />
+              <LocalOpenAISettings disabled={generationRunning} />
+            </>
           }
           onPreviewModeChange={setPreviewMode}
           onPreviewZoomChange={setPreviewZoom}

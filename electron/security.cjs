@@ -5,20 +5,33 @@ function isAllowedAppUrl(url, isDev) {
   return url.startsWith('file://');
 }
 
-function contentSecurityPolicy(isDev) {
+function localProviderConnectSources(opts) {
+  return opts?.allowLocalProvider ? ['http://127.0.0.1:*', 'http://localhost:*'] : [];
+}
+
+function contentSecurityPolicy(isDev, opts) {
   if (isDev) {
+    const connectSources = [
+      "'self'",
+      'http://127.0.0.1:5173',
+      'ws://127.0.0.1:5173',
+      ...localProviderConnectSources(opts),
+    ];
+
     return [
       "default-src 'self' http://127.0.0.1:5173",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://127.0.0.1:5173",
       "style-src 'self' 'unsafe-inline' http://127.0.0.1:5173",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
-      "connect-src 'self' http://127.0.0.1:5173 ws://127.0.0.1:5173",
+      `connect-src ${connectSources.join(' ')}`,
       "object-src 'none'",
       "base-uri 'self'",
       "frame-src 'self'",
     ].join('; ');
   }
+
+  const connectSources = ["'self'", ...localProviderConnectSources(opts)];
 
   return [
     "default-src 'self'",
@@ -26,15 +39,15 @@ function contentSecurityPolicy(isDev) {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
-    "connect-src 'self'",
+    `connect-src ${connectSources.join(' ')}`,
     "object-src 'none'",
     "base-uri 'self'",
     "frame-src 'self'",
   ].join('; ');
 }
 
-function applyContentSecurityPolicy(win, isDev) {
-  const csp = contentSecurityPolicy(isDev);
+function applyContentSecurityPolicy(win, isDev, opts) {
+  const csp = contentSecurityPolicy(isDev, opts);
   win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
@@ -45,8 +58,8 @@ function applyContentSecurityPolicy(win, isDev) {
   });
 }
 
-function configureWindowSecurity(win, isDev) {
-  applyContentSecurityPolicy(win, isDev);
+function configureWindowSecurity(win, isDev, opts) {
+  applyContentSecurityPolicy(win, isDev, opts);
 
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
 
@@ -62,6 +75,8 @@ function configureWindowSecurity(win, isDev) {
 }
 
 module.exports = {
+  applyContentSecurityPolicy,
   configureWindowSecurity,
+  contentSecurityPolicy,
   isAllowedAppUrl,
 };
