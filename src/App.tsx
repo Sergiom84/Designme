@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { getThemeById } from './design-system/tokens';
 import {
   artifactOptions,
   buildDesignProject,
@@ -51,12 +52,12 @@ interface VersionSnapshot {
 }
 
 const initialPrompt =
-  'Crea un disenador de apps, software y webs local-first: prompt a prototipo, con variaciones visuales, tweaks, critica y export HTML.';
+  'Crea un diseñador de apps, software y webs local-first: prompt a prototipo, con variaciones visuales, tweaks, crítica y export HTML.';
 
 const sideTabs: Array<{ id: SideTab; label: string; icon: LucideIcon }> = [
   { id: 'directions', label: 'Direcciones', icon: Palette },
   { id: 'tweaks', label: 'Tweaks', icon: SlidersHorizontal },
-  { id: 'critique', label: 'Critica', icon: Gauge },
+  { id: 'critique', label: 'Crítica', icon: Gauge },
   { id: 'handoff', label: 'Handoff', icon: FileCode2 },
 ];
 
@@ -71,9 +72,9 @@ const artifactIcons: Record<ArtifactType, LucideIcon> = {
 
 const promptPresets = [
   'Dashboard para un CRM de ventas B2B con pipeline, riesgos y siguientes acciones.',
-  'App movil de habitos para fundadores ocupados, con foco diario y progreso semanal.',
+  'App móvil de hábitos para fundadores ocupados, con foco diario y progreso semanal.',
   'Web de producto para una herramienta de IA que convierte reuniones en tareas verificables.',
-  'Deck de lanzamiento para explicar una plataforma local-first de diseno con agentes.',
+  'Deck de lanzamiento para explicar una plataforma local-first de diseño con agentes.',
 ];
 
 function readStoredVersions(): VersionSnapshot[] {
@@ -121,7 +122,7 @@ export default function App() {
   const [previewMode, setPreviewMode] = useState<PreviewMode>('desktop');
   const [sideTab, setSideTab] = useState<SideTab>('directions');
   const [versions, setVersions] = useState<VersionSnapshot[]>(readStoredVersions);
-  const [status, setStatus] = useState('Ready');
+  const [status, setStatus] = useState('Listo');
   const [exportPath, setExportPath] = useState('');
 
   const output = useMemo(
@@ -164,7 +165,7 @@ export default function App() {
       tweaks,
     };
     setVersions((current) => [snapshot, ...current].slice(0, 10));
-    setStatus(`Saved ${output.name}`);
+    setStatus(`Versión guardada: ${output.name}`);
   }
 
   function restoreVersion(snapshot: VersionSnapshot) {
@@ -172,12 +173,12 @@ export default function App() {
     setArtifactType(snapshot.artifactType);
     setDirectionId(snapshot.directionId);
     setTweaks(snapshot.tweaks);
-    setStatus(`Restored ${snapshot.name}`);
+    setStatus(`Versión restaurada: ${snapshot.name}`);
   }
 
   async function writeClipboard(text: string): Promise<boolean> {
     if (window.designme?.copyText) {
-      window.designme.copyText(text);
+      await window.designme.copyText(text);
       return true;
     }
 
@@ -195,7 +196,7 @@ export default function App() {
 
   async function copyHandoff() {
     const copied = await writeClipboard(output.handoffPrompt);
-    setStatus(copied ? 'Handoff prompt copied' : 'Could not access clipboard');
+    setStatus(copied ? 'Handoff copiado' : 'No se pudo acceder al portapapeles');
   }
 
   async function exportHtml() {
@@ -205,7 +206,7 @@ export default function App() {
         html: output.html,
       });
       setExportPath(result.filePath);
-      setStatus('HTML exported');
+      setStatus('HTML exportado');
       return;
     }
 
@@ -216,20 +217,20 @@ export default function App() {
     link.download = `${output.exportName}.html`;
     link.click();
     URL.revokeObjectURL(url);
-    setStatus('HTML downloaded');
+    setStatus('HTML descargado');
   }
 
   async function openExports() {
     if (!window.designme) {
-      setStatus('Export folder is available in desktop mode');
+      setStatus('La carpeta de exports está disponible en modo escritorio');
       return;
     }
     const result = await window.designme.openExports();
-    setStatus(`Opened ${result.directory}`);
+    setStatus(`Carpeta abierta: ${result.directory}`);
   }
 
   const previewSizeLabel =
-    previewMode === 'desktop' ? 'Desktop canvas' : previewMode === 'tablet' ? 'Tablet canvas' : 'Mobile canvas';
+    previewMode === 'desktop' ? 'Canvas desktop' : previewMode === 'tablet' ? 'Canvas tablet' : 'Canvas móvil';
 
   return (
     <div className="app-shell">
@@ -263,7 +264,7 @@ export default function App() {
         </section>
 
         <section className="input-section">
-          <label>Artifact</label>
+          <label>Artefacto</label>
           <div className="artifact-grid">
             {artifactOptions.map((option) => {
               const Icon = artifactIcons[option.id];
@@ -286,12 +287,18 @@ export default function App() {
         <section className="input-section versions-section">
           <div className="section-title-row">
             <label>Versiones</label>
-            <button type="button" className="icon-button" title="Save version" onClick={saveVersion}>
+            <button
+              type="button"
+              className="icon-button"
+              title="Guardar versión"
+              aria-label="Guardar versión"
+              onClick={saveVersion}
+            >
               <Save size={17} aria-hidden />
             </button>
           </div>
           {versions.length === 0 ? (
-            <p className="empty-copy">Guarda una version para comparar decisiones sin perder el camino.</p>
+            <p className="empty-copy">Guarda una versión para comparar decisiones sin perder el camino.</p>
           ) : (
             <div className="version-list">
               {versions.map((snapshot) => (
@@ -313,10 +320,12 @@ export default function App() {
             <p>{output.briefSummary}</p>
           </div>
           <div className="toolbar-actions">
-            <div className="icon-segment" aria-label="Preview mode">
+            <div className="icon-segment" aria-label="Modo de preview">
               <button
                 type="button"
                 title="Desktop"
+                aria-label="Preview desktop"
+                aria-pressed={previewMode === 'desktop'}
                 className={previewMode === 'desktop' ? 'active' : ''}
                 onClick={() => setPreviewMode('desktop')}
               >
@@ -325,6 +334,8 @@ export default function App() {
               <button
                 type="button"
                 title="Tablet"
+                aria-label="Preview tablet"
+                aria-pressed={previewMode === 'tablet'}
                 className={previewMode === 'tablet' ? 'active' : ''}
                 onClick={() => setPreviewMode('tablet')}
               >
@@ -332,7 +343,9 @@ export default function App() {
               </button>
               <button
                 type="button"
-                title="Mobile"
+                title="Móvil"
+                aria-label="Preview móvil"
+                aria-pressed={previewMode === 'mobile'}
                 className={previewMode === 'mobile' ? 'active' : ''}
                 onClick={() => setPreviewMode('mobile')}
               >
@@ -350,24 +363,24 @@ export default function App() {
           </div>
         </header>
 
-        <section className={classNames('preview-stage', `mode-${previewMode}`)}>
+        <section className={classNames('preview-stage', `mode-${previewMode}`)} aria-label="Vista previa">
           <div className="iframe-shell">
             <iframe
-              title="Design preview"
+              title="Vista previa del diseño"
               srcDoc={output.html}
               sandbox="allow-scripts allow-same-origin"
             />
           </div>
         </section>
 
-        <footer className="status-row">
+        <footer className="status-row" role="status" aria-live="polite">
           <span>{status}</span>
           {exportPath ? <code>{exportPath}</code> : <code>Sin API keys. Todo se genera localmente.</code>}
         </footer>
       </main>
 
       <aside className="right-panel">
-        <nav className="tab-row" aria-label="Inspector tabs">
+        <nav className="tab-row" role="tablist" aria-label="Panel inspector">
           {sideTabs.map((tab) => {
             const Icon = tab.icon;
             return (
@@ -375,6 +388,10 @@ export default function App() {
                 key={tab.id}
                 type="button"
                 title={tab.label}
+                id={`tab-${tab.id}`}
+                role="tab"
+                aria-selected={sideTab === tab.id}
+                aria-controls={`panel-${tab.id}`}
                 className={sideTab === tab.id ? 'active' : ''}
                 onClick={() => setSideTab(tab.id)}
               >
@@ -386,32 +403,41 @@ export default function App() {
         </nav>
 
         {sideTab === 'directions' ? (
-          <section className="inspector-section">
+          <section
+            id="panel-directions"
+            role="tabpanel"
+            aria-labelledby="tab-directions"
+            className="inspector-section"
+          >
             <div className="section-heading">
               <Layers size={18} aria-hidden />
               <div>
                 <strong>Design direction advisor</strong>
-                <span>Tres rutas con intencion distinta.</span>
+                <span>Tres rutas con intención distinta.</span>
               </div>
             </div>
             <div className="direction-list">
-              {designDirections.map((direction) => (
-                <button
-                  key={direction.id}
-                  type="button"
-                  className={classNames('direction-card', directionId === direction.id && 'is-selected')}
-                  onClick={() => setDirectionId(direction.id)}
-                >
-                  <span className="swatches" aria-hidden>
-                    <i style={{ background: direction.palette.accent }} />
-                    <i style={{ background: direction.palette.secondary }} />
-                    <i style={{ background: direction.palette.highlight }} />
-                  </span>
-                  <strong>{direction.name}</strong>
-                  <small>{direction.school}</small>
-                  <p>{direction.promise}</p>
-                </button>
-              ))}
+              {designDirections.map((direction) => {
+                const theme = getThemeById(direction.themeId);
+                return (
+                  <button
+                    key={direction.id}
+                    type="button"
+                    aria-pressed={directionId === direction.id}
+                    className={classNames('direction-card', directionId === direction.id && 'is-selected')}
+                    onClick={() => setDirectionId(direction.id)}
+                  >
+                    <span className="swatches" aria-hidden>
+                      <i style={{ background: theme.color.accent }} />
+                      <i style={{ background: theme.color.secondary }} />
+                      <i style={{ background: theme.color.highlight }} />
+                    </span>
+                    <strong>{direction.name}</strong>
+                    <small>{direction.school}</small>
+                    <p>{direction.promise}</p>
+                  </button>
+                );
+              })}
             </div>
             <div className="assumption-list">
               {output.assumptions.map((assumption) => (
@@ -425,12 +451,17 @@ export default function App() {
         ) : null}
 
         {sideTab === 'tweaks' ? (
-          <section className="inspector-section">
+          <section
+            id="panel-tweaks"
+            role="tabpanel"
+            aria-labelledby="tab-tweaks"
+            className="inspector-section"
+          >
             <div className="section-heading">
               <SlidersHorizontal size={18} aria-hidden />
               <div>
                 <strong>Tweak surface</strong>
-                <span>Controles pequenos, decisiones reales.</span>
+                <span>Controles pequeños, decisiones reales.</span>
               </div>
             </div>
 
@@ -482,7 +513,12 @@ export default function App() {
         ) : null}
 
         {sideTab === 'critique' ? (
-          <section className="inspector-section">
+          <section
+            id="panel-critique"
+            role="tabpanel"
+            aria-labelledby="tab-critique"
+            className="inspector-section"
+          >
             <div className="score-lockup">
               <ClipboardCheck size={22} aria-hidden />
               <strong>{output.critique.total}/10</strong>
@@ -504,7 +540,12 @@ export default function App() {
         ) : null}
 
         {sideTab === 'handoff' ? (
-          <section className="inspector-section handoff-section">
+          <section
+            id="panel-handoff"
+            role="tabpanel"
+            aria-labelledby="tab-handoff"
+            className="inspector-section handoff-section"
+          >
             <div className="section-heading">
               <FileCode2 size={18} aria-hidden />
               <div>

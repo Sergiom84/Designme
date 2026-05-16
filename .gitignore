@@ -4,6 +4,7 @@ release/
 exports/
 artifacts/
 .refs/
+/plan_mejoras_designme.md
 *.log
 .DS_Store
 Thumbs.db

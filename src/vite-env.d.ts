@@ -9,6 +9,6 @@ interface Window {
   designme?: {
     exportHtml(payload: { name: string; html: string }): Promise<DesignmeExportResult>;
     openExports(): Promise<{ directory: string }>;
-    copyText(text: string): void;
+    copyText(text: string): Promise<void>;
   };
 }

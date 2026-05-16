@@ -1,25 +1,9 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
-const fs = require('node:fs/promises');
 const path = require('node:path');
+const { app, BrowserWindow } = require('electron');
+const { registerIpcHandlers } = require('./ipc.cjs');
+const { configureWindowSecurity } = require('./security.cjs');
 
 const isDev = process.argv.includes('--dev');
-
-function sanitizeFileName(value) {
-  const safe = String(value || 'designme-export')
-    .normalize('NFKD')
-    .replace(/[^\w\s.-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .slice(0, 80);
-  return safe || 'designme-export';
-}
-
-function exportDirectory() {
-  return (
-    process.env.DESIGNME_EXPORT_DIR ||
-    path.join(app.getPath('documents'), 'Designme', 'exports')
-  );
-}
 
 async function createWindow() {
   const win = new BrowserWindow({
@@ -32,9 +16,13 @@ async function createWindow() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: true,
+      webSecurity: true,
       preload: path.join(__dirname, 'preload.cjs'),
     },
   });
+
+  configureWindowSecurity(win, isDev);
 
   if (isDev) {
     await win.loadURL('http://127.0.0.1:5173');
@@ -43,27 +31,7 @@ async function createWindow() {
   }
 }
 
-ipcMain.handle('designme:export-html', async (_event, payload) => {
-  if (!payload || typeof payload.html !== 'string') {
-    throw new Error('No HTML payload received');
-  }
-
-  const dir = exportDirectory();
-  await fs.mkdir(dir, { recursive: true });
-
-  const base = sanitizeFileName(payload.name);
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const filePath = path.join(dir, `${base}-${stamp}.html`);
-  await fs.writeFile(filePath, payload.html, 'utf8');
-  return { filePath, directory: dir };
-});
-
-ipcMain.handle('designme:open-exports', async () => {
-  const dir = exportDirectory();
-  await fs.mkdir(dir, { recursive: true });
-  await shell.openPath(dir);
-  return { directory: dir };
-});
+registerIpcHandlers(app);
 
 app.whenReady().then(createWindow);
 

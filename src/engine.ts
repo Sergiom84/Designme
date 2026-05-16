@@ -1,3 +1,10 @@
+import {
+  contrastRatio,
+  getThemeById,
+  renderThemeCssVars,
+  type ThemeId,
+} from './design-system/tokens';
+
 export type ArtifactType = 'web' | 'software' | 'dashboard' | 'mobile' | 'deck' | 'infographic';
 export type DirectionId = 'systems' | 'editorial' | 'kinetic';
 export type Density = 'calm' | 'balanced' | 'dense';
@@ -16,15 +23,7 @@ export interface DesignDirection {
   school: string;
   promise: string;
   bestFor: string;
-  palette: {
-    ink: string;
-    paper: string;
-    surface: string;
-    subtle: string;
-    accent: string;
-    secondary: string;
-    highlight: string;
-  };
+  themeId: ThemeId;
 }
 
 export interface DesignTweaks {
@@ -89,47 +88,23 @@ export const designDirections: DesignDirection[] = [
     school: 'Producto local-first',
     promise: 'Interfaz densa, clara y preparada para uso diario.',
     bestFor: 'Dashboards, backoffices, CRMs, herramientas internas.',
-    palette: {
-      ink: '#17191c',
-      paper: '#f5f1e8',
-      surface: '#fffdf8',
-      subtle: '#dfd8c8',
-      accent: '#0f766e',
-      secondary: '#be5b3d',
-      highlight: '#d9b84f',
-    },
+    themeId: 'systems',
   },
   {
     id: 'editorial',
     name: 'Editorial funcional',
-    school: 'Informacion con pulso',
-    promise: 'Jerarquia fuerte, ritmo tipografico y narrativa visible.',
+    school: 'Información con pulso',
+    promise: 'Jerarquía fuerte, ritmo tipográfico y narrativa visible.',
     bestFor: 'Webs, decks, informes, productos que necesitan explicar.',
-    palette: {
-      ink: '#161412',
-      paper: '#f8f4ec',
-      surface: '#ffffff',
-      subtle: '#e3ded3',
-      accent: '#9b3f31',
-      secondary: '#1e6f9f',
-      highlight: '#d8b53f',
-    },
+    themeId: 'editorial',
   },
   {
     id: 'kinetic',
-    name: 'Prototipo cinetico',
+    name: 'Prototipo cinético',
     school: 'Movimiento medido',
-    promise: 'Estados vivos, microinteracciones y sensacion de producto real.',
-    bestFor: 'Apps moviles, demos, launch screens y prototipos con flujo.',
-    palette: {
-      ink: '#121417',
-      paper: '#f2f5ef',
-      surface: '#fbfcf8',
-      subtle: '#d8dfd6',
-      accent: '#d76642',
-      secondary: '#16858f',
-      highlight: '#b6cf50',
-    },
+    promise: 'Estados vivos, microinteracciones y sensación de producto real.',
+    bestFor: 'Apps móviles, demos, launch screens y prototipos con flujo.',
+    themeId: 'kinetic',
   },
 ];
 
@@ -146,9 +121,9 @@ const fallbackPrompts: Record<ArtifactType, string> = {
     'Un estudio para planificar, generar y revisar pantallas de software para equipos de producto.',
   web: 'Una web de producto para presentar una herramienta nueva y convertir visitantes en demos.',
   dashboard: 'Un dashboard ejecutivo para ver actividad, riesgos y siguientes acciones.',
-  mobile: 'Una app movil de productividad con onboarding, foco y seguimiento semanal.',
+  mobile: 'Una app móvil de productividad con onboarding, foco y seguimiento semanal.',
   deck: 'Un deck de lanzamiento para explicar una idea compleja con claridad y ritmo visual.',
-  infographic: 'Una infografia que convierte datos dispersos en una historia visual accionable.',
+  infographic: 'Una infografía que convierte datos dispersos en una historia visual accionable.',
 };
 
 const sectionBank: Record<ArtifactType, string[]> = {
@@ -262,19 +237,19 @@ function extractName(prompt: string, type: ArtifactType): string {
 }
 
 function inferAudience(prompt: string, type: ArtifactType): string {
-  if (/developer|dev|api|engineer|program/i.test(prompt)) return 'equipos tecnicos';
+  if (/developer|dev|api|engineer|program/i.test(prompt)) return 'equipos técnicos';
   if (/ceo|founder|director|executive|ejecut/i.test(prompt)) return 'decision makers';
   if (/cliente|customer|usuario|consumer/i.test(prompt)) return 'usuarios finales';
   if (/sales|ventas|marketing|growth/i.test(prompt)) return 'equipos comerciales';
   if (type === 'dashboard' || type === 'software') return 'equipos operativos';
-  return 'personas que necesitan entender rapido';
+  return 'personas que necesitan entender rápido';
 }
 
 function inferObjective(prompt: string, type: ArtifactType): string {
-  if (/vender|convert|lead|demo|signup|registro/i.test(prompt)) return 'convertir interes en accion';
+  if (/vender|convert|lead|demo|signup|registro/i.test(prompt)) return 'convertir interés en acción';
   if (/monitor|metric|kpi|seguimiento|control/i.test(prompt)) return 'hacer visible el estado real';
-  if (/explicar|teach|curso|aprender|understand/i.test(prompt)) return 'explicar sin perder precision';
-  if (/organizar|plan|task|tarea|workflow/i.test(prompt)) return 'coordinar trabajo sin friccion';
+  if (/explicar|teach|curso|aprender|understand/i.test(prompt)) return 'explicar sin perder precisión';
+  if (/organizar|plan|task|tarea|workflow/i.test(prompt)) return 'coordinar trabajo sin fricción';
   if (type === 'deck') return 'defender una narrativa con pruebas';
   return 'pasar de idea vaga a prototipo revisable';
 }
@@ -606,9 +581,9 @@ function buildHtml(
 ): string {
   const title = escapeHtml(brief.name);
   const artifact = renderArtifact(brief, type, tweaks);
-  const palette = direction.palette;
-  const motionMs = tweaks.motion === 'still' ? 0 : tweaks.motion === 'measured' ? 180 : 360;
-  const densityGap = tweaks.density === 'calm' ? 22 : tweaks.density === 'dense' ? 10 : 16;
+  const theme = getThemeById(direction.themeId);
+  const themeCssVars = renderThemeCssVars(theme, tweaks);
+  const dataScheme = tweaks.tone === 'light' ? 'light' : 'contrast';
 
   return `<!doctype html>
 <html lang="en">
@@ -618,17 +593,7 @@ function buildHtml(
   <title>${title}</title>
   <style>
     :root {
-      --ink: ${palette.ink};
-      --paper: ${palette.paper};
-      --surface: ${palette.surface};
-      --subtle: ${palette.subtle};
-      --accent: ${palette.accent};
-      --secondary: ${palette.secondary};
-      --highlight: ${palette.highlight};
-      --radius: ${tweaks.radius}px;
-      --gap: ${densityGap}px;
-      --motion: ${motionMs}ms;
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+${themeCssVars}
       color: var(--ink);
       background: var(--paper);
       letter-spacing: 0;
@@ -749,7 +714,7 @@ function buildHtml(
     .segmented button { border: 0; min-height: 34px; padding: 0 12px; }
     .tweak-dock { position: fixed; right: 16px; bottom: 16px; z-index: 20; display: flex; gap: 8px; padding: 8px; }
     .tweak-dock button { width: 38px; height: 38px; padding: 0; font-weight: 900; }
-    body[data-scheme="contrast"] { --paper: #111417; --surface: #1b2025; --ink: #f6f0e6; --subtle: #33404a; }
+    body[data-scheme="contrast"] { --paper: #111417; --surface: #1b2025; --ink: #f6f0e6; --text: #f6f0e6; --subtle: #33404a; }
     body[data-density="dense"] { --gap: 10px; }
     body[data-density="calm"] { --gap: 24px; }
     @media (max-width: 980px) {
@@ -762,7 +727,7 @@ function buildHtml(
     }
   </style>
 </head>
-<body data-density="${tweaks.density}" data-scheme="${tweaks.tone === 'ink' ? 'contrast' : 'light'}">
+<body data-density="${tweaks.density}" data-scheme="${dataScheme}">
   ${artifact}
   <div class="tweak-dock" aria-label="Standalone tweaks">
     <button type="button" data-density-toggle title="Density">D</button>
@@ -797,13 +762,15 @@ function buildHtml(
 }
 
 function buildCritique(brief: DerivedBrief, direction: DesignDirection, tweaks: DesignTweaks): Critique {
+  const theme = getThemeById(direction.themeId);
+  const contrast = contrastRatio(theme.color.text, theme.color.background);
   const promptDepth = Math.min(2, Math.floor(brief.rawPrompt.length / 90));
   const motionBonus = tweaks.motion === 'expressive' ? 1 : 0;
   const densityBonus = tweaks.density === 'balanced' ? 1 : 0;
   const scores = [
     { label: 'Coherence', value: 7 + promptDepth },
     { label: 'Hierarchy', value: 8 + densityBonus },
-    { label: 'Craft', value: 7 + (direction.id === 'editorial' ? 1 : 0) },
+    { label: 'Craft', value: 7 + (direction.id === 'editorial' ? 1 : 0) + (contrast >= 7 ? 1 : 0) },
     { label: 'Function', value: 8 + (brief.features.length > 6 ? 1 : 0) },
     { label: 'Novelty', value: 6 + motionBonus + (direction.id === 'kinetic' ? 1 : 0) },
   ].map((item) => ({ ...item, value: Math.min(10, item.value) }));
@@ -815,6 +782,7 @@ function buildCritique(brief: DerivedBrief, direction: DesignDirection, tweaks: 
     keep: [
       `The ${direction.name.toLowerCase()} direction gives the concept a clear visual contract.`,
       `The generated modules are tied to "${brief.objective}" instead of generic filler.`,
+      `Base text contrast is ${contrast}:1, which is ready for normal UI copy.`,
       'Tweaks stay small enough to explore choices without becoming a settings maze.',
     ],
     fix: [
@@ -846,20 +814,20 @@ function buildHandoffPrompt(
   tweaks: DesignTweaks,
 ): string {
   return [
-    'Actua como disenador senior de producto y frontend.',
+    'Actúa como diseñador senior de producto y frontend.',
     '',
     `Brief: ${brief.rawPrompt}`,
     `Artefacto: ${type}`,
     `Nombre provisional: ${brief.name}`,
     `Audiencia: ${brief.audience}`,
     `Objetivo: ${brief.objective}`,
-    `Direccion visual: ${direction.name} (${direction.school})`,
+    `Dirección visual: ${direction.name} (${direction.school})`,
     `Tweaks: density=${tweaks.density}, tone=${tweaks.tone}, motion=${tweaks.motion}, radius=${tweaks.radius}px`,
     '',
-    'Entrega un prototipo HTML/CSS/JS standalone, responsive, con estados interactivos reales, texto listo para revisar, y un pequeno panel de tweaks persistente en localStorage.',
-    'Evita una landing generica si el brief pide software: construye la pantalla utilizable. Usa jerarquia clara, controles esperables, y deja notas breves solo donde ayuden a iterar.',
+    'Entrega un prototipo HTML/CSS/JS standalone, responsive, con estados interactivos reales, texto listo para revisar, y un pequeño panel de tweaks persistente en localStorage.',
+    'Evita una landing genérica si el brief pide software: construye la pantalla utilizable. Usa jerarquía clara, controles esperables, y deja notas breves solo donde ayuden a iterar.',
     '',
-    `Modulos que ya propuso Designme Studio: ${brief.features.join(', ')}.`,
+    `Módulos que ya propuso Designme Studio: ${brief.features.join(', ')}.`,
   ].join('\n');
 }
 
