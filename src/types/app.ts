@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import type { ArtifactType, DesignTweaks, DirectionId } from '../engine/index';
+import type { ArtifactType, DesignOutput, DesignTweaks, DirectionId } from '../engine/index';
 
 export type PreviewMode = 'desktop' | 'tablet' | 'mobile';
 export type PreviewZoom = 'fit' | '50' | '75' | '100';
@@ -13,6 +13,7 @@ export interface VersionSnapshot {
   artifactType: ArtifactType;
   directionId: DirectionId;
   tweaks: DesignTweaks;
+  output?: DesignOutput;
 }
 
 export interface SideTabOption {

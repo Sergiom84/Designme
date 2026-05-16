@@ -46,6 +46,90 @@
   background: var(--app-text-strong);
 }
 
+.provider-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.provider-picker-control {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.provider-picker label {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #796145;
+}
+
+.provider-picker select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid rgba(25, 27, 31, 0.16);
+  border-radius: var(--app-radius-md);
+  padding: 0 34px 0 12px;
+  background: var(--app-surface);
+  color: var(--app-text);
+}
+
+.provider-picker select:disabled {
+  color: var(--app-text-muted);
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.provider-status-badge {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--app-border-strong);
+  border-radius: var(--app-radius-md);
+  padding: 0 10px;
+  background: var(--app-surface-muted);
+  color: var(--app-text-subtle);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.provider-status-badge::before {
+  width: 8px;
+  height: 8px;
+  margin-right: 7px;
+  border-radius: 999px;
+  background: currentColor;
+  content: '';
+}
+
+.provider-status-badge.is-ready {
+  border-color: rgba(15, 118, 110, 0.32);
+  background: rgba(15, 118, 110, 0.1);
+  color: #0f766e;
+}
+
+.provider-status-badge.is-warning {
+  border-color: rgba(180, 83, 9, 0.32);
+  background: rgba(245, 158, 11, 0.13);
+  color: #92400e;
+}
+
+.provider-status-badge.is-error {
+  border-color: rgba(185, 28, 28, 0.3);
+  background: rgba(248, 113, 113, 0.13);
+  color: #991b1b;
+}
+
+.provider-stop-button {
+  color: #fff8e8;
+  border-color: #991b1b;
+  background: #991b1b;
+}
+
 .segmented-control {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -87,4 +171,11 @@
 
 .check-control input {
   accent-color: var(--app-accent);
+}
+
+@media (max-width: 760px) {
+  .provider-picker {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
 }

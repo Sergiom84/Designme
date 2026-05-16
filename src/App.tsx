@@ -6,6 +6,7 @@ import { DirectionInspector } from './components/DirectionInspector';
 import { HandoffInspector } from './components/HandoffInspector';
 import { InspectorPanel } from './components/InspectorPanel';
 import { LeftPanel } from './components/LeftPanel';
+import { ProviderPicker, type ProviderPickerOption } from './components/ProviderPicker';
 import { ReferenceInspector } from './components/ReferenceInspector';
 import { TweakControls } from './components/TweakControls';
 import { enhancePrompt } from './ai';
@@ -13,13 +14,16 @@ import {
   buildDesignProject,
   defaultTweaks,
   type ArtifactType,
+  type BuildInput,
   type DesignTweaks,
   type DirectionId,
 } from './engine/index';
 import { buildExportBundle } from './export';
+import { useGenerate } from './hooks/useGenerate';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useLocalStorageState } from './hooks/useLocalStorageState';
 import { usePreviewZoom } from './hooks/usePreviewZoom';
+import { getActiveProviderId, listProviders, setActiveProviderId, type ProviderId } from './providers';
 import {
   analyzeReferenceNotes,
   emptyReferenceState,
@@ -102,28 +106,52 @@ export default function App() {
   const [canvasOnly, setCanvasOnly] = useState(false);
   const [compareVersionId, setCompareVersionId] = useState('');
   const [aiUsed, setAiUsed] = useState(false);
+  const [activeProviderId, setActiveProviderIdState] = useState<ProviderId>(() => getActiveProviderId());
   const { previewZoom, setPreviewZoom, zoomScale, resetPreviewZoom } = usePreviewZoom();
 
   const referenceAnalysis = useMemo(() => analyzeReferenceNotes(referenceState.notes), [referenceState.notes]);
-
-  const output = useMemo(
-    () => buildDesignProject({ prompt, artifactType, directionId, tweaks }),
+  const providerList = useMemo(() => listProviders(), []);
+  const providerOptions = useMemo<ProviderPickerOption[]>(
+    () =>
+      providerList.map((provider) => ({
+        id: provider.id,
+        label: provider.label,
+        status: 'ready',
+      })),
+    [providerList],
+  );
+  const activeProvider = providerList.find((provider) => provider.id === activeProviderId) ?? providerList[0];
+  const generationInput = useMemo<BuildInput>(
+    () => ({ prompt, artifactType, directionId, tweaks }),
     [artifactType, directionId, prompt, tweaks],
   );
 
-  const compareSnapshot = versions.find((snapshot) => snapshot.id === compareVersionId);
-  const compareOutput = useMemo(
-    () =>
-      compareSnapshot
-        ? buildDesignProject({
-            prompt: compareSnapshot.prompt,
-            artifactType: compareSnapshot.artifactType,
-            directionId: compareSnapshot.directionId,
-            tweaks: compareSnapshot.tweaks,
-          })
-        : undefined,
-    [compareSnapshot],
+  const { output, events: generationEvents, running: generationRunning, stop: stopGeneration } = useGenerate(
+    generationInput,
+    {
+      providerId: activeProviderId,
+    },
   );
+
+  const compareSnapshot = versions.find((snapshot) => snapshot.id === compareVersionId);
+  const compareOutput = useMemo(() => {
+    if (!compareSnapshot) return undefined;
+    if (compareSnapshot.output) return compareSnapshot.output;
+
+    return buildDesignProject({
+      prompt: compareSnapshot.prompt,
+      artifactType: compareSnapshot.artifactType,
+      directionId: compareSnapshot.directionId,
+      tweaks: compareSnapshot.tweaks,
+    });
+  }, [compareSnapshot]);
+  const generationError = [...generationEvents].reverse().find((event) => event.type === 'error');
+  const visibleStatus =
+    generationError?.type === 'error'
+      ? generationError.message
+      : generationRunning
+        ? `Generando con ${activeProvider?.label ?? activeProviderId}`
+        : status;
 
   function patchTweaks(patch: Partial<DesignTweaks>) {
     setTweaks((current) => ({ ...current, ...patch }));
@@ -142,6 +170,18 @@ export default function App() {
     }
     setReferenceState((current) => ({ ...current, lastAppliedAt: new Date().toISOString() }));
     setStatus('Preferencias de referencia aplicadas');
+  }
+
+  function changeProvider(providerId: string) {
+    try {
+      const nextProviderId = providerId as ProviderId;
+      setActiveProviderId(nextProviderId);
+      setActiveProviderIdState(nextProviderId);
+      const nextProvider = providerList.find((provider) => provider.id === nextProviderId);
+      setStatus(`Provider activo: ${nextProvider?.label ?? nextProviderId}`);
+    } catch (error) {
+      setStatus(`No se pudo activar el provider: ${errorMessage(error)}`);
+    }
   }
 
   async function enhancePromptWithReferences() {
@@ -165,6 +205,7 @@ export default function App() {
       artifactType,
       directionId,
       tweaks,
+      output,
     };
     setVersions((current) => [snapshot, ...current].slice(0, 10));
     setStatus(`Versión guardada: ${output.name}`);
@@ -263,9 +304,9 @@ export default function App() {
           tweaks,
           references: referenceAnalysis,
           ai: {
-            providerId: 'local',
-            used: aiUsed,
-            localOnly: true,
+            providerId: activeProviderId,
+            used: aiUsed || activeProviderId !== 'deterministic',
+            localOnly: activeProviderId === 'deterministic' || activeProviderId === 'local-openai',
           },
         },
       });
@@ -365,8 +406,17 @@ export default function App() {
           previewZoom={previewZoom}
           zoomScale={zoomScale}
           canvasOnly={canvasOnly}
-          status={status}
+          status={visibleStatus}
           exportPath={exportPath}
+          providerPicker={
+            <ProviderPicker
+              providers={providerOptions}
+              activeProviderId={activeProviderId}
+              running={generationRunning}
+              onProviderChange={changeProvider}
+              onStop={stopGeneration}
+            />
+          }
           onPreviewModeChange={setPreviewMode}
           onPreviewZoomChange={setPreviewZoom}
           onToggleCanvasOnly={() => setCanvasOnly((current) => !current)}

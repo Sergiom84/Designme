@@ -1,4 +1,5 @@
 import { Columns2, Copy, Download, Maximize2, Monitor, RotateCcw, Smartphone, Tablet } from 'lucide-react';
+import type { ReactNode } from 'react';
 import type { PreviewMode, PreviewZoom } from '../types/app';
 import { es } from '../i18n';
 
@@ -9,6 +10,7 @@ interface CanvasToolbarProps {
   previewZoom: PreviewZoom;
   canvasOnly: boolean;
   hasCompare: boolean;
+  providerPicker?: ReactNode;
   onPreviewModeChange(mode: PreviewMode): void;
   onPreviewZoomChange(zoom: PreviewZoom): void;
   onToggleCanvasOnly(): void;
@@ -26,6 +28,7 @@ export function CanvasToolbar({
   previewZoom,
   canvasOnly,
   hasCompare,
+  providerPicker,
   onPreviewModeChange,
   onPreviewZoomChange,
   onToggleCanvasOnly,
@@ -50,6 +53,7 @@ export function CanvasToolbar({
         <p>{summary}</p>
       </div>
       <div className="toolbar-actions" role="toolbar" aria-label={es.toolbar.controlsLabel}>
+        {providerPicker}
         <div className="icon-segment" role="group" aria-label={es.toolbar.previewModeLabel}>
           <button
             type="button"

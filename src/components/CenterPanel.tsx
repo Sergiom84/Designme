@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { CanvasToolbar } from './CanvasToolbar';
 import { PreviewStage } from './PreviewStage';
 import { StatusRow } from './StatusRow';
@@ -13,6 +14,7 @@ interface CenterPanelProps {
   canvasOnly: boolean;
   status: string;
   exportPath: string;
+  providerPicker?: ReactNode;
   onPreviewModeChange(mode: PreviewMode): void;
   onPreviewZoomChange(zoom: PreviewZoom): void;
   onToggleCanvasOnly(): void;
@@ -32,6 +34,7 @@ export function CenterPanel({
   canvasOnly,
   status,
   exportPath,
+  providerPicker,
   onPreviewModeChange,
   onPreviewZoomChange,
   onToggleCanvasOnly,
@@ -50,6 +53,7 @@ export function CenterPanel({
         previewZoom={previewZoom}
         canvasOnly={canvasOnly}
         hasCompare={Boolean(compareOutput)}
+        providerPicker={providerPicker}
         onPreviewModeChange={onPreviewModeChange}
         onPreviewZoomChange={onPreviewZoomChange}
         onToggleCanvasOnly={onToggleCanvasOnly}
