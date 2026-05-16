@@ -1,4 +1,5 @@
 import { getThemeById, renderThemeCssVars } from '../../design-system/tokens';
+import type { UXIntent } from '../intent/types';
 import type { ArtifactType, DerivedBrief, DesignDirection, DesignTweaks } from '../types';
 import { escapeHtml } from '../utils';
 import { renderArtifact } from './index';
@@ -8,9 +9,10 @@ export function buildHtml(
   type: ArtifactType,
   direction: DesignDirection,
   tweaks: DesignTweaks,
+  intent: UXIntent,
 ): string {
   const title = escapeHtml(brief.name);
-  const artifact = renderArtifact(brief, type, tweaks);
+  const artifact = renderArtifact(brief, type, tweaks, intent);
   const theme = getThemeById(direction.themeId);
   const themeCssVars = renderThemeCssVars(theme, tweaks);
   const dataScheme = tweaks.tone === 'light' ? 'light' : 'contrast';
@@ -157,7 +159,7 @@ ${themeCssVars}
     }
   </style>
 </head>
-<body data-density="${tweaks.density}" data-scheme="${dataScheme}">
+<body data-density="${tweaks.density}" data-scheme="${dataScheme}" data-ux-domain="${intent.domain}" data-ux-goal="${intent.goal}">
   ${artifact}
   <div class="tweak-dock" aria-label="Standalone tweaks">
     <button type="button" data-density-toggle title="Density">D</button>

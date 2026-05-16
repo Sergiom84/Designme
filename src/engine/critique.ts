@@ -1,10 +1,13 @@
 import { contrastRatio, getThemeById } from '../design-system/tokens';
+import { domainLabels, goalLabels } from './intent/domainRules';
+import type { UXIntent } from './intent/types';
 import type { Critique, DerivedBrief, DesignDirection, DesignTweaks } from './types';
 
 export function buildCritique(
   brief: DerivedBrief,
   direction: DesignDirection,
   tweaks: DesignTweaks,
+  intent: UXIntent,
 ): Critique {
   const theme = getThemeById(direction.themeId);
   const contrast = contrastRatio(theme.color.text, theme.color.background);
@@ -15,7 +18,7 @@ export function buildCritique(
     { label: 'Coherence', value: 7 + promptDepth },
     { label: 'Hierarchy', value: 8 + densityBonus },
     { label: 'Craft', value: 7 + (direction.id === 'editorial' ? 1 : 0) + (contrast >= 7 ? 1 : 0) },
-    { label: 'Function', value: 8 + (brief.features.length > 6 ? 1 : 0) },
+    { label: 'Function', value: 8 + (intent.modules.length > 5 ? 1 : 0) },
     { label: 'Novelty', value: 6 + motionBonus + (direction.id === 'kinetic' ? 1 : 0) },
   ].map((item) => ({ ...item, value: Math.min(10, item.value) }));
 
@@ -25,13 +28,14 @@ export function buildCritique(
     scores,
     keep: [
       `The ${direction.name.toLowerCase()} direction gives the concept a clear visual contract.`,
-      `The generated modules are tied to "${brief.objective}" instead of generic filler.`,
+      `Detected ${domainLabels[intent.domain]} / ${goalLabels[intent.goal]}, so modules are planned around real use.`,
       `Base text contrast is ${contrast}:1, which is ready for normal UI copy.`,
       'Tweaks stay small enough to explore choices without becoming a settings maze.',
     ],
     fix: [
       'Replace any placeholder copy with real product language before shipping.',
       'Add actual brand assets when the product identity is known.',
+      ...intent.riskNotes.slice(0, 1),
       'Run click-through verification after changing the generated HTML.',
     ],
     quickWins: [
@@ -42,10 +46,16 @@ export function buildCritique(
   };
 }
 
-export function buildAssumptions(brief: DerivedBrief, direction: DesignDirection): string[] {
+export function buildAssumptions(
+  brief: DerivedBrief,
+  direction: DesignDirection,
+  intent: UXIntent,
+): string[] {
   return [
     `Audience: ${brief.audience}.`,
     `Goal: ${brief.objective}.`,
+    `Intent: ${domainLabels[intent.domain]} / ${goalLabels[intent.goal]}.`,
+    `Primary action: ${intent.primaryAction}.`,
     `Direction: ${direction.name}, because it fits ${direction.bestFor.toLowerCase()}.`,
     'No API key is required; this pass is deterministic and local.',
   ];

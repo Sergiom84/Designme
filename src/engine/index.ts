@@ -1,6 +1,7 @@
 import { deriveBrief } from './brief';
 import { buildAssumptions, buildCritique } from './critique';
 import { buildHandoffPrompt } from './handoff';
+import { applyIntentToBrief, resolveIntent } from './intent';
 import { directionById } from './options';
 import { buildHtml } from './render/htmlDocument';
 import type { BuildInput, DesignOutput } from './types';
@@ -8,22 +9,26 @@ import { slugify } from './utils';
 
 export * from './options';
 export * from './types';
+export * from './intent';
 
 export function buildDesignProject(input: BuildInput): DesignOutput {
   const direction = directionById(input.directionId);
   const brief = deriveBrief(input.prompt, input.artifactType);
-  const html = buildHtml(brief, input.artifactType, direction, input.tweaks);
-  const critique = buildCritique(brief, direction, input.tweaks);
+  const intent = resolveIntent(brief, input.artifactType);
+  const enrichedBrief = applyIntentToBrief(brief, intent);
+  const html = buildHtml(enrichedBrief, input.artifactType, direction, input.tweaks, intent);
+  const critique = buildCritique(enrichedBrief, direction, input.tweaks, intent);
   return {
-    name: brief.name,
-    exportName: slugify(`${brief.name}-${input.artifactType}`),
-    briefSummary: `${brief.objective} for ${brief.audience}.`,
-    assumptions: buildAssumptions(brief, direction),
-    sections: brief.sections,
-    features: brief.features,
+    name: enrichedBrief.name,
+    exportName: slugify(`${enrichedBrief.name}-${input.artifactType}`),
+    briefSummary: `${enrichedBrief.objective} for ${enrichedBrief.audience}.`,
+    assumptions: buildAssumptions(enrichedBrief, direction, intent),
+    sections: enrichedBrief.sections,
+    features: enrichedBrief.features,
     html,
-    handoffPrompt: buildHandoffPrompt(brief, input.artifactType, direction, input.tweaks),
+    handoffPrompt: buildHandoffPrompt(enrichedBrief, input.artifactType, direction, input.tweaks, intent),
     critique,
     direction,
+    intent,
   };
 }

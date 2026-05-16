@@ -1,7 +1,8 @@
+import type { UXIntent } from '../intent/types';
 import type { DerivedBrief } from '../types';
 import { escapeHtml } from '../utils';
 
-export function renderInfographic(brief: DerivedBrief): string {
+export function renderInfographic(brief: DerivedBrief, intent: UXIntent): string {
   return `
     <div class="artifact-shell infographic-shell">
       <main class="poster">
@@ -9,14 +10,14 @@ export function renderInfographic(brief: DerivedBrief): string {
         <h1>${escapeHtml(brief.objective)}</h1>
         <p>${escapeHtml(brief.topic)}</p>
         <section class="poster-grid">
-          ${brief.sections
+          ${intent.modules
             .slice(0, 4)
             .map(
-              (section, index) => `
+              (module, index) => `
                 <article>
                   <span>${String(index + 1).padStart(2, '0')}</span>
-                  <strong>${escapeHtml(section)}</strong>
-                  <p>${escapeHtml(brief.features[index] ?? brief.objective)}</p>
+                  <strong>${escapeHtml(module.label)}</strong>
+                  <p>${escapeHtml(module.purpose)}</p>
                 </article>
               `,
             )

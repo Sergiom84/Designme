@@ -1,4 +1,5 @@
 import type { ThemeId } from '../design-system/tokens/types';
+import type { UXIntent } from './intent/types';
 
 export type ArtifactType = 'web' | 'software' | 'dashboard' | 'mobile' | 'deck' | 'infographic';
 export type DirectionId = 'systems' | 'editorial' | 'kinetic';
@@ -55,6 +56,7 @@ export interface DesignOutput {
   handoffPrompt: string;
   critique: Critique;
   direction: DesignDirection;
+  intent: UXIntent;
 }
 
 export interface DerivedBrief {

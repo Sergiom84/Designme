@@ -1,8 +1,9 @@
+import type { UXIntent } from '../intent/types';
 import type { DerivedBrief } from '../types';
 import { escapeHtml } from '../utils';
 import { renderFeatureList } from './partials';
 
-export function renderDeck(brief: DerivedBrief): string {
+export function renderDeck(brief: DerivedBrief, intent: UXIntent): string {
   return `
     <div class="artifact-shell deck-shell">
       <aside class="slide-rail">
@@ -17,13 +18,13 @@ export function renderDeck(brief: DerivedBrief): string {
         <p>${escapeHtml(brief.topic)}</p>
         <div class="slide-proof">
           <span>${escapeHtml(brief.objective)}</span>
-          <strong>${escapeHtml(brief.audience)}</strong>
+          <strong>${escapeHtml(intent.primaryAction)}</strong>
         </div>
         <ul class="feature-list">${renderFeatureList(brief)}</ul>
       </main>
       <aside class="speaker-notes">
         <span>Speaker notes</span>
-        <p>Open with the tension, show the system, then ask for one concrete next step.</p>
+        <p>${escapeHtml(intent.userMentalModel)}</p>
       </aside>
     </div>
   `;

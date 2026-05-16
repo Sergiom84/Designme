@@ -1,8 +1,9 @@
+import type { UXIntent } from '../intent/types';
 import type { DerivedBrief } from '../types';
 import { escapeHtml } from '../utils';
 import { renderTimeline } from './partials';
 
-export function renderMobile(brief: DerivedBrief, showDevice: boolean): string {
+export function renderMobile(brief: DerivedBrief, showDevice: boolean, intent: UXIntent): string {
   const phoneClass = showDevice ? 'phone-frame' : 'phone-frame no-device';
   return `
     <div class="artifact-shell mobile-shell">
@@ -13,7 +14,7 @@ export function renderMobile(brief: DerivedBrief, showDevice: boolean): string {
           <h1>${escapeHtml(brief.name)}</h1>
           <div class="focus-card">
             <span>${escapeHtml(brief.objective)}</span>
-            <strong>3 actions ready</strong>
+            <strong>${escapeHtml(intent.primaryAction)}</strong>
           </div>
           <div class="mini-list">
             ${brief.features
@@ -31,7 +32,7 @@ export function renderMobile(brief: DerivedBrief, showDevice: boolean): string {
       </section>
       <aside class="mobile-context">
         <p class="eyebrow">Prototype map</p>
-        <h2>Clickable states</h2>
+        <h2>${escapeHtml(intent.userMentalModel)}</h2>
         <div class="timeline">${renderTimeline(brief)}</div>
       </aside>
     </div>

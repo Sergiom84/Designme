@@ -1,8 +1,9 @@
+import type { UXIntent } from '../intent/types';
 import type { DerivedBrief } from '../types';
 import { escapeHtml } from '../utils';
 import { renderMetricCards } from './partials';
 
-export function renderWeb(brief: DerivedBrief): string {
+export function renderWeb(brief: DerivedBrief, intent: UXIntent): string {
   return `
     <div class="artifact-shell web-shell">
       <nav class="site-nav">
@@ -17,8 +18,8 @@ export function renderWeb(brief: DerivedBrief): string {
             <h1>${escapeHtml(brief.objective)}.</h1>
             <p>${escapeHtml(brief.topic)}</p>
             <div class="hero-actions">
-              <button class="primary-action">Start prototype</button>
-              <button class="ghost-action">View system</button>
+              <button class="primary-action">${escapeHtml(intent.primaryAction)}</button>
+              <button class="ghost-action">${escapeHtml(intent.secondaryAction ?? 'View system')}</button>
             </div>
           </div>
           <div class="product-shot" aria-label="Generated product preview">

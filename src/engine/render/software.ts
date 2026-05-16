@@ -1,8 +1,9 @@
+import type { UXIntent } from '../intent/types';
 import type { DerivedBrief } from '../types';
 import { escapeHtml } from '../utils';
 import { renderFeatureList, renderMetricCards } from './partials';
 
-export function renderSoftware(brief: DerivedBrief): string {
+export function renderSoftware(brief: DerivedBrief, intent: UXIntent): string {
   return `
     <div class="artifact-shell software-shell">
       <aside class="rail">
@@ -19,7 +20,7 @@ export function renderSoftware(brief: DerivedBrief): string {
             <h1>${escapeHtml(brief.name)}</h1>
             <p>${escapeHtml(brief.objective)} for ${escapeHtml(brief.audience)}.</p>
           </div>
-          <button class="primary-action">Ship review</button>
+          <button class="primary-action">${escapeHtml(intent.primaryAction)}</button>
         </header>
         <section class="metric-grid">${renderMetricCards(brief)}</section>
         <section class="split-grid">

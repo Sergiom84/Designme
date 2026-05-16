@@ -56,10 +56,13 @@ Baseline prompts and acceptance checks live under [`docs/quality/`](docs/quality
 
 - `src/engine.ts` is a compatibility barrel.
 - `src/engine/brief.ts` turns prompts into a derived brief.
+- `src/engine/intent/` detects domain, UX goal, modules, states, and risks.
 - `src/engine/options.ts` owns artifact options, directions, and default tweaks.
 - `src/engine/render/` owns standalone HTML rendering by artifact type.
 - `src/engine/critique.ts` and `src/engine/handoff.ts` keep quality review and agent handoff separate from rendering.
 - `src/design-system/tokens/` owns themes, palettes, CSS variables, and contrast helpers.
+
+More detail: [`docs/architecture.md`](docs/architecture.md).
 
 ## What It Borrows Conceptually
 

@@ -30,6 +30,8 @@ import {
   buildDesignProject,
   defaultTweaks,
   designDirections,
+  domainLabels,
+  goalLabels,
   type ArtifactType,
   type Density,
   type DesignTweaks,
@@ -415,6 +417,22 @@ export default function App() {
                 <strong>Design direction advisor</strong>
                 <span>Tres rutas con intención distinta.</span>
               </div>
+            </div>
+            <div className="intent-card">
+              <div>
+                <span>Dominio</span>
+                <strong>{domainLabels[output.intent.domain]}</strong>
+              </div>
+              <div>
+                <span>Objetivo UX</span>
+                <strong>{goalLabels[output.intent.goal]}</strong>
+              </div>
+              <p>{output.intent.userMentalModel}</p>
+              <ul>
+                {output.intent.modules.slice(0, 4).map((module) => (
+                  <li key={module.id}>{module.label}</li>
+                ))}
+              </ul>
             </div>
             <div className="direction-list">
               {designDirections.map((direction) => {
