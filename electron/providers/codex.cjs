@@ -58,7 +58,7 @@ function findKnownWindowsExecutable(command, env = process.env) {
     const stack = [root];
     while (stack.length > 0) {
       const dir = stack.pop();
-      let entries = [];
+      let entries;
       try {
         entries = fs.readdirSync(dir, { withFileTypes: true });
       } catch {

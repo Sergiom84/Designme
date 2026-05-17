@@ -16,6 +16,8 @@ export default tseslint.config(
       'node_modules/**',
       'playwright-report/**',
       'release/**',
+      'src/components/legacy/**',
+      'src/legacy/**',
       'test-results/**',
     ],
   },
