@@ -143,3 +143,16 @@ No hay proveedor externo activo por defecto. Local OpenAI, Claude Code y Codex s
 - Nuevo formato de export: `src/export/`, `electron/exportBundle.cjs`, `electron/validators.cjs`.
 - Nuevo provider: `src/providers/`, `electron/providers/` si necesita desktop, tests unitarios y `docs/providers.md`.
 - Cambio visual de app: `src/components/`, `src/styles/`, `src/i18n/`.
+# Designme v2 Redesign
+
+```mermaid
+flowchart LR
+  A["Chat rail"] --> B["Ask flow"]
+  B --> C["Provider abstraction"]
+  C --> D["Multi-idea dashboard"]
+  E["Local code workspace"] --> C
+  D --> F["Right inspector"]
+  F --> G["Tweaks / Design.md / Critique / Workspace"]
+```
+
+The v2 shell uses three persistent columns: chat rail, idea dashboard, and inspector. Providers receive prompt, artifact type, tweaks, and optional workspace summary. Deterministic generation remains fallback; cloud and CLI providers stream through Electron IPC.

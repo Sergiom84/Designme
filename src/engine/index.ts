@@ -7,6 +7,13 @@ import { buildHtml } from './render/htmlDocument';
 import type { BuildInput, DesignOutput } from './types';
 import { slugify } from './utils';
 
+function sanitizeProviderHtml(rawHtml: string): string {
+  return rawHtml
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, '')
+    .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, '');
+}
+
 export * from './options';
 export * from './types';
 export * from './intent';
@@ -70,4 +77,9 @@ export function rebuildDesignOutputWithHtml(input: BuildInput, html: string): De
     direction,
     intent,
   };
+}
+
+export function wrapProviderHtml(rawHtml: string, input: BuildInput): DesignOutput {
+  const html = sanitizeProviderHtml(rawHtml);
+  return rebuildDesignOutputWithHtml(input, html);
 }

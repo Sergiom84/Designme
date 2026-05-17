@@ -187,3 +187,12 @@ El plan activo vive en [`docs/PLAN_MEJORAS_DESIGNME.md`](docs/PLAN_MEJORAS_DESIG
 
 - Open CoDesign: flujo local-first, sesiones explícitas, preview en vivo, exports reales y sin bloqueo cloud.
 - Huashu Design: asesor de dirección visual, variaciones ajustables, supuestos visuales tempranos y rúbrica práctica de crítica.
+# Designme Studio v2
+
+Designme now opens into a three-column design workbench: chat rail, multi-idea dashboard, and right inspector. The redesign adds provider capabilities, ask-first flow, local workspace analysis, and deterministic fallback generation.
+
+Run:
+
+```bash
+npm run dev
+```

@@ -1,4 +1,4 @@
-import { buildProviderPrompt } from './shared/multiIdea';
+import { buildProviderPrompt } from './shared/providerPrompt';
 import { createDesktopCliProvider } from './desktopCliBridge';
 
 export const anthropicApiProvider = createDesktopCliProvider({

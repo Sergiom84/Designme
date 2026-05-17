@@ -48,7 +48,7 @@ describe('local setup detection', () => {
     expect(detection).toMatchObject({
       providers: [
         {
-          id: 'claude-code',
+          id: 'claude-code-cli',
           detected: true,
           ready: true,
           configFound: true,
@@ -56,7 +56,7 @@ describe('local setup detection', () => {
           version: 'claude 1.2.3',
         },
         {
-          id: 'codex',
+          id: 'codex-cli',
           detected: true,
           ready: true,
           configFound: true,
@@ -90,8 +90,8 @@ describe('local setup detection', () => {
 
     expect(detection).toMatchObject({
       providers: [
-        { id: 'claude-code', detected: false, ready: false },
-        { id: 'codex', detected: false, ready: false },
+        { id: 'claude-code-cli', detected: false, ready: false },
+        { id: 'codex-cli', detected: false, ready: false },
       ],
       localOpenAI: { id: 'ollama', detected: false, ready: false },
     });

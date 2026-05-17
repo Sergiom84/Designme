@@ -32,7 +32,7 @@ function createProvider(html = '<!doctype html><html><body><main>Manual</main></
   );
 
   const provider: Provider = {
-    id: 'claude-code',
+    id: 'claude-code-cli',
     label: 'Claude Code',
     status: vi.fn(async () => 'ready'),
     generate,
@@ -53,7 +53,7 @@ describe('useGenerate', () => {
     const { rerender, result } = renderHook(
       ({ input, runKey }) =>
         useGenerate(input, {
-          providerId: 'claude-code',
+          providerId: 'claude-code-cli',
           autoGenerate: false,
           runKey,
         }),
@@ -99,7 +99,7 @@ describe('useGenerate', () => {
     });
 
     const provider: Provider = {
-      id: 'claude-code',
+      id: 'claude-code-cli',
       label: 'Claude Code',
       status: vi.fn(async () => 'ready'),
       generate,
@@ -110,7 +110,7 @@ describe('useGenerate', () => {
     const { rerender, result } = renderHook(
       ({ input, runKey }) =>
         useGenerate(input, {
-          providerId: 'claude-code',
+          providerId: 'claude-code-cli',
           autoGenerate: false,
           runKey,
         }),
@@ -145,7 +145,7 @@ describe('useGenerate', () => {
     const { rerender, result } = renderHook(
       ({ input, runKey }) =>
         useGenerate(input, {
-          providerId: 'claude-code',
+          providerId: 'claude-code-cli',
           autoGenerate: false,
           runKey,
         }),

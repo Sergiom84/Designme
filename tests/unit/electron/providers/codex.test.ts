@@ -150,7 +150,7 @@ describe('electron Codex provider', () => {
     const run = startCodexRun(
       { prompt: 'Build a page' },
       { onEvent: (event: Record<string, unknown>) => events.push(event) },
-      { spawn, command: 'codex', cwd: 'C:\\tmp\\designme-codex' },
+      { spawn, command: 'codex-cli', cwd: 'C:\\tmp\\designme-codex' },
     );
 
     await expect(run.done).resolves.toMatchObject({
@@ -170,7 +170,7 @@ describe('electron Codex provider', () => {
       '-',
     ]);
     expect(spawn).toHaveBeenCalledWith(
-      'codex',
+      'codex-cli',
       run.args,
       expect.objectContaining({ shell: false, stdio: ['pipe', 'pipe', 'pipe'] }),
     );

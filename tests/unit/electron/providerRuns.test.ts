@@ -24,7 +24,7 @@ interface FakeWebContents {
 
 function makeStartPayload() {
   return {
-    providerId: 'claude-code',
+    providerId: 'claude-code-cli',
     prompt: 'Build a compact dashboard',
     artifactType: 'dashboard',
     directionId: 'calm',

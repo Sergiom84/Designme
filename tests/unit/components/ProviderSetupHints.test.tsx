@@ -1,12 +1,12 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ProviderSetupHints } from '../../../src/components/ProviderSetupHints';
+import { ProviderSetupHints } from '../../../src/components/legacy/ProviderSetupHints';
 
 const detection: DesignmeLocalSetupDetection = {
   generatedAt: '2026-05-17T10:00:00.000Z',
   providers: [
     {
-      id: 'claude-code',
+      id: 'claude-code-cli',
       label: 'Claude Code',
       detected: true,
       ready: true,
@@ -15,8 +15,8 @@ const detection: DesignmeLocalSetupDetection = {
       version: 'claude 1.2.3',
     },
     {
-      id: 'codex',
-      label: 'Codex',
+      id: 'codex-cli',
+      label: 'codex-cli',
       detected: false,
       ready: false,
       configFound: false,
@@ -68,7 +68,7 @@ describe('ProviderSetupHints', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Activar Claude Code' }));
-    expect(onActivateProvider).toHaveBeenCalledWith('claude-code');
+    expect(onActivateProvider).toHaveBeenCalledWith('claude-code-cli');
 
     fireEvent.click(screen.getByRole('button', { name: 'Usar Ollama' }));
     expect(onUseOllama).toHaveBeenCalledWith({

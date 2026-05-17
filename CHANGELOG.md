@@ -63,3 +63,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Initial Designme Studio application baseline.
 - Local-first project structure for generating and reviewing design artifacts.
 - Phase 0 documentation baseline with a single-locale policy.
+# v0.3.0 — Redesign OCD-inspired
+
+- Added v2 three-column shell: chat rail, idea dashboard, right inspector.
+- Added unified provider capabilities, ask flow, multi-idea generation, OpenAI/Anthropic API bridge scaffolding, and CLI provider rename.
+- Added local workspace import, indexing, analysis, and prompt context injection.
+- Added Design.md, critique, tweaks, workspace inspector tabs, scaffolds, and updated architecture docs.
