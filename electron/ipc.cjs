@@ -4,6 +4,7 @@ const { writeExportBundle } = require('./exportBundle.cjs');
 const { exportDirectory, timestampedExportPath } = require('./paths.cjs');
 const { createProviderRunManager } = require('./providerRuns.cjs');
 const { detectClaudeCode } = require('./providers/claude-code.cjs');
+const { detectCodex } = require('./providers/codex.cjs');
 const { isAllowedAppUrl } = require('./security.cjs');
 const {
   validateClipboardText,
@@ -20,6 +21,11 @@ function assertTrustedSender(event, isDev) {
     throw new Error('Blocked IPC from untrusted sender');
   }
 }
+
+const providerStatusDetectors = {
+  'claude-code': () => detectClaudeCode({ checkStatus: true }),
+  codex: () => detectCodex({ checkStatus: true }),
+};
 
 function registerIpcHandlers(app, isDev) {
   const providerRuns = createProviderRunManager();
@@ -70,11 +76,12 @@ function registerIpcHandlers(app, isDev) {
     assertTrustedSender(event, isDev);
     validateProviderStatusPayload(payload);
 
-    if (payload.providerId !== 'claude-code') {
+    const detectProvider = providerStatusDetectors[payload.providerId];
+    if (!detectProvider) {
       return { providerId: payload.providerId, status: 'error', detail: 'Provider status is not available in desktop IPC.' };
     }
 
-    const detection = await detectClaudeCode({ checkStatus: true });
+    const detection = await detectProvider();
     return {
       providerId: payload.providerId,
       status: detection.available && !detection.statusError ? 'ready' : 'error',

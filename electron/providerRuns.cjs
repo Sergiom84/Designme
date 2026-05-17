@@ -3,61 +3,88 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { extractHtmlFromClaudeText, startClaudeCodeRun } = require('./providers/claude-code.cjs');
+const { extractHtmlFromCodexText, startCodexRun } = require('./providers/codex.cjs');
 const { validateProviderEventPayload, validateProviderStartPayload } = require('./validators.cjs');
 
-function claudeCodeWorkspace() {
-  const workspace = path.join(os.tmpdir(), 'designme-claude-code');
+const providerHandlers = {
+  'claude-code': {
+    errorMessage: 'Claude Code did not return a complete standalone HTML document.',
+    extractHtml: extractHtmlFromClaudeText,
+    notes: 'Generated with Claude Code.',
+    startRun: startClaudeCodeRun,
+    workspaceName: 'designme-claude-code',
+  },
+  codex: {
+    errorMessage: 'Codex did not return a complete standalone HTML document.',
+    extractHtml: extractHtmlFromCodexText,
+    notes: 'Generated with Codex.',
+    startRun: startCodexRun,
+    workspaceName: 'designme-codex',
+  },
+};
+
+function providerWorkspace(workspaceName) {
+  const workspace = path.join(os.tmpdir(), workspaceName);
   fs.mkdirSync(workspace, { recursive: true });
   return workspace;
+}
+
+async function startCliProviderRun(handler, { payload, signal, emit }) {
+  if (signal.aborted) {
+    return;
+  }
+
+  emit({ type: 'started' });
+
+  let emittedTerminal = false;
+  const run = handler.startRun(
+    { prompt: payload.prompt, signal },
+    {
+      onToken(text) {
+        emit({ type: 'token', text });
+      },
+      onToolCall(event) {
+        emit({ type: 'tool-call', name: event.name, args: event.args });
+      },
+      onToolResult(event) {
+        emit({ type: 'tool-result', name: event.name, result: event.result });
+      },
+      onFinal(event) {
+        const html = handler.extractHtml(event.text || '');
+        if (!html) {
+          emittedTerminal = true;
+          emit({ type: 'error', message: handler.errorMessage });
+          return;
+        }
+        emittedTerminal = true;
+        emit({ type: 'final', html, notes: handler.notes });
+      },
+    },
+    { cwd: providerWorkspace(handler.workspaceName) },
+  );
+
+  const result = await run.done;
+  if (!emittedTerminal) {
+    const html = handler.extractHtml(result.finalText || '');
+    if (html) {
+      emit({ type: 'final', html, notes: handler.notes });
+      return;
+    }
+
+    emit({ type: 'error', message: handler.errorMessage });
+  }
 }
 
 function createDefaultProviderAdapter() {
   return {
     async start({ payload, signal, emit }) {
-      if (payload.providerId !== 'claude-code') {
+      const handler = providerHandlers[payload.providerId];
+      if (!handler) {
         emit({ type: 'error', message: `Provider ${payload.providerId} is not available in desktop IPC.` });
         return;
       }
 
-      emit({ type: 'started' });
-
-      let emittedTerminal = false;
-      const run = startClaudeCodeRun(
-        { prompt: payload.prompt, signal },
-        {
-          onToken(text) {
-            emit({ type: 'token', text });
-          },
-          onToolCall(event) {
-            emit({ type: 'tool-call', name: event.name, args: event.args });
-          },
-          onToolResult(event) {
-            emit({ type: 'tool-result', name: event.name, result: event.result });
-          },
-          onFinal(event) {
-            const html = extractHtmlFromClaudeText(event.text || '');
-            if (!html) {
-              emittedTerminal = true;
-              emit({ type: 'error', message: 'Claude Code did not return a complete standalone HTML document.' });
-              return;
-            }
-            emittedTerminal = true;
-            emit({ type: 'final', html, notes: 'Generated with Claude Code.' });
-          },
-        },
-        { cwd: claudeCodeWorkspace() },
-      );
-
-      const result = await run.done;
-      if (!emittedTerminal) {
-        const html = extractHtmlFromClaudeText(result.finalText || '');
-        if (html) {
-          emit({ type: 'final', html, notes: 'Generated with Claude Code.' });
-          return;
-        }
-
-        emit({ type: 'error', message: 'Claude Code did not return a complete standalone HTML document.' });
-      }
+      await startCliProviderRun(handler, { payload, signal, emit });
     },
   };
 }
