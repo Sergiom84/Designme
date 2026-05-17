@@ -1,12 +1,18 @@
 # Designme Studio
 
-Diseñador local-first para apps, pantallas de software, dashboards, decks, infografías y webs. No requiere API key: esta versión usa un motor determinista, exporta HTML autónomo y genera un prompt de handoff para continuar el trabajo en Codex, Claude u otro agente.
+Designme Studio es un diseñador local-first para apps, pantallas de software, dashboards, decks, infografías y webs. Funciona offline con un motor determinista y, cuando el usuario lo pide, puede generar con providers externos: Local OpenAI/Ollama, Claude Code o Codex.
+
+La versión `0.2.0` mantiene la filosofía de control local: no hay proveedor cloud obligatorio, los providers no deterministas se ejecutan solo con el botón `Generar`, y las credenciales se gestionan fuera de Designme o quedan solo en memoria de sesión.
 
 ## Funcionalidades
 
-- Generador determinista local, sin proveedor cloud obligatorio.
+- Generador determinista local, sin API key ni red.
+- Provider OpenAI-compatible configurable para Ollama, LM Studio, vLLM o gateways BYOK.
+- Providers de escritorio para Claude Code y Codex usando los CLI ya autenticados del usuario.
+- Detección one-click de Claude Code, Codex y Ollama en la app desktop.
+- Streaming de tokens, tool calls, resultados y botón `Stop` en el panel de agente.
+- Sesiones recientes, versiones guardadas y modo de comentarios sobre el preview.
 - Vista previa en lienzos de escritorio, tablet y móvil.
-- Shell adaptable con zoom, modo solo lienzo y comparación de versiones guardadas.
 - Direcciones visuales respaldadas por tokens de diseño compartidos.
 - Ajustes de densidad, tono, movimiento, radio y marco de dispositivo.
 - Referencias locales: notas visuales/textuales que se convierten en preferencias, no en copia ciega.
@@ -15,7 +21,6 @@ Diseñador local-first para apps, pantallas de software, dashboards, decks, info
 - Analizador local de accesibilidad, jerarquía, layout, copy, contraste y exportación.
 - Exportación HTML y paquete estructurado con `index.html`, `styles.css`, `script.js`, `designme.json`, `handoff.md` y README.
 - Electron endurecido con CSP, IPC validado por origen y sandbox de preview más estricto.
-- Shell React accesible con tabs por teclado, controles nombrados, medidores etiquetados y estado anunciado de forma discreta.
 
 ## Capturas
 
@@ -24,6 +29,16 @@ Diseñador local-first para apps, pantallas de software, dashboards, decks, info
 ![Panel de crítica local](docs/assets/screenshots/designme-critica.png)
 
 ![Preview móvil](docs/assets/screenshots/designme-mobile.png)
+
+### Providers
+
+![Provider determinista](docs/assets/screenshots/providers/designme-provider-deterministic.png)
+
+![Provider Local OpenAI](docs/assets/screenshots/providers/designme-provider-local-openai.png)
+
+![Provider Claude Code](docs/assets/screenshots/providers/designme-provider-claude-code.png)
+
+![Provider Codex](docs/assets/screenshots/providers/designme-provider-codex.png)
 
 ## Quick Start
 
@@ -37,6 +52,37 @@ Esto arranca Vite y Electron. Para probar solo la versión web:
 ```bash
 npm run web
 ```
+
+## Providers
+
+Designme tiene cuatro providers:
+
+| Provider | Dónde corre | Requiere | Cuándo genera |
+|---|---|---|---|
+| `deterministic` | Renderer local | Nada | Automático con debounce |
+| `local-openai` | Endpoint OpenAI-compatible | Servidor/modelo; API key opcional | Solo al pulsar `Generar` |
+| `claude-code` | Electron + CLI `claude` | Claude Code instalado y autenticado | Solo al pulsar `Generar` |
+| `codex` | Electron + CLI `codex` | Codex instalado y autenticado | Solo al pulsar `Generar` |
+
+Más detalle en [`docs/providers.md`](docs/providers.md).
+
+### BYOK Y Local OpenAI
+
+`Local OpenAI` permite apuntar a cualquier endpoint compatible con `/chat/completions` y streaming SSE. Por defecto usa:
+
+```txt
+http://127.0.0.1:11434/v1
+```
+
+La API key es opcional. Si se introduce, se envía como `Authorization: Bearer ...` en la petición, pero Designme no la guarda en `localStorage`; solo persiste `baseUrl`, `model` y `timeoutMs`.
+
+### Ollama
+
+En escritorio, Designme busca Ollama en `http://127.0.0.1:11434/api/tags`. Si responde, muestra `Usar Ollama`, rellena `Local OpenAI` con `http://127.0.0.1:11434/v1` y activa el provider local.
+
+### Subscriptions: Claude Code Y Codex
+
+Claude Code y Codex no son BYOK dentro de Designme. La app no gestiona login, billing ni OAuth: usa los CLI locales ya autenticados. En modo web aparecen como no disponibles porque dependen del bridge seguro de Electron.
 
 ## Build
 
@@ -62,7 +108,7 @@ npm run e2e
 npm run security:audit
 ```
 
-`npm run check` ejecuta typecheck, unit tests y build. `npm run e2e` levanta Vite en `127.0.0.1:4173` y corre el flujo principal, export web y Axe.
+`npm run check` ejecuta typecheck, lint, unit tests con coverage y build. `npm run e2e` levanta Vite en `127.0.0.1:4173` y corre el flujo principal, export web y Axe.
 
 ## Atajos
 
@@ -77,40 +123,32 @@ npm run security:audit
 npm run package
 ```
 
-El ejecutable portable se crea en `release/`. Los HTML exportados se escriben en `Documents/Designme/exports`, salvo que definas `DESIGNME_EXPORT_DIR`.
+El script de release Windows genera portable y NSIS en `release/`:
 
-## Roadmap De Calidad
+```bash
+npm run package:win:portable
+npm run package:win:nsis
+```
 
-El plan activo vive en [`docs/PLAN_MEJORAS_DESIGNME.md`](docs/PLAN_MEJORAS_DESIGNME.md).
-
-Los prompts base y checks de aceptación están en [`docs/quality/`](docs/quality/). Prioridades actuales:
-
-1. Tokens y calidad de tema.
-2. Arquitectura modular del generador.
-3. Crítica medible y accesibilidad.
-4. Shell adaptable.
-5. IPC Electron y límites de preview más seguros.
+Los HTML exportados se escriben en `Documents/Designme/exports`, salvo que definas `DESIGNME_EXPORT_DIR`.
 
 ## Arquitectura
 
-- `src/engine.ts` es un barrel de compatibilidad.
-- `src/engine/brief.ts` convierte prompts en un brief derivado.
-- `src/engine/intent/` detecta dominio, objetivo UX, módulos, estados y riesgos.
-- `src/engine/options.ts` define artefactos, direcciones y ajustes por defecto.
-- `src/engine/render/components/` contiene componentes HTML reutilizables para artefactos generados.
-- `src/engine/render/styles/` contiene CSS compartido y layouts por tipo de artefacto.
-- `src/engine/render/` renderiza HTML autónomo por artefacto.
-- `src/engine/critique.ts` y `src/engine/handoff.ts` separan revisión de calidad y handoff del render.
+- `src/engine/` deriva brief, intención UX, render HTML, crítica y handoff.
+- `src/providers/` contiene el contrato multi-provider y los adapters determinista, Local OpenAI, Claude Code y Codex.
+- `src/settings/` guarda configuración local de providers sin persistir API keys.
+- `src/sessions/` mantiene sesiones recientes y snapshots.
+- `src/comments/` añade comentarios del preview al siguiente run.
 - `src/quality/` analiza HTML generado y convierte incidencias medibles en puntuaciones.
-- `src/components/`, `src/hooks/` y `src/styles/` mantienen modular la shell responsive.
 - `src/export/` construye HTML autónomo y paquetes de exportación.
 - `src/references/` convierte referencias locales en preferencias estructuradas.
-- `src/ai/` define proveedores opcionales; el proveedor activo por defecto es local y determinista.
+- `electron/` valida IPC, seguridad, exportaciones y providers CLI de escritorio.
 - `src/design-system/tokens/` contiene temas, paletas, variables CSS y helpers de contraste.
 
 Más detalle:
 
 - Arquitectura: [`docs/architecture.md`](docs/architecture.md).
+- Providers: [`docs/providers.md`](docs/providers.md).
 - Sistema de diseño: [`docs/design-system.md`](docs/design-system.md).
 - Formato de exportación: [`docs/export-format.md`](docs/export-format.md).
 - Rúbrica de calidad: [`docs/quality-rubric.md`](docs/quality-rubric.md).
@@ -131,20 +169,21 @@ handoff.md
 README.md
 ```
 
-`designme.json` conserva prompt, tipo de artefacto, dirección, tema, ajustes, intención UX y reporte de calidad.
+`designme.json` conserva prompt, tipo de artefacto, dirección, tema, ajustes, intención UX, reporte de calidad, referencias locales y metadata del provider usado.
 
-## IA Opcional Y Privacidad
+## Privacidad
 
-La app no envía nada fuera por defecto. La pestaña `Referencias` analiza notas locales, detecta rasgos como densidad, contraste, dirección visual o movimiento, y deja al usuario decidir si quiere:
+La app no envía nada fuera por defecto. El provider determinista, las referencias, la crítica y la exportación son locales.
 
-- aplicar esas preferencias a dirección/ajustes;
-- mejorar el brief localmente con un proveedor determinista.
+Cuando eliges `Local OpenAI`, el prompt y el contexto se envían al `baseUrl` configurado. Si ese endpoint es Ollama en `127.0.0.1`, el flujo permanece local; si apunta a un servicio remoto, saldrá del equipo.
 
-La IA futura debe entrar como proveedor explícito y opt-in. Designme no persiste API keys ni manda referencias a servicios externos en esta fase.
+Cuando eliges `Claude Code` o `Codex`, Designme envía el prompt al CLI local y el CLI se comunica con su servicio según la cuenta del usuario. Designme no guarda credenciales de esos CLI.
+
+## Roadmap De Calidad
+
+El plan activo vive en [`docs/PLAN_MEJORAS_DESIGNME.md`](docs/PLAN_MEJORAS_DESIGNME.md). Los prompts base y checks de aceptación están en [`docs/quality/`](docs/quality/).
 
 ## Inspiración Conceptual
 
 - Open CoDesign: flujo local-first, sesiones explícitas, preview en vivo, exports reales y sin bloqueo cloud.
 - Huashu Design: asesor de dirección visual, variaciones ajustables, supuestos visuales tempranos y rúbrica práctica de crítica.
-
-No hay proveedor de modelos hardcodeado. La app funciona offline como punto de partida de diseño y deja un puente limpio hacia Codex o Claude sin atar Designme a una cuenta de API.

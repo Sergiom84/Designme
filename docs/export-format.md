@@ -52,7 +52,7 @@ Designme Export/
 - intención UX;
 - puntuación e incidencias de calidad;
 - resumen de referencias locales, si se usaron;
-- metadata del proveedor IA opcional, si se usó.
+- metadata del provider usado.
 
 Ejemplo reducido:
 
@@ -95,12 +95,14 @@ Ejemplo reducido:
     "keywords": ["sistemas", "contraste"]
   },
   "ai": {
-    "providerId": "local",
+    "providerId": "local-openai",
     "used": true,
     "localOnly": true
   }
 }
 ```
+
+`ai.providerId` puede ser `deterministic`, `local-openai`, `claude-code` o `codex`. `localOnly` indica si Designme considera que el flujo permanece local desde la perspectiva de la app; en `local-openai` depende de que el `baseUrl` configurado sea realmente local.
 
 El manifest puede crecer, pero no debe perder estos campos base porque los consume el handoff y la documentación de export.
 
