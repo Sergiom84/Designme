@@ -10,6 +10,7 @@ import { StatusBar } from './layout/StatusBar';
 import { TopBar } from './layout/TopBar';
 import { createChatTurn, createIdeaDraft, useV2Store } from './state/store';
 import type { Attachment } from './state/types';
+import { analyzeWorkspace, summarizeWorkspace } from './workspace/analyzer';
 
 function digest(value: string): string {
   let hash = 0;
@@ -134,13 +135,34 @@ export default function App() {
     setActiveIdea(nextIdeas[0]?.id);
   }
 
-  function importWorkspacePlaceholder() {
-    setWorkspace({
-      files: [],
-      stats: { fileCount: 0, bytes: 0 },
-      summary: 'Workspace IPC llega en base 3.',
-    });
-    setRunState('ready', 'Workspace placeholder conectado');
+  async function importWorkspace() {
+    if (!window.designme?.codeWorkspacePick || !window.designme?.codeWorkspaceIndex) {
+      setRunState('error', 'Workspace import sólo disponible en app desktop');
+      return;
+    }
+    setRunState('generating', 'Indexando workspace');
+    const picked = await window.designme.codeWorkspacePick();
+    if (picked.canceled || !picked.rootPath) {
+      setRunState('idle', 'Importación cancelada');
+      return;
+    }
+    const indexed = await window.designme.codeWorkspaceIndex({ rootPath: picked.rootPath });
+    const readFile = async (path: string) => {
+      if (!window.designme?.codeWorkspaceReadFile) return '';
+      const result = await window.designme.codeWorkspaceReadFile({ rootPath: indexed.rootPath, path });
+      return result.content;
+    };
+    const analysis = await analyzeWorkspace(indexed.files, readFile);
+    const snapshot = {
+      ...indexed,
+      analysis,
+      summary: '',
+    };
+    snapshot.summary = summarizeWorkspace(snapshot);
+    setWorkspace(snapshot);
+    await window.designme.codeWorkspaceWatch?.({ rootPath: indexed.rootPath });
+    addTurn(createChatTurn('system', `<workspace_context>\n${snapshot.summary}\n</workspace_context>`));
+    setRunState('ready', 'Workspace analizado');
   }
 
   const tokenCount = useMemo(() => chatTurns.reduce((count, turn) => count + turn.text.length, 0), [chatTurns]);
@@ -184,9 +206,9 @@ export default function App() {
           tweaks={project.draft.tweaks}
           workspace={workspace}
           onDesignMdChange={setDesignMd}
-          onImportWorkspace={importWorkspacePlaceholder}
+          onImportWorkspace={() => void importWorkspace()}
           onPatchTweaks={(tweaks) => patchDraft({ tweaks })}
-          onRescanWorkspace={importWorkspacePlaceholder}
+          onRescanWorkspace={() => void importWorkspace()}
         />
       }
       status={<StatusBar ideaCount={ideas.length} state={runState} text={statusText} tokenCount={tokenCount} />}

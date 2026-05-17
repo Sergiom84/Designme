@@ -14,7 +14,8 @@ export const DESIGN_SESSION_STORAGE_KEY = 'designme.session';
 export const DESIGN_SESSIONS_STORAGE_KEY = 'designme.sessions';
 export const MAX_SESSION_SNAPSHOTS = 10;
 export const MAX_DESIGN_SESSIONS = 50;
-export const DESIGN_SESSION_SCHEMA_VERSION = 1;
+export const DESIGN_SESSION_SCHEMA_VERSION = 2;
+export const MAX_SESSION_IDEAS = 12;
 
 type Clock = () => string;
 type IdFactory = () => string;
@@ -176,6 +177,8 @@ export function createInitialDesignSession(
     createdAt: at,
     updatedAt: at,
     draft,
+    chatTurns: [],
+    ideas: [],
     snapshots: normalizeSnapshots(legacySnapshots, draft, resolved),
   };
 }
@@ -224,6 +227,8 @@ export function migrateDesignSessionValue(
     updatedAt,
     draft,
     output: isDesignOutput(value.output) ? value.output : undefined,
+    chatTurns: Array.isArray(value.chatTurns) ? value.chatTurns : [],
+    ideas: Array.isArray(value.ideas) ? value.ideas.slice(0, MAX_SESSION_IDEAS) : [],
     snapshots,
   };
 }

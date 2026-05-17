@@ -102,6 +102,33 @@ interface DesignmeSecretDeleteResult {
   deleted: boolean;
 }
 
+interface DesignmeCodeWorkspacePickResult {
+  canceled: boolean;
+  rootPath?: string;
+}
+
+interface DesignmeCodeWorkspaceFile {
+  path: string;
+  size: number;
+  mime?: string;
+  sha1?: string;
+}
+
+interface DesignmeCodeWorkspaceIndexResult {
+  rootPath: string;
+  files: DesignmeCodeWorkspaceFile[];
+  stats: {
+    fileCount: number;
+    bytes: number;
+    capped?: boolean;
+  };
+}
+
+interface DesignmeCodeWorkspaceChange {
+  event: string;
+  path: string;
+}
+
 type DesignmeProviderEvent =
   | { runId: string; type: 'started' }
   | { runId: string; type: 'token'; text: string }
@@ -117,6 +144,10 @@ interface Window {
     exportHtml(payload: { name: string; html: string }): Promise<DesignmeExportResult>;
     openExports(): Promise<{ directory: string }>;
     copyText(text: string): Promise<void>;
+    codeWorkspacePick(): Promise<DesignmeCodeWorkspacePickResult>;
+    codeWorkspaceIndex(payload: { rootPath: string }): Promise<DesignmeCodeWorkspaceIndexResult>;
+    codeWorkspaceReadFile(payload: { rootPath: string; path: string }): Promise<{ content: string }>;
+    codeWorkspaceWatch(payload: { rootPath: string }): Promise<{ watching: boolean }>;
     providerStart(payload: DesignmeProviderStartPayload): Promise<{ runId: string }>;
     providerStop(payload: { runId: string }): Promise<{ stopped: boolean }>;
     providerStatus(payload: { providerId: DesignmeProviderId }): Promise<DesignmeProviderStatusResult>;
@@ -128,5 +159,6 @@ interface Window {
     getSecret(payload: DesignmeSecretKeyPayload): Promise<DesignmeSecretGetResult>;
     deleteSecret(payload: DesignmeSecretKeyPayload): Promise<DesignmeSecretDeleteResult>;
     onProviderEvent(listener: (event: DesignmeProviderEvent) => void): () => void;
+    onCodeWorkspaceChange(listener: (event: DesignmeCodeWorkspaceChange) => void): () => void;
   };
 }

@@ -1,5 +1,11 @@
 const { clipboard, ipcMain, shell } = require('electron');
 const fs = require('node:fs/promises');
+const {
+  indexWorkspace,
+  pickWorkspace,
+  readWorkspaceFile,
+  watchWorkspace,
+} = require('./codeWorkspace.cjs');
 const { writeExportBundle } = require('./exportBundle.cjs');
 const { exportDirectory, timestampedExportPath } = require('./paths.cjs');
 const { createProviderRunManager } = require('./providerRuns.cjs');
@@ -90,6 +96,26 @@ function registerIpcHandlers(app, isDev, options = {}) {
     assertTrustedSender(event, isDev);
     validateClipboardText(text);
     clipboard.writeText(text);
+  });
+
+  ipcMain.handle('designme:code-workspace-pick', async (event) => {
+    assertTrustedSender(event, isDev);
+    return pickWorkspace();
+  });
+
+  ipcMain.handle('designme:code-workspace-index', async (event, payload) => {
+    assertTrustedSender(event, isDev);
+    return indexWorkspace(payload?.rootPath);
+  });
+
+  ipcMain.handle('designme:code-workspace-read-file', async (event, payload) => {
+    assertTrustedSender(event, isDev);
+    return readWorkspaceFile(payload?.rootPath, payload?.path);
+  });
+
+  ipcMain.handle('designme:code-workspace-watch', async (event, payload) => {
+    assertTrustedSender(event, isDev);
+    return watchWorkspace(payload?.rootPath, event.sender);
   });
 
   ipcMain.handle('designme:provider-start', async (event, payload) => {

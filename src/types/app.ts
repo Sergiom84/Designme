@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ArtifactType, BuildInput, DesignOutput, DesignTweaks, DirectionId } from '../engine/index';
+import type { ChatTurn, Idea } from '../v2/state/types';
 
 export type PreviewMode = 'desktop' | 'tablet' | 'mobile';
 export type PreviewZoom = 'fit' | '50' | '75' | '100';
@@ -22,6 +23,8 @@ export interface DesignSession {
   updatedAt: string;
   draft: BuildInput;
   output?: DesignOutput;
+  chatTurns: ChatTurn[];
+  ideas: Idea[];
   snapshots: VersionSnapshot[];
 }
 

@@ -131,6 +131,19 @@ function validateProviderStartPayload(payload) {
   assertOptionalPlainObject(payload.workspace, 'Provider workspace must be an object');
 }
 
+function validateWorkspaceRootPayload(payload) {
+  assertPlainObject(payload, 'Invalid workspace payload');
+  assertString(payload.rootPath, 'Workspace rootPath must be a string', 4096);
+}
+
+function validateWorkspaceReadPayload(payload) {
+  validateWorkspaceRootPayload(payload);
+  assertString(payload.path, 'Workspace path must be a string', 4096);
+  if (/^(?:[a-z]:)?[\\/]/i.test(payload.path) || payload.path.includes('..')) {
+    throw new Error('Workspace path must be relative');
+  }
+}
+
 function validateProviderStopPayload(payload) {
   assertPlainObject(payload, 'Invalid provider stop payload');
   validateProviderRunId(payload.runId);
@@ -318,6 +331,19 @@ contextBridge.exposeInMainWorld('designme', {
     validateClipboardText(text);
     return ipcRenderer.invoke('designme:copy-text', text);
   },
+  codeWorkspacePick: () => ipcRenderer.invoke('designme:code-workspace-pick'),
+  codeWorkspaceIndex: (payload) => {
+    validateWorkspaceRootPayload(payload);
+    return ipcRenderer.invoke('designme:code-workspace-index', payload);
+  },
+  codeWorkspaceReadFile: (payload) => {
+    validateWorkspaceReadPayload(payload);
+    return ipcRenderer.invoke('designme:code-workspace-read-file', payload);
+  },
+  codeWorkspaceWatch: (payload) => {
+    validateWorkspaceRootPayload(payload);
+    return ipcRenderer.invoke('designme:code-workspace-watch', payload);
+  },
   providerStart: (payload) => {
     validateProviderStartPayload(payload);
     return ipcRenderer.invoke('designme:provider-start', payload);
@@ -382,6 +408,16 @@ contextBridge.exposeInMainWorld('designme', {
     ipcRenderer.on('designme:provider-event', wrappedListener);
     return () => {
       ipcRenderer.removeListener('designme:provider-event', wrappedListener);
+    };
+  },
+  onCodeWorkspaceChange: (listener) => {
+    if (typeof listener !== 'function') {
+      throw new Error('Workspace change listener must be a function');
+    }
+    const wrappedListener = (_event, payload) => listener(payload);
+    ipcRenderer.on('designme:code-workspace-change', wrappedListener);
+    return () => {
+      ipcRenderer.removeListener('designme:code-workspace-change', wrappedListener);
     };
   },
 });
