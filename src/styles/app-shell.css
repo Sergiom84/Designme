@@ -33,6 +33,10 @@
   grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
+.center-panel.has-agent-stream {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
 .canvas-only .left-panel,
 .canvas-only .right-panel {
   display: none;

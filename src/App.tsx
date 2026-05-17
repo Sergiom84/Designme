@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AgentStream } from './components/AgentStream';
 import { AppShell } from './components/AppShell';
 import { CenterPanel } from './components/CenterPanel';
 import { CritiqueInspector } from './components/CritiqueInspector';
@@ -108,6 +109,7 @@ export default function App() {
   const [compareVersionId, setCompareVersionId] = useState('');
   const [aiUsed, setAiUsed] = useState(false);
   const [activeProviderId, setActiveProviderIdState] = useState<ProviderId>(() => getActiveProviderId());
+  const [agentStreamVisible, setAgentStreamVisible] = useState(() => getActiveProviderId() !== 'deterministic');
   const [providerStatuses, setProviderStatuses] = useState<Record<string, ProviderStatus>>({});
   const { previewZoom, setPreviewZoom, zoomScale, resetPreviewZoom } = usePreviewZoom();
 
@@ -148,6 +150,7 @@ export default function App() {
     });
   }, [compareSnapshot]);
   const generationError = [...generationEvents].reverse().find((event) => event.type === 'error');
+  const showAgentStream = activeProviderId !== 'deterministic';
   const visibleStatus =
     generationError?.type === 'error'
       ? generationError.message
@@ -194,6 +197,7 @@ export default function App() {
       const nextProviderId = providerId as ProviderId;
       setActiveProviderId(nextProviderId);
       setActiveProviderIdState(nextProviderId);
+      setAgentStreamVisible(nextProviderId !== 'deterministic');
       const nextProvider = providerList.find((provider) => provider.id === nextProviderId);
       setStatus(`Provider activo: ${nextProvider?.label ?? nextProviderId}`);
     } catch (error) {
@@ -436,6 +440,17 @@ export default function App() {
               />
               <LocalOpenAISettings disabled={generationRunning} />
             </>
+          }
+          agentStream={
+            showAgentStream ? (
+              <AgentStream
+                events={generationEvents}
+                running={generationRunning}
+                provider={{ id: activeProviderId, label: activeProvider?.label ?? activeProviderId }}
+                visible={agentStreamVisible}
+                onToggleVisible={() => setAgentStreamVisible((current) => !current)}
+              />
+            ) : undefined
           }
           onPreviewModeChange={setPreviewMode}
           onPreviewZoomChange={setPreviewZoom}

@@ -15,6 +15,7 @@ interface CenterPanelProps {
   status: string;
   exportPath: string;
   providerPicker?: ReactNode;
+  agentStream?: ReactNode;
   onPreviewModeChange(mode: PreviewMode): void;
   onPreviewZoomChange(zoom: PreviewZoom): void;
   onToggleCanvasOnly(): void;
@@ -35,6 +36,7 @@ export function CenterPanel({
   status,
   exportPath,
   providerPicker,
+  agentStream,
   onPreviewModeChange,
   onPreviewZoomChange,
   onToggleCanvasOnly,
@@ -45,7 +47,7 @@ export function CenterPanel({
   onExportBundle,
 }: CenterPanelProps) {
   return (
-    <main className="center-panel">
+    <main className={agentStream ? 'center-panel has-agent-stream' : 'center-panel'}>
       <CanvasToolbar
         title={output.name}
         summary={output.briefSummary}
@@ -63,6 +65,7 @@ export function CenterPanel({
         onExportHtml={onExportHtml}
         onExportBundle={onExportBundle}
       />
+      {agentStream}
       <PreviewStage
         previewMode={previewMode}
         html={output.html}
