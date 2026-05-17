@@ -1,3 +1,4 @@
+import { Play, Square } from 'lucide-react';
 import { classNames } from '../utils/classNames';
 
 export type ProviderStatus = 'idle' | 'checking' | 'ready' | 'warning' | 'error';
@@ -11,8 +12,10 @@ export interface ProviderPickerOption {
 interface ProviderPickerProps {
   providers: ProviderPickerOption[];
   activeProviderId: string;
+  canGenerate: boolean;
   running: boolean;
   onProviderChange(providerId: string): void;
+  onGenerate(): void;
   onStop(): void;
 }
 
@@ -35,8 +38,10 @@ function getStatusTone(status: ProviderStatus): 'ready' | 'warning' | 'error' {
 export function ProviderPicker({
   providers,
   activeProviderId,
+  canGenerate,
   running,
   onProviderChange,
+  onGenerate,
   onStop,
 }: ProviderPickerProps) {
   const activeProvider = providers.find((provider) => provider.id === activeProviderId) ?? providers[0];
@@ -79,7 +84,13 @@ export function ProviderPicker({
 
       {running ? (
         <button type="button" className="command-button provider-stop-button" onClick={onStop}>
+          <Square size={16} aria-hidden />
           Stop
+        </button>
+      ) : canGenerate ? (
+        <button type="button" className="command-button primary" onClick={onGenerate}>
+          <Play size={16} aria-hidden />
+          <span>Generar</span>
         </button>
       ) : null}
     </section>

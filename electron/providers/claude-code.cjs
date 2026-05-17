@@ -242,7 +242,24 @@ function startClaudeCodeRun(request, callbacksOrOptions = {}, maybeOptions = {})
   const command = options.command || DEFAULT_COMMAND;
   const killTimeoutMs = options.killTimeoutMs || DEFAULT_KILL_TIMEOUT_MS;
   const prompt = requestToPrompt(request);
-  const args = ['-p', prompt, '--output-format', 'stream-json', ...(options.extraArgs || [])];
+  const args = [
+    '-p',
+    '--output-format',
+    'stream-json',
+    '--input-format',
+    'text',
+    '--permission-mode',
+    'dontAsk',
+    '--disallowedTools',
+    'Bash',
+    'Edit',
+    'MultiEdit',
+    'NotebookEdit',
+    'Write',
+    'WebFetch',
+    'WebSearch',
+    ...(options.extraArgs || []),
+  ];
   const emit = createEmitter(callbacks);
   let finalText = '';
   let killTimeoutId = null;
@@ -253,11 +270,12 @@ function startClaudeCodeRun(request, callbacksOrOptions = {}, maybeOptions = {})
     env: options.env,
     shell: false,
     windowsHide: true,
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: ['pipe', 'pipe', 'pipe'],
   });
 
   child.stdout?.setEncoding?.('utf8');
   child.stderr?.setEncoding?.('utf8');
+  child.stdin?.end?.(prompt);
 
   const done = new Promise((resolve, reject) => {
     let stderr = '';

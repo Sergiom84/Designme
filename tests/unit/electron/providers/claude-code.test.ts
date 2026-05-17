@@ -4,21 +4,19 @@ import { createRequire } from 'node:module';
 import { describe, expect, it, vi } from 'vitest';
 
 const require = createRequire(import.meta.url);
-const {
-  detectClaudeCode,
-  normalizeClaudeEvent,
-  startClaudeCodeRun,
-} = require('../../../../electron/providers/claude-code.cjs') as {
-  detectClaudeCode(options?: Record<string, unknown>): Promise<Record<string, unknown>>;
-  normalizeClaudeEvent(event: unknown): Array<Record<string, unknown>>;
-  startClaudeCodeRun(
-    request: { prompt: string; signal?: AbortSignal },
-    callbacks?: Record<string, unknown>,
-    options?: Record<string, unknown>,
-  ): { args: string[]; child: FakeChild; done: Promise<Record<string, unknown>>; stop: () => void };
-};
+const { detectClaudeCode, normalizeClaudeEvent, startClaudeCodeRun } =
+  require('../../../../electron/providers/claude-code.cjs') as {
+    detectClaudeCode(options?: Record<string, unknown>): Promise<Record<string, unknown>>;
+    normalizeClaudeEvent(event: unknown): Array<Record<string, unknown>>;
+    startClaudeCodeRun(
+      request: { prompt: string; signal?: AbortSignal },
+      callbacks?: Record<string, unknown>,
+      options?: Record<string, unknown>,
+    ): { args: string[]; child: FakeChild; done: Promise<Record<string, unknown>>; stop: () => void };
+  };
 
 class FakeChild extends EventEmitter {
+  stdin = new PassThrough();
   stdout = new PassThrough();
   stderr = new PassThrough();
   killed = false;
@@ -26,18 +24,6 @@ class FakeChild extends EventEmitter {
     this.killed = true;
     queueMicrotask(() => this.emit('close', null, signal));
     return true;
-  });
-}
-
-function spawnSuccess(stdout: string) {
-  return vi.fn((_command: string, _args: string[]) => {
-    const child = new FakeChild();
-    queueMicrotask(() => {
-      child.stdout.end(stdout);
-      child.stderr.end();
-      child.emit('close', 0, null);
-    });
-    return child;
   });
 }
 
@@ -120,7 +106,7 @@ describe('electron Claude Code provider', () => {
     ]);
   });
 
-  it('starts claude with prompt mode and maps stream-json lines to callbacks', async () => {
+  it('starts claude in print mode with safe flags, writes the prompt to stdin, and maps callbacks', async () => {
     const stdout = [
       JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: 'Hi' }] } }),
       JSON.stringify({
@@ -130,22 +116,85 @@ describe('electron Claude Code provider', () => {
       JSON.stringify({ type: 'result', result: '<html>Hi</html>' }),
       '',
     ].join('\n');
-    const spawn = spawnSuccess(stdout);
+    let stdin = '';
+    const spawn = vi.fn((_command: string, _args: string[]) => {
+      const child = new FakeChild();
+      child.stdin.on('data', (chunk) => {
+        stdin += chunk.toString();
+      });
+      queueMicrotask(() => {
+        child.stdout.end(stdout);
+        child.stderr.end();
+        child.emit('close', 0, null);
+      });
+      return child;
+    });
     const events: Array<Record<string, unknown>> = [];
+    const rawEvents: Array<Record<string, unknown>> = [];
+    const tokens: string[] = [];
+    const toolCalls: Array<Record<string, unknown>> = [];
+    const finals: Array<Record<string, unknown>> = [];
+    const exits: Array<Record<string, unknown>> = [];
 
     const run = startClaudeCodeRun(
       { prompt: 'Build a page' },
-      { onEvent: (event: Record<string, unknown>) => events.push(event) },
+      {
+        onEvent: (event: Record<string, unknown>) => events.push(event),
+        onRaw: (event: Record<string, unknown>) => rawEvents.push(event),
+        onToken: (text: string) => tokens.push(text),
+        onToolCall: (event: Record<string, unknown>) => toolCalls.push(event),
+        onFinal: (event: Record<string, unknown>) => finals.push(event),
+        onExit: (event: Record<string, unknown>) => exits.push(event),
+      },
       { spawn, command: 'claude' },
     );
 
     await expect(run.done).resolves.toMatchObject({ code: 0, finalText: '<html>Hi</html>' });
-    expect(run.args).toEqual(['-p', 'Build a page', '--output-format', 'stream-json']);
+    expect(run.args).toEqual([
+      '-p',
+      '--output-format',
+      'stream-json',
+      '--input-format',
+      'text',
+      '--permission-mode',
+      'dontAsk',
+      '--disallowedTools',
+      'Bash',
+      'Edit',
+      'MultiEdit',
+      'NotebookEdit',
+      'Write',
+      'WebFetch',
+      'WebSearch',
+    ]);
+    expect(run.args).not.toContain('Build a page');
     expect(spawn).toHaveBeenCalledWith(
       'claude',
-      ['-p', 'Build a page', '--output-format', 'stream-json'],
-      expect.objectContaining({ shell: false, stdio: ['ignore', 'pipe', 'pipe'] }),
+      [
+        '-p',
+        '--output-format',
+        'stream-json',
+        '--input-format',
+        'text',
+        '--permission-mode',
+        'dontAsk',
+        '--disallowedTools',
+        'Bash',
+        'Edit',
+        'MultiEdit',
+        'NotebookEdit',
+        'Write',
+        'WebFetch',
+        'WebSearch',
+      ],
+      expect.objectContaining({ shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] }),
     );
+    expect(stdin).toBe('Build a page');
+    expect(tokens).toEqual(['Hi']);
+    expect(toolCalls).toMatchObject([{ type: 'tool-call', name: 'Write', args: { file: 'index.html' } }]);
+    expect(finals).toMatchObject([{ type: 'final', text: '<html>Hi</html>' }]);
+    expect(rawEvents).toHaveLength(3);
+    expect(exits).toMatchObject([{ code: 0, signal: null }]);
     expect(events).toMatchObject([
       { type: 'token', text: 'Hi' },
       { type: 'tool-call', name: 'Write', args: { file: 'index.html' } },
@@ -159,6 +208,18 @@ describe('electron Claude Code provider', () => {
     const run = startClaudeCodeRun({ prompt: 'Build a page' }, {}, { spawn });
 
     run.stop();
+
+    await expect(run.done).resolves.toMatchObject({ signal: 'SIGTERM' });
+    expect(child.kill).toHaveBeenCalledWith('SIGTERM');
+  });
+
+  it('kills the child with SIGTERM when the request is aborted', async () => {
+    const child = new FakeChild();
+    const spawn = vi.fn(() => child);
+    const controller = new AbortController();
+    const run = startClaudeCodeRun({ prompt: 'Build a page', signal: controller.signal }, {}, { spawn });
+
+    controller.abort();
 
     await expect(run.done).resolves.toMatchObject({ signal: 'SIGTERM' });
     expect(child.kill).toHaveBeenCalledWith('SIGTERM');

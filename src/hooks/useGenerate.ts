@@ -1,15 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { buildDesignProject, type BuildInput, type DesignOutput } from '../engine/index';
-import {
-  getProvider,
-  type GenerateEvent,
-  type ProviderId,
-} from '../providers';
+import { getProvider, type GenerateEvent, type ProviderId } from '../providers';
 
 interface UseGenerateOptions {
   providerId: ProviderId;
   initialOutput?: DesignOutput;
   resetKey?: string;
+  autoGenerate?: boolean;
+  runKey?: number;
   onFinalOutput?(output: DesignOutput): void;
 }
 
@@ -27,14 +25,17 @@ function eventOutput(event: GenerateEvent, fallback: DesignOutput): DesignOutput
 
 export function useGenerate(
   input: BuildInput,
-  { providerId, initialOutput, resetKey, onFinalOutput }: UseGenerateOptions,
+  { providerId, initialOutput, resetKey, autoGenerate = true, runKey = 0, onFinalOutput }: UseGenerateOptions,
 ): UseGenerateResult {
   const fallbackOutput = useMemo(() => buildDesignProject(input), [input]);
+  const inputKey = useMemo(() => JSON.stringify({ input, resetKey }), [input, resetKey]);
   const [output, setOutput] = useState<DesignOutput>(() => initialOutput ?? fallbackOutput);
   const [events, setEvents] = useState<GenerateEvent[]>([]);
   const [running, setRunning] = useState(false);
+  const [generatedInputKey, setGeneratedInputKey] = useState(autoGenerate ? inputKey : '');
   const abortRef = useRef<AbortController | null>(null);
   const runIdRef = useRef(0);
+  const manualRunKeyRef = useRef(0);
   const initialOutputRef = useRef<DesignOutput | undefined>(initialOutput);
 
   const stop = useCallback(() => {
@@ -48,6 +49,13 @@ export function useGenerate(
   }, [initialOutput, resetKey]);
 
   useEffect(() => {
+    if (!autoGenerate) {
+      if (runKey <= 0 || manualRunKeyRef.current === runKey) {
+        return undefined;
+      }
+      manualRunKeyRef.current = runKey;
+    }
+
     const provider = getProvider(providerId);
     const controller = new AbortController();
     const runId = runIdRef.current + 1;
@@ -57,6 +65,7 @@ export function useGenerate(
 
     const start = window.setTimeout(
       () => {
+        setGeneratedInputKey(inputKey);
         setEvents([]);
         setOutput(initialOutputRef.current ?? fallbackOutput);
         setRunning(true);
@@ -92,7 +101,14 @@ export function useGenerate(
       window.clearTimeout(start);
       controller.abort();
     };
-  }, [fallbackOutput, input, onFinalOutput, providerId, resetKey]);
+  }, [autoGenerate, fallbackOutput, input, inputKey, onFinalOutput, providerId, resetKey, runKey]);
 
-  return { output, events, running, stop };
+  const hasCurrentOutput = autoGenerate || generatedInputKey === inputKey;
+
+  return {
+    output: hasCurrentOutput ? output : (initialOutput ?? fallbackOutput),
+    events: hasCurrentOutput ? events : [],
+    running,
+    stop,
+  };
 }

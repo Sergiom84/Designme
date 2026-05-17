@@ -159,6 +159,7 @@ export default function App() {
   const [exportPath, setExportPath] = useState('');
   const [canvasOnly, setCanvasOnly] = useState(false);
   const [commentMode, setCommentMode] = useState(false);
+  const [generationRunKey, setGenerationRunKey] = useState(0);
   const [compareVersionId, setCompareVersionId] = useState('');
   const [aiUsed, setAiUsed] = useState(false);
   const [activeProviderId, setActiveProviderIdState] = useState<ProviderId>(() => getActiveProviderId());
@@ -227,6 +228,8 @@ export default function App() {
     providerId: activeProviderId,
     initialOutput: designSession.output,
     resetKey: designSession.id,
+    autoGenerate: activeProviderId === 'deterministic',
+    runKey: generationRunKey,
     onFinalOutput: persistGeneratedOutput,
   });
 
@@ -316,6 +319,11 @@ export default function App() {
     } catch (error) {
       setStatus(`No se pudo activar el provider: ${errorMessage(error)}`);
     }
+  }
+
+  function runActiveProvider() {
+    setGenerationRunKey((current) => current + 1);
+    setStatus(`Generando con ${activeProvider?.label ?? activeProviderId}`);
   }
 
   function addPreviewComment(target: PreviewCommentTarget, note: string) {
@@ -607,8 +615,10 @@ export default function App() {
               <ProviderPicker
                 providers={providerOptions}
                 activeProviderId={activeProviderId}
+                canGenerate={activeProviderId !== 'deterministic'}
                 running={generationRunning}
                 onProviderChange={changeProvider}
+                onGenerate={runActiveProvider}
                 onStop={stopGeneration}
               />
               <LocalOpenAISettings disabled={generationRunning} />

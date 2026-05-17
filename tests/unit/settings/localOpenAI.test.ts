@@ -59,14 +59,32 @@ describe('local OpenAI settings', () => {
       {
         baseUrl: 'https://localhost:8000/v1',
         model: 'qwen-local',
-        apiKey: '',
+        apiKey: 'secret-token',
         timeoutMs: 500,
       },
       storage,
     );
 
     expect(saved.timeoutMs).toBe(1000);
-    expect(storage.getItem(LOCAL_OPENAI_SETTINGS_STORAGE_KEY)).toContain('qwen-local');
-    expect(readLocalOpenAISettings(storage)).toEqual(saved);
+    const stored = storage.getItem(LOCAL_OPENAI_SETTINGS_STORAGE_KEY);
+    expect(stored).toContain('qwen-local');
+    expect(stored).not.toContain('secret-token');
+    expect(readLocalOpenAISettings(storage)).toEqual({ ...saved, apiKey: '' });
+  });
+
+  it('does not rehydrate API keys from old storage values', () => {
+    const stored = JSON.stringify({
+      baseUrl: 'http://localhost:1234/v1',
+      model: 'local-model',
+      apiKey: 'old-secret',
+      timeoutMs: 30000,
+    });
+
+    expect(parseStoredLocalOpenAISettings(stored)).toEqual({
+      baseUrl: 'http://localhost:1234/v1',
+      model: 'local-model',
+      apiKey: '',
+      timeoutMs: 30000,
+    });
   });
 });

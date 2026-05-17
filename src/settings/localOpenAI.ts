@@ -73,7 +73,7 @@ export function parseStoredLocalOpenAISettings(value: string | null): LocalOpenA
   }
 
   try {
-    return parseLocalOpenAISettings(JSON.parse(value));
+    return { ...parseLocalOpenAISettings(JSON.parse(value)), apiKey: '' };
   } catch {
     return DEFAULT_LOCAL_OPENAI_SETTINGS;
   }
@@ -102,7 +102,8 @@ export function persistLocalOpenAISettings(
   }
 
   try {
-    storage.setItem(LOCAL_OPENAI_SETTINGS_STORAGE_KEY, JSON.stringify(parsed));
+    const { apiKey: _apiKey, ...persistableSettings } = parsed;
+    storage.setItem(LOCAL_OPENAI_SETTINGS_STORAGE_KEY, JSON.stringify(persistableSettings));
   } catch {
     // Ignore storage failures in private mode, hardened contexts, or tests.
   }
