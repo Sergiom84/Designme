@@ -18,7 +18,6 @@ interface CenterPanelProps {
   comments: PreviewComment[];
   status: string;
   exportPath: string;
-  providerPicker?: ReactNode;
   agentStream?: ReactNode;
   onPreviewModeChange(mode: PreviewMode): void;
   onPreviewZoomChange(zoom: PreviewZoom): void;
@@ -28,7 +27,6 @@ interface CenterPanelProps {
   onResolvePreviewComment(commentId: string): void;
   onClearCompare(): void;
   onResetView(): void;
-  onCopyHandoff(): void;
   onExportHtml(): void;
   onExportBundle(): void;
 }
@@ -45,7 +43,6 @@ export function CenterPanel({
   comments,
   status,
   exportPath,
-  providerPicker,
   agentStream,
   onPreviewModeChange,
   onPreviewZoomChange,
@@ -55,7 +52,6 @@ export function CenterPanel({
   onResolvePreviewComment,
   onClearCompare,
   onResetView,
-  onCopyHandoff,
   onExportHtml,
   onExportBundle,
 }: CenterPanelProps) {
@@ -70,14 +66,12 @@ export function CenterPanel({
         hasCompare={Boolean(compareOutput)}
         commentMode={commentMode}
         commentCount={commentCount}
-        providerPicker={providerPicker}
         onPreviewModeChange={onPreviewModeChange}
         onPreviewZoomChange={onPreviewZoomChange}
         onToggleCanvasOnly={onToggleCanvasOnly}
         onToggleCommentMode={onToggleCommentMode}
         onClearCompare={onClearCompare}
         onResetView={onResetView}
-        onCopyHandoff={onCopyHandoff}
         onExportHtml={onExportHtml}
         onExportBundle={onExportBundle}
       />

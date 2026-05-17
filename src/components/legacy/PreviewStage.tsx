@@ -244,8 +244,22 @@ function PreviewFrame({
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const nonce = useMemo(() => createNonceForHtml(html), [html]);
   const srcDoc = useMemo(() => (commentMode ? instrumentPreviewHtml(html, nonce) : html), [commentMode, html, nonce]);
+  const [frameSrc, setFrameSrc] = useState('');
   const [pendingComment, setPendingComment] = useState<PendingComment | null>(null);
   const [note, setNote] = useState('');
+
+  useEffect(() => {
+    if (typeof Blob === 'undefined' || typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') {
+      setFrameSrc('');
+      return undefined;
+    }
+
+    const url = URL.createObjectURL(new Blob([srcDoc], { type: 'text/html;charset=utf-8' }));
+    setFrameSrc(url);
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [srcDoc]);
 
   useEffect(() => {
     if (!commentMode) return undefined;
@@ -270,7 +284,14 @@ function PreviewFrame({
 
   return (
     <div className="iframe-shell">
-      <iframe ref={iframeRef} title={title} srcDoc={srcDoc} sandbox="allow-scripts" referrerPolicy="no-referrer" />
+      <iframe
+        ref={iframeRef}
+        title={title}
+        src={frameSrc || undefined}
+        srcDoc={frameSrc ? undefined : srcDoc}
+        sandbox="allow-scripts"
+        referrerPolicy="no-referrer"
+      />
       {commentMode ? (
         <div className="preview-comment-layer" aria-label="Comentarios de preview">
           {comments.map((comment, index) => (

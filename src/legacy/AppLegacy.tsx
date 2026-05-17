@@ -387,34 +387,14 @@ export default function App() {
           recentSessions={recentSessions}
           versions={versions}
           compareVersionId={compareVersionId}
-          onCreateSession={createSession}
-          onSelectSession={selectSession}
-          onPromptChange={changePrompt}
-          onArtifactTypeChange={changeArtifactType}
-          onSaveVersion={saveVersion}
-          onRestoreVersion={restoreVersion}
-          onCompareVersion={compareVersion}
-        />
-      }
-      center={
-        <CenterPanel
-          output={output}
-          compareOutput={compareOutput}
-          previewMode={previewMode}
-          previewZoom={previewZoom}
-          zoomScale={zoomScale}
-          canvasOnly={canvasOnly}
-          commentMode={commentMode}
-          commentCount={activePreviewComments.length}
-          comments={activePreviewComments}
-          status={visibleStatus}
-          exportPath={exportPath}
-          providerPicker={
+          providerControls={
             <>
               <ProviderPicker
                 providers={providerOptions}
                 activeProviderId={activeProviderId}
-                canGenerate={activeProviderId !== 'deterministic'}
+                canGenerate={
+                  activeProviderId !== 'deterministic' && providerStatuses[activeProviderId] === 'ready'
+                }
                 running={generationRunning}
                 onProviderChange={changeProvider}
                 onGenerate={runActiveProvider}
@@ -442,8 +422,30 @@ export default function App() {
               />
             </>
           }
+          onCreateSession={createSession}
+          onSelectSession={selectSession}
+          onPromptChange={changePrompt}
+          onArtifactTypeChange={changeArtifactType}
+          onSaveVersion={saveVersion}
+          onRestoreVersion={restoreVersion}
+          onCompareVersion={compareVersion}
+        />
+      }
+      center={
+        <CenterPanel
+          output={output}
+          compareOutput={compareOutput}
+          previewMode={previewMode}
+          previewZoom={previewZoom}
+          zoomScale={zoomScale}
+          canvasOnly={canvasOnly}
+          commentMode={commentMode}
+          commentCount={activePreviewComments.length}
+          comments={activePreviewComments}
+          status={visibleStatus}
+          exportPath={exportPath}
           agentStream={
-            showAgentStream ? (
+            showAgentStream && agentStreamVisible ? (
               <AgentStream
                 events={generationEvents}
                 running={generationRunning}
@@ -461,7 +463,6 @@ export default function App() {
           onResolvePreviewComment={resolvePreviewCommentById}
           onClearCompare={() => setCompareVersionId('')}
           onResetView={resetView}
-          onCopyHandoff={copyHandoff}
           onExportHtml={exportHtml}
           onExportBundle={exportBundle}
         />

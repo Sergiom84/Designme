@@ -1,6 +1,5 @@
 import {
   Columns2,
-  Copy,
   Download,
   Maximize2,
   MessageSquare,
@@ -9,7 +8,6 @@ import {
   Smartphone,
   Tablet,
 } from 'lucide-react';
-import type { ReactNode } from 'react';
 import type { PreviewMode, PreviewZoom } from '../types/app';
 import { es } from '../i18n';
 
@@ -22,14 +20,12 @@ interface CanvasToolbarProps {
   hasCompare: boolean;
   commentMode: boolean;
   commentCount: number;
-  providerPicker?: ReactNode;
   onPreviewModeChange(mode: PreviewMode): void;
   onPreviewZoomChange(zoom: PreviewZoom): void;
   onToggleCanvasOnly(): void;
   onToggleCommentMode(): void;
   onClearCompare(): void;
   onResetView(): void;
-  onCopyHandoff(): void;
   onExportHtml(): void;
   onExportBundle(): void;
 }
@@ -43,14 +39,12 @@ export function CanvasToolbar({
   hasCompare,
   commentMode,
   commentCount,
-  providerPicker,
   onPreviewModeChange,
   onPreviewZoomChange,
   onToggleCanvasOnly,
   onToggleCommentMode,
   onClearCompare,
   onResetView,
-  onCopyHandoff,
   onExportHtml,
   onExportBundle,
 }: CanvasToolbarProps) {
@@ -69,7 +63,6 @@ export function CanvasToolbar({
         <p>{summary}</p>
       </div>
       <div className="toolbar-actions" role="toolbar" aria-label={es.toolbar.controlsLabel}>
-        {providerPicker}
         <div className="icon-segment" role="group" aria-label={es.toolbar.previewModeLabel}>
           <button
             type="button"
@@ -103,7 +96,7 @@ export function CanvasToolbar({
           </button>
         </div>
 
-        <div className="zoom-segment" role="group" aria-label={es.toolbar.zoomLabel}>
+        <div className="zoom-segment secondary-control" role="group" aria-label={es.toolbar.zoomLabel}>
           {(['fit', '50', '75', '100'] as PreviewZoom[]).map((zoom) => (
             <button
               key={zoom}
@@ -120,7 +113,7 @@ export function CanvasToolbar({
 
         <button
           type="button"
-          className="icon-button"
+          className="icon-button secondary-control"
           title={es.toolbar.resetView}
           aria-label={es.toolbar.resetView}
           onClick={onResetView}
@@ -129,7 +122,7 @@ export function CanvasToolbar({
         </button>
         <button
           type="button"
-          className={`icon-button comment-mode-button${commentMode ? ' active' : ''}`}
+          className={`icon-button comment-mode-button secondary-control${commentMode ? ' active' : ''}`}
           title="Comentar preview"
           aria-label="Comentar preview"
           aria-pressed={commentMode}
@@ -140,7 +133,7 @@ export function CanvasToolbar({
         </button>
         <button
           type="button"
-          className="icon-button"
+          className="icon-button secondary-control"
           title={canvasOnly ? es.toolbar.showPanels : es.toolbar.canvasOnly}
           aria-label={canvasOnly ? es.toolbar.showPanels : es.toolbar.canvasOnly}
           aria-pressed={canvasOnly}
@@ -154,10 +147,6 @@ export function CanvasToolbar({
             <span>{es.toolbar.closeCompare}</span>
           </button>
         ) : null}
-        <button type="button" className="command-button" onClick={onCopyHandoff}>
-          <Copy size={17} aria-hidden />
-          <span>{es.toolbar.copyHandoff}</span>
-        </button>
         <button type="button" className="command-button primary" onClick={onExportHtml}>
           <Download size={17} aria-hidden />
           <span>{es.toolbar.exportHtml}</span>

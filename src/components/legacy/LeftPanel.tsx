@@ -1,5 +1,6 @@
 import { AppWindow, ChartPie, Globe2, LayoutDashboard, Plus, Presentation, Save, Smartphone, Sparkles, Wand2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { artifactOptions, type ArtifactType } from '../engine/index';
 import { es } from '../i18n';
 import type { RecentSessionItem, VersionSnapshot } from '../types/app';
@@ -23,6 +24,7 @@ interface LeftPanelProps {
   recentSessions: RecentSessionItem[];
   versions: VersionSnapshot[];
   compareVersionId: string;
+  providerControls?: ReactNode;
   onCreateSession(): void;
   onSelectSession(sessionId: string): void;
   onPromptChange(prompt: string): void;
@@ -40,6 +42,7 @@ export function LeftPanel({
   recentSessions,
   versions,
   compareVersionId,
+  providerControls,
   onCreateSession,
   onSelectSession,
   onPromptChange,
@@ -60,9 +63,9 @@ export function LeftPanel({
         </div>
       </header>
 
-      <section className="input-section sessions-section" aria-labelledby="sessions-heading">
+      <section className="input-section" aria-labelledby="brief-heading">
         <div className="section-title-row">
-          <span id="sessions-heading" className="section-label">Recientes</span>
+          <label id="brief-heading" htmlFor="prompt">Qué quieres diseñar</label>
           <button
             type="button"
             className="icon-button"
@@ -73,29 +76,6 @@ export function LeftPanel({
             <Plus size={17} aria-hidden />
           </button>
         </div>
-        <div className="session-list" role="list" aria-label="Sesiones recientes">
-          {recentSessions.map((session) => (
-            <article
-              key={session.id}
-              role="listitem"
-              className={classNames('session-item', activeSessionId === session.id && 'is-selected')}
-            >
-              <button
-                type="button"
-                aria-current={activeSessionId === session.id ? 'true' : undefined}
-                aria-label={`Abrir sesión ${session.name}`}
-                onClick={() => onSelectSession(session.id)}
-              >
-                <span>{session.name}</span>
-                <small>{formatTime(session.updatedAt)}</small>
-              </button>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="input-section" aria-labelledby="brief-heading">
-        <label id="brief-heading" htmlFor="prompt">Brief</label>
         <textarea
           id="prompt"
           value={prompt}
@@ -117,7 +97,7 @@ export function LeftPanel({
       </section>
 
       <section className="input-section" aria-labelledby="artifact-heading">
-        <span id="artifact-heading" className="section-label">Artefacto</span>
+        <span id="artifact-heading" className="section-label">Formato</span>
         <div className="artifact-grid" role="group" aria-labelledby="artifact-heading">
           {artifactOptions.map((option) => {
             const Icon = artifactIcons[option.id];
@@ -135,6 +115,37 @@ export function LeftPanel({
               </button>
             );
           })}
+        </div>
+      </section>
+
+      {providerControls ? (
+        <section className="input-section provider-section" aria-label="Generación">
+          {providerControls}
+        </section>
+      ) : null}
+
+      <section className="input-section sessions-section" aria-labelledby="sessions-heading">
+        <div className="section-title-row">
+          <span id="sessions-heading" className="section-label">Recientes</span>
+        </div>
+        <div className="session-list" role="list" aria-label="Sesiones recientes">
+          {recentSessions.slice(0, 3).map((session) => (
+            <article
+              key={session.id}
+              role="listitem"
+              className={classNames('session-item', activeSessionId === session.id && 'is-selected')}
+            >
+              <button
+                type="button"
+                aria-current={activeSessionId === session.id ? 'true' : undefined}
+                aria-label={`Abrir sesión ${session.name}`}
+                onClick={() => onSelectSession(session.id)}
+              >
+                <span>{session.name}</span>
+                <small>{formatTime(session.updatedAt)}</small>
+              </button>
+            </article>
+          ))}
         </div>
       </section>
 
