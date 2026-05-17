@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Optional `safeStorage`-backed secret store (`electron/secretStore.cjs` + `src/settings/secretStore.ts`) for the Local OpenAI API key. A new "Recordar API key en este equipo" checkbox in `LocalOpenAISettings` persists the key as OS-encrypted ciphertext under `userData/secrets.json`. The checkbox is disabled and the key stays in memory only when `safeStorage` is unavailable (web mode, headless Linux without a keyring).
 - Cross-platform release pipeline: new `.github/workflows/release.yml` builds macOS (`dmg` + `zip`, x64 + arm64), Linux (`AppImage` + `tar.gz`) and Windows (`portable` + `nsis`) artifacts on tag push or manual dispatch. `package.json` gains `package:mac` and `package:linux` scripts plus the matching electron-builder targets.
 - Stricter LLM HTML extractor: candidates must include `<html>`, `</html>`, `<body>` and `</body>` before they are accepted, so truncated documents fail fast and the renderer-side retry kicks in instead of rendering a blank iframe.
+- IndexedDB-backed session storage (`src/sessions/idbStore.ts` + `src/hooks/useIdbPersistedState.ts`). The session collection now lives in the `designme/sessions` IDB store, which is mirrored to localStorage as a warm cache. Lifts the ~5 MiB localStorage quota for users who keep many saved versions with embedded HTML; falls back to plain localStorage when IndexedDB is unavailable.
 
 ### Changed
 

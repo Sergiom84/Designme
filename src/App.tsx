@@ -30,6 +30,7 @@ import {
 import { useDesignSessionActions } from './hooks/useDesignSessionActions';
 import { useExportActions } from './hooks/useExportActions';
 import { useGenerate } from './hooks/useGenerate';
+import { useIdbPersistedState } from './hooks/useIdbPersistedState';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useLocalStorageState } from './hooks/useLocalStorageState';
 import { usePreviewZoom } from './hooks/usePreviewZoom';
@@ -63,7 +64,11 @@ import {
 import type { DesignSession, PreviewMode, RecentSessionItem, SideTab, VersionSnapshot } from './types/app';
 
 export default function App() {
-  const [sessionCollection, setSessionCollection] = useLocalStorageState<DesignSessionCollection>(
+  // Sessions can grow large once each saved version embeds a full HTML
+  // artifact, so they live in IndexedDB with localStorage as the warm cache.
+  // The other persisted state (references, comments) stays on the smaller
+  // synchronous localStorage path.
+  const [sessionCollection, setSessionCollection] = useIdbPersistedState<DesignSessionCollection>(
     DESIGN_SESSIONS_STORAGE_KEY,
     () =>
       parseStoredDesignSessionCollection(
