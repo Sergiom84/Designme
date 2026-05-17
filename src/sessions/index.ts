@@ -8,6 +8,8 @@ import {
 } from '../engine/index';
 import type { DesignSession, VersionSnapshot } from '../types/app';
 
+export * from './legacyInput';
+
 export const DESIGN_SESSION_STORAGE_KEY = 'designme.session';
 export const DESIGN_SESSIONS_STORAGE_KEY = 'designme.sessions';
 export const MAX_SESSION_SNAPSHOTS = 10;

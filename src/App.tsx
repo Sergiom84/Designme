@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AgentStream } from './components/AgentStream';
 import { AppShell } from './components/AppShell';
 import { CenterPanel } from './components/CenterPanel';
@@ -24,25 +24,18 @@ import {
 } from './comments';
 import {
   buildDesignProject,
-  defaultTweaks,
-  type ArtifactType,
   type BuildInput,
   type DesignOutput,
-  type DesignTweaks,
-  type DirectionId,
 } from './engine/index';
-import { buildExportBundle } from './export';
+import { useDesignSessionActions } from './hooks/useDesignSessionActions';
+import { useExportActions } from './hooks/useExportActions';
 import { useGenerate } from './hooks/useGenerate';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useLocalStorageState } from './hooks/useLocalStorageState';
 import { usePreviewZoom } from './hooks/usePreviewZoom';
-import {
-  getActiveProviderId,
-  listProviders,
-  setActiveProviderId,
-  type ProviderId,
-  type ProviderStatus,
-} from './providers';
+import { useProviderRuntime } from './hooks/useProviderRuntime';
+import { useSetupDetection } from './hooks/useSetupDetection';
+import { getActiveProviderId, type ProviderId } from './providers';
 import {
   analyzeReferenceNotes,
   emptyReferenceState,
@@ -56,81 +49,18 @@ import {
 } from './settings';
 import {
   DESIGN_SESSIONS_STORAGE_KEY,
-  appendDesignSessionSnapshot,
-  createDesignSessionFromDraft,
+  LEGACY_PROMPT_PRESETS,
   ensureActiveDesignSession,
   listRecentDesignSessions,
   parseStoredDesignSessionCollection,
-  updateDesignSessionDraft,
+  readLegacyInput,
+  readLegacyVersions,
+  readLocalStorageValue,
   updateDesignSessionInCollection,
   updateDesignSessionOutput,
-  upsertDesignSession,
   type DesignSessionCollection,
 } from './sessions';
 import type { DesignSession, PreviewMode, RecentSessionItem, SideTab, VersionSnapshot } from './types/app';
-
-const initialPrompt =
-  'Crea un diseñador de apps, software y webs local-first: prompt a prototipo, con variaciones visuales, tweaks, crítica y export HTML.';
-
-const promptPresets = [
-  'Dashboard para un CRM de ventas B2B con pipeline, riesgos y siguientes acciones.',
-  'App móvil de hábitos para fundadores ocupados, con foco diario y progreso semanal.',
-  'Web de producto para una herramienta de IA que convierte reuniones en tareas verificables.',
-  'Deck de lanzamiento para explicar una plataforma local-first de diseño con agentes.',
-];
-
-function parseArtifactType(value: string): ArtifactType {
-  return ['software', 'web', 'dashboard', 'mobile', 'deck', 'infographic'].includes(value)
-    ? (value as ArtifactType)
-    : 'software';
-}
-
-function parseDirectionId(value: string): DirectionId {
-  return ['systems', 'editorial', 'kinetic'].includes(value) ? (value as DirectionId) : 'systems';
-}
-
-function parseTweaks(value: string): DesignTweaks {
-  try {
-    return { ...defaultTweaks, ...(JSON.parse(value) as Partial<DesignTweaks>) };
-  } catch {
-    return defaultTweaks;
-  }
-}
-
-function parseVersions(value: string): VersionSnapshot[] {
-  try {
-    const parsed = JSON.parse(value) as VersionSnapshot[];
-    return Array.isArray(parsed) ? parsed.slice(0, 10) : [];
-  } catch {
-    return [];
-  }
-}
-
-function readLocalStorageValue(key: string): string | null {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-function readLegacyInput(): BuildInput {
-  return {
-    prompt: readLocalStorageValue('designme.prompt') ?? initialPrompt,
-    artifactType: parseArtifactType(readLocalStorageValue('designme.artifactType') ?? 'software'),
-    directionId: parseDirectionId(readLocalStorageValue('designme.directionId') ?? 'systems'),
-    tweaks: parseTweaks(readLocalStorageValue('designme.tweaks') ?? ''),
-  };
-}
-
-function readLegacyVersions(): VersionSnapshot[] {
-  const stored = readLocalStorageValue('designme.versions');
-  return stored ? parseVersions(stored) : [];
-}
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : 'Error desconocido';
-}
 
 export default function App() {
   const [sessionCollection, setSessionCollection] = useLocalStorageState<DesignSessionCollection>(
@@ -162,21 +92,24 @@ export default function App() {
   const [previewMode, setPreviewMode] = useState<PreviewMode>('desktop');
   const [sideTab, setSideTab] = useState<SideTab>('directions');
   const [status, setStatus] = useState('Listo');
-  const [exportPath, setExportPath] = useState('');
   const [canvasOnly, setCanvasOnly] = useState(false);
   const [commentMode, setCommentMode] = useState(false);
   const [generationRunKey, setGenerationRunKey] = useState(0);
   const [compareVersionId, setCompareVersionId] = useState('');
   const [aiUsed, setAiUsed] = useState(false);
-  const [activeProviderId, setActiveProviderIdState] = useState<ProviderId>(() => getActiveProviderId());
   const [agentStreamVisible, setAgentStreamVisible] = useState(() => getActiveProviderId() !== 'deterministic');
-  const [providerStatuses, setProviderStatuses] = useState<Record<string, ProviderStatus>>({});
+  const { providerList, activeProviderId, providerStatuses, changeProvider: changeProviderRuntime } =
+    useProviderRuntime({ onStatus: setStatus });
   const [localOpenAISettings, setLocalOpenAISettings] = useState<LocalOpenAISettingsValue>(() =>
     readLocalOpenAISettings(),
   );
-  const [setupDetection, setSetupDetection] = useState<DesignmeLocalSetupDetection | undefined>();
-  const [setupChecking, setSetupChecking] = useState(false);
-  const [setupDismissed, setSetupDismissed] = useState(false);
+  const {
+    detection: setupDetection,
+    checking: setupChecking,
+    dismissed: setupDismissed,
+    dismiss: dismissSetup,
+    refresh: refreshLocalSetups,
+  } = useSetupDetection();
   const { previewZoom, setPreviewZoom, zoomScale, resetPreviewZoom } = usePreviewZoom();
 
   const designSession = useMemo<DesignSession>(() => {
@@ -186,7 +119,6 @@ export default function App() {
   const { artifactType, directionId, prompt, tweaks } = designSession.draft;
   const versions = designSession.snapshots;
   const referenceAnalysis = useMemo(() => analyzeReferenceNotes(referenceState.notes), [referenceState.notes]);
-  const providerList = useMemo(() => listProviders(), []);
   const providerOptions = useMemo<ProviderPickerOption[]>(
     () =>
       providerList.map((provider) => ({
@@ -245,6 +177,13 @@ export default function App() {
     onFinalOutput: persistGeneratedOutput,
   });
 
+  // Keep `outputRef` synced so `useDesignSessionActions.saveVersion` can read
+  // the latest output without needing the hook to depend on the generation
+  // pipeline directly.
+  useEffect(() => {
+    outputRef.current = output;
+  }, [output]);
+
   const compareSnapshot = versions.find((snapshot) => snapshot.id === compareVersionId);
   const compareOutput = useMemo(() => {
     if (!compareSnapshot) return undefined;
@@ -266,60 +205,21 @@ export default function App() {
         ? `Generando con ${activeProvider?.label ?? activeProviderId}`
         : status;
 
-  useEffect(() => {
-    let cancelled = false;
-
-    for (const provider of providerList) {
-      void provider.status().then((providerStatus) => {
-        if (cancelled) return;
-        setProviderStatuses((current) => ({ ...current, [provider.id]: providerStatus }));
-      });
-    }
-
-    return () => {
-      cancelled = true;
-    };
-  }, [providerList, activeProviderId]);
-
-  async function refreshLocalSetups(options: { markChecking?: boolean } = {}) {
-    if (!window.designme?.detectLocalSetup || setupChecking) return;
-    if (options.markChecking ?? true) {
-      setSetupChecking(true);
-    }
-    try {
-      const detection = await window.designme.detectLocalSetup();
-      setSetupDetection(detection);
-      setSetupDismissed(false);
-    } catch {
-      setSetupDetection(undefined);
-    } finally {
-      setSetupChecking(false);
-    }
-  }
-
-  function updateActiveSession(update: (session: DesignSession) => DesignSession) {
-    setSessionCollection((current) => updateDesignSessionInCollection(current, current.activeSessionId, update));
-  }
-
-  function patchTweaks(patch: Partial<DesignTweaks>) {
-    updateActiveSession((session) => updateDesignSessionDraft(session, { tweaks: patch }));
-  }
-
-  function changePrompt(nextPrompt: string) {
-    updateActiveSession((session) => updateDesignSessionDraft(session, { prompt: nextPrompt }));
-  }
-
-  function changeArtifactType(nextArtifactType: ArtifactType) {
-    updateActiveSession((session) => updateDesignSessionDraft(session, { artifactType: nextArtifactType }));
-  }
-
-  function changeDirection(nextDirectionId: DirectionId) {
-    updateActiveSession((session) => updateDesignSessionDraft(session, { directionId: nextDirectionId }));
-  }
-
-  function resetTweaks(nextTweaks: DesignTweaks) {
-    updateActiveSession((session) => updateDesignSessionDraft(session, { tweaks: nextTweaks }));
-  }
+  const outputRef = useRef<DesignOutput | undefined>(designSession.output);
+  const sessionActions = useDesignSessionActions({
+    sessionCollection,
+    setSessionCollection,
+    designSession,
+    getOutput: () => outputRef.current ?? designSession.output ?? ({} as DesignOutput),
+    onStatus: setStatus,
+  });
+  const {
+    patchTweaks,
+    changePrompt,
+    changeArtifactType,
+    changeDirection,
+    resetTweaks,
+  } = sessionActions;
 
   function changeReferenceNotes(notes: string) {
     setReferenceState((current) => ({ ...current, notes }));
@@ -337,16 +237,9 @@ export default function App() {
   }
 
   function changeProvider(providerId: string) {
-    try {
-      const nextProviderId = providerId as ProviderId;
-      setActiveProviderId(nextProviderId);
-      setActiveProviderIdState(nextProviderId);
-      setAgentStreamVisible(nextProviderId !== 'deterministic');
-      const nextProvider = providerList.find((provider) => provider.id === nextProviderId);
-      setStatus(`Provider activo: ${nextProvider?.label ?? nextProviderId}`);
-    } catch (error) {
-      setStatus(`No se pudo activar el provider: ${errorMessage(error)}`);
-    }
+    const nextProviderId = providerId as ProviderId;
+    setAgentStreamVisible(nextProviderId !== 'deterministic');
+    changeProviderRuntime(providerId);
   }
 
   function runActiveProvider() {
@@ -362,7 +255,7 @@ export default function App() {
     const nextSettings = applyLocalOpenAISettingsPatch(localOpenAISettings, settings);
     setLocalOpenAISettings(nextSettings);
     changeProvider('local-openai');
-    setSetupDismissed(true);
+    dismissSetup();
     setStatus('Ollama aplicado como provider local');
   }
 
@@ -390,28 +283,13 @@ export default function App() {
   }
 
   function createSession() {
-    const session = createDesignSessionFromDraft({
-      prompt: initialPrompt,
-      artifactType: 'software',
-      directionId: 'systems',
-      tweaks: defaultTweaks,
-    });
-
-    setSessionCollection((current) => upsertDesignSession(current, session));
+    sessionActions.createSession();
     setCompareVersionId('');
-    setStatus('Nueva sesión creada');
   }
 
   function selectSession(sessionId: string) {
-    const session = sessionCollection.sessions.find((item) => item.id === sessionId);
-    if (!session) {
-      setStatus('No se pudo abrir la sesión');
-      return;
-    }
-
-    setSessionCollection((current) => ({ ...current, activeSessionId: sessionId }));
+    sessionActions.selectSession(sessionId);
     setCompareVersionId('');
-    setStatus(`Sesión activa: ${session.output?.name ?? session.draft.prompt}`);
   }
 
   async function enhancePromptWithReferences() {
@@ -426,32 +304,11 @@ export default function App() {
     setStatus('Brief mejorado localmente con referencias');
   }
 
-  function saveVersion() {
-    const snapshot: VersionSnapshot = {
-      id: crypto.randomUUID(),
-      at: new Date().toISOString(),
-      name: output.name,
-      prompt,
-      artifactType,
-      directionId,
-      tweaks,
-      output,
-    };
-    updateActiveSession((session) => appendDesignSessionSnapshot(session, snapshot));
-    setStatus(`Versión guardada: ${output.name}`);
-  }
+  const saveVersion = sessionActions.saveVersion;
 
   function restoreVersion(snapshot: VersionSnapshot) {
-    updateActiveSession((session) =>
-      updateDesignSessionDraft(session, {
-        prompt: snapshot.prompt,
-        artifactType: snapshot.artifactType,
-        directionId: snapshot.directionId,
-        tweaks: snapshot.tweaks,
-      }),
-    );
+    sessionActions.restoreVersion(snapshot);
     setCompareVersionId('');
-    setStatus(`Versión restaurada: ${snapshot.name}`);
   }
 
   function compareVersion(snapshot: VersionSnapshot) {
@@ -459,128 +316,25 @@ export default function App() {
     setStatus(`Comparativa ${compareVersionId === snapshot.id ? 'cerrada' : `activa: ${snapshot.name}`}`);
   }
 
-  async function writeClipboard(text: string): Promise<boolean> {
-    try {
-      if (window.designme?.copyText) {
-        await window.designme.copyText(text);
-        return true;
-      }
-
-      const scratch = document.createElement('textarea');
-      scratch.value = text;
-      scratch.setAttribute('readonly', 'true');
-      scratch.style.position = 'fixed';
-      scratch.style.left = '-9999px';
-      document.body.appendChild(scratch);
-      scratch.select();
-      const ok = document.execCommand('copy');
-      scratch.remove();
-      return ok;
-    } catch {
-      return false;
-    }
-  }
-
-  async function copyHandoff() {
-    const copied = await writeClipboard(output.handoffPrompt);
-    setStatus(copied ? 'Handoff copiado' : 'No se pudo acceder al portapapeles');
-  }
-
-  async function copyCritique() {
-    const lines = [
-      `Puntuación de calidad: ${output.critique.total}/10`,
-      '',
-      'Puntuaciones:',
-      ...output.critique.scores.map((score) => `- ${score.label}: ${score.value}/10`),
-      '',
-      'Incidencias:',
-      ...output.critique.issues.map((issue) => `- [${issue.severity}] ${issue.title}: ${issue.suggestedFix}`),
-      '',
-      'Corregir:',
-      ...output.critique.fix.map((item) => `- ${item}`),
-    ];
-    const copied = await writeClipboard(lines.join('\n'));
-    setStatus(copied ? 'Crítica copiada' : 'No se pudo acceder al portapapeles');
-  }
-
-  async function exportHtml() {
-    try {
-      if (window.designme) {
-        const result = await window.designme.exportHtml({
-          name: output.exportName,
-          html: output.html,
-        });
-        setExportPath(result.filePath);
-        setStatus('HTML exportado');
-        return;
-      }
-
-      const blob = new Blob([output.html], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${output.exportName}.html`;
-      link.click();
-      URL.revokeObjectURL(url);
-      setStatus('HTML descargado');
-    } catch (error) {
-      setStatus(`No se pudo exportar HTML: ${errorMessage(error)}`);
-    }
-  }
-
-  async function exportBundle() {
-    try {
-      const bundle = buildExportBundle({
-        output,
-        input: {
-          prompt,
-          artifactType,
-          directionId,
-          tweaks,
-          references: referenceAnalysis,
-          ai: {
-            providerId: activeProviderId,
-            used: aiUsed || activeProviderId !== 'deterministic',
-            localOnly: activeProviderId === 'deterministic' || activeProviderId === 'local-openai',
-          },
+  const { exportPath, copyHandoff, copyCritique, exportHtml, exportBundle, openExports } = useExportActions({
+    getOutput: () => output,
+    getBundleInput: () => ({
+      output,
+      input: {
+        prompt,
+        artifactType,
+        directionId,
+        tweaks,
+        references: referenceAnalysis,
+        ai: {
+          providerId: activeProviderId,
+          used: aiUsed || activeProviderId !== 'deterministic',
+          localOnly: activeProviderId === 'deterministic' || activeProviderId === 'local-openai',
         },
-      });
-
-      if (window.designme) {
-        const result = await window.designme.exportBundle({
-          name: bundle.name,
-          files: bundle.files,
-        });
-        setExportPath(result.filePath);
-        setStatus('Paquete exportado');
-        return;
-      }
-
-      const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${bundle.name}-bundle.json`;
-      link.click();
-      URL.revokeObjectURL(url);
-      setStatus('Paquete descargado como JSON');
-    } catch (error) {
-      setStatus(`No se pudo exportar el paquete: ${errorMessage(error)}`);
-    }
-  }
-
-  async function openExports() {
-    try {
-      if (!window.designme) {
-        setStatus('La carpeta de exportaciones está disponible en modo escritorio');
-        return;
-      }
-      const result = await window.designme.openExports();
-      setStatus(`Carpeta abierta: ${result.directory}`);
-    } catch (error) {
-      setStatus(`No se pudo abrir exports: ${errorMessage(error)}`);
-    }
-  }
+      },
+    }),
+    onStatus: setStatus,
+  });
 
   function resetView() {
     setPreviewMode('desktop');
@@ -622,7 +376,7 @@ export default function App() {
       left={
         <LeftPanel
           prompt={prompt}
-          promptPresets={promptPresets}
+          promptPresets={LEGACY_PROMPT_PRESETS}
           artifactType={artifactType}
           activeSessionId={sessionCollection.activeSessionId}
           recentSessions={recentSessions}
@@ -670,11 +424,11 @@ export default function App() {
                 disabled={generationRunning}
                 onActivateProvider={(providerId) => {
                   changeProvider(providerId);
-                  setSetupDismissed(true);
+                  dismissSetup();
                 }}
                 onUseOllama={useOllama}
                 onRefresh={() => void refreshLocalSetups({ markChecking: true })}
-                onDismiss={() => setSetupDismissed(true)}
+                onDismiss={() => dismissSetup()}
               />
               <LocalOpenAISettings
                 disabled={generationRunning}
