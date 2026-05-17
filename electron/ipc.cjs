@@ -9,12 +9,15 @@ const { isAllowedAppUrl } = require('./security.cjs');
 const { detectLocalSetup } = require('./setupDetection.cjs');
 const {
   validateClipboardText,
+  validateCspStatePayload,
   validateExportBundlePayload,
   validateExportHtmlPayload,
   validateLocalSetupDetectionResult,
   validateProviderStartPayload,
   validateProviderStatusPayload,
   validateProviderStopPayload,
+  validateSecretKeyPayload,
+  validateSecretSetPayload,
 } = require('./validators.cjs');
 
 function assertTrustedSender(event, isDev) {
@@ -29,8 +32,10 @@ const providerStatusDetectors = {
   codex: () => detectCodex({ checkStatus: true }),
 };
 
-function registerIpcHandlers(app, isDev) {
+function registerIpcHandlers(app, isDev, options = {}) {
   const providerRuns = createProviderRunManager();
+  const cspState = options.cspState;
+  const secretStore = options.secretStore;
 
   ipcMain.handle('designme:export-html', async (event, payload) => {
     assertTrustedSender(event, isDev);
@@ -101,6 +106,57 @@ function registerIpcHandlers(app, isDev) {
     const detection = await detectLocalSetup();
     validateLocalSetupDetectionResult(detection);
     return detection;
+  });
+
+  ipcMain.handle('designme:set-csp-state', async (event, payload) => {
+    assertTrustedSender(event, isDev);
+    validateCspStatePayload(payload);
+    if (!cspState) {
+      return { allowLocalProvider: false };
+    }
+    const next = cspState.set({ allowLocalProvider: payload.allowLocalProvider });
+    return next;
+  });
+
+  ipcMain.handle('designme:get-csp-state', async (event) => {
+    assertTrustedSender(event, isDev);
+    if (!cspState) {
+      return { allowLocalProvider: false };
+    }
+    return cspState.get();
+  });
+
+  ipcMain.handle('designme:secret-status', async (event) => {
+    assertTrustedSender(event, isDev);
+    return { ready: Boolean(secretStore?.ready?.()) };
+  });
+
+  ipcMain.handle('designme:secret-set', async (event, payload) => {
+    assertTrustedSender(event, isDev);
+    validateSecretSetPayload(payload);
+    if (!secretStore) {
+      return { stored: false };
+    }
+    return secretStore.set(payload.key, payload.value);
+  });
+
+  ipcMain.handle('designme:secret-get', async (event, payload) => {
+    assertTrustedSender(event, isDev);
+    validateSecretKeyPayload(payload);
+    if (!secretStore) {
+      return { value: null };
+    }
+    const value = secretStore.get(payload.key);
+    return { value: typeof value === 'string' ? value : null };
+  });
+
+  ipcMain.handle('designme:secret-delete', async (event, payload) => {
+    assertTrustedSender(event, isDev);
+    validateSecretKeyPayload(payload);
+    if (!secretStore) {
+      return { deleted: false };
+    }
+    return secretStore.delete(payload.key);
   });
 }
 

@@ -66,6 +66,35 @@ interface DesignmeLocalSetupDetection {
   localOpenAI: DesignmeLocalOpenAISetup;
 }
 
+interface DesignmeCspState {
+  allowLocalProvider: boolean;
+}
+
+interface DesignmeSecretSetPayload {
+  key: string;
+  value: string;
+}
+
+interface DesignmeSecretKeyPayload {
+  key: string;
+}
+
+interface DesignmeSecretStatusResult {
+  ready: boolean;
+}
+
+interface DesignmeSecretSetResult {
+  stored: boolean;
+}
+
+interface DesignmeSecretGetResult {
+  value: string | null;
+}
+
+interface DesignmeSecretDeleteResult {
+  deleted: boolean;
+}
+
 type DesignmeProviderEvent =
   | { runId: string; type: 'started' }
   | { runId: string; type: 'token'; text: string }
@@ -85,6 +114,12 @@ interface Window {
     providerStop(payload: { runId: string }): Promise<{ stopped: boolean }>;
     providerStatus(payload: { providerId: DesignmeProviderId }): Promise<DesignmeProviderStatusResult>;
     detectLocalSetup(): Promise<DesignmeLocalSetupDetection>;
+    setCspState(payload: DesignmeCspState): Promise<DesignmeCspState>;
+    getCspState(): Promise<DesignmeCspState>;
+    secretStatus(): Promise<DesignmeSecretStatusResult>;
+    setSecret(payload: DesignmeSecretSetPayload): Promise<DesignmeSecretSetResult>;
+    getSecret(payload: DesignmeSecretKeyPayload): Promise<DesignmeSecretGetResult>;
+    deleteSecret(payload: DesignmeSecretKeyPayload): Promise<DesignmeSecretDeleteResult>;
     onProviderEvent(listener: (event: DesignmeProviderEvent) => void): () => void;
   };
 }

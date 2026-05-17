@@ -7,4 +7,12 @@ export {
   persistLocalOpenAISettings,
   readLocalOpenAISettings,
 } from './localOpenAI';
+export {
+  LOCAL_OPENAI_API_KEY_SECRET,
+  deleteSecret,
+  getSecretStoreStatus,
+  readSecret,
+  writeSecret,
+} from './secretStore';
+export type { SecretStoreStatus } from './secretStore';
 export type { LocalOpenAISettings } from './types';
