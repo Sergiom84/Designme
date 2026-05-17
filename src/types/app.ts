@@ -25,6 +25,14 @@ export interface DesignSession {
   snapshots: VersionSnapshot[];
 }
 
+export interface RecentSessionItem {
+  id: string;
+  name: string;
+  updatedAt: string;
+  artifactType: ArtifactType;
+  prompt: string;
+}
+
 export interface SideTabOption {
   id: SideTab;
   label: string;

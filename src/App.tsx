@@ -34,14 +34,19 @@ import {
   type StoredReferenceState,
 } from './references';
 import {
-  DESIGN_SESSION_STORAGE_KEY,
+  DESIGN_SESSIONS_STORAGE_KEY,
   appendDesignSessionSnapshot,
-  createInitialDesignSession,
-  parseStoredDesignSession,
+  createDesignSessionFromDraft,
+  ensureActiveDesignSession,
+  listRecentDesignSessions,
+  parseStoredDesignSessionCollection,
   updateDesignSessionDraft,
+  updateDesignSessionInCollection,
   updateDesignSessionOutput,
+  upsertDesignSession,
+  type DesignSessionCollection,
 } from './sessions';
-import type { DesignSession, PreviewMode, SideTab, VersionSnapshot } from './types/app';
+import type { DesignSession, PreviewMode, RecentSessionItem, SideTab, VersionSnapshot } from './types/app';
 
 const initialPrompt =
   'Crea un diseñador de apps, software y webs local-first: prompt a prototipo, con variaciones visuales, tweaks, crítica y export HTML.';
@@ -107,11 +112,16 @@ function errorMessage(error: unknown): string {
 }
 
 export default function App() {
-  const [designSession, setDesignSession] = useLocalStorageState<DesignSession>(
-    DESIGN_SESSION_STORAGE_KEY,
-    () => createInitialDesignSession(readLegacyInput(), readLegacyVersions()),
+  const [sessionCollection, setSessionCollection] = useLocalStorageState<DesignSessionCollection>(
+    DESIGN_SESSIONS_STORAGE_KEY,
+    () =>
+      parseStoredDesignSessionCollection(
+        readLocalStorageValue('designme.session') ?? '',
+        readLegacyInput(),
+        readLegacyVersions(),
+      ),
     {
-      deserialize: (value) => parseStoredDesignSession(value, readLegacyInput(), readLegacyVersions()),
+      deserialize: (value) => parseStoredDesignSessionCollection(value, readLegacyInput(), readLegacyVersions()),
     },
   );
   const [referenceState, setReferenceState] = useLocalStorageState<StoredReferenceState>(
@@ -133,6 +143,10 @@ export default function App() {
   const [providerStatuses, setProviderStatuses] = useState<Record<string, ProviderStatus>>({});
   const { previewZoom, setPreviewZoom, zoomScale, resetPreviewZoom } = usePreviewZoom();
 
+  const designSession = useMemo<DesignSession>(() => {
+    const ensured = ensureActiveDesignSession(sessionCollection, readLegacyInput());
+    return ensured.sessions.find((session) => session.id === ensured.activeSessionId) ?? ensured.sessions[0];
+  }, [sessionCollection]);
   const { artifactType, directionId, prompt, tweaks } = designSession.draft;
   const versions = designSession.snapshots;
   const referenceAnalysis = useMemo(() => analyzeReferenceNotes(referenceState.notes), [referenceState.notes]);
@@ -147,15 +161,30 @@ export default function App() {
     [providerList, providerStatuses],
   );
   const activeProvider = providerList.find((provider) => provider.id === activeProviderId) ?? providerList[0];
+  const recentSessions = useMemo<RecentSessionItem[]>(
+    () =>
+      listRecentDesignSessions(sessionCollection).map((session) => ({
+        id: session.id,
+        name: session.output?.name ?? session.snapshots[0]?.name ?? session.draft.prompt,
+        updatedAt: session.updatedAt,
+        artifactType: session.draft.artifactType,
+        prompt: session.draft.prompt,
+      })),
+    [sessionCollection],
+  );
   const generationInput = useMemo<BuildInput>(
     () => ({ prompt, artifactType, directionId, tweaks }),
     [artifactType, directionId, prompt, tweaks],
   );
   const persistGeneratedOutput = useCallback(
     (nextOutput: DesignOutput) => {
-      setDesignSession((current) => updateDesignSessionOutput(current, nextOutput));
+      setSessionCollection((current) =>
+        updateDesignSessionInCollection(current, current.activeSessionId, (session) =>
+          updateDesignSessionOutput(session, nextOutput),
+        ),
+      );
     },
-    [setDesignSession],
+    [setSessionCollection],
   );
 
   const { output, events: generationEvents, running: generationRunning, stop: stopGeneration } = useGenerate(
@@ -163,6 +192,7 @@ export default function App() {
     {
       providerId: activeProviderId,
       initialOutput: designSession.output,
+      resetKey: designSession.id,
       onFinalOutput: persistGeneratedOutput,
     },
   );
@@ -203,24 +233,28 @@ export default function App() {
     };
   }, [providerList, activeProviderId]);
 
+  function updateActiveSession(update: (session: DesignSession) => DesignSession) {
+    setSessionCollection((current) => updateDesignSessionInCollection(current, current.activeSessionId, update));
+  }
+
   function patchTweaks(patch: Partial<DesignTweaks>) {
-    setDesignSession((current) => updateDesignSessionDraft(current, { tweaks: patch }));
+    updateActiveSession((session) => updateDesignSessionDraft(session, { tweaks: patch }));
   }
 
   function changePrompt(nextPrompt: string) {
-    setDesignSession((current) => updateDesignSessionDraft(current, { prompt: nextPrompt }));
+    updateActiveSession((session) => updateDesignSessionDraft(session, { prompt: nextPrompt }));
   }
 
   function changeArtifactType(nextArtifactType: ArtifactType) {
-    setDesignSession((current) => updateDesignSessionDraft(current, { artifactType: nextArtifactType }));
+    updateActiveSession((session) => updateDesignSessionDraft(session, { artifactType: nextArtifactType }));
   }
 
   function changeDirection(nextDirectionId: DirectionId) {
-    setDesignSession((current) => updateDesignSessionDraft(current, { directionId: nextDirectionId }));
+    updateActiveSession((session) => updateDesignSessionDraft(session, { directionId: nextDirectionId }));
   }
 
   function resetTweaks(nextTweaks: DesignTweaks) {
-    setDesignSession((current) => updateDesignSessionDraft(current, { tweaks: nextTweaks }));
+    updateActiveSession((session) => updateDesignSessionDraft(session, { tweaks: nextTweaks }));
   }
 
   function changeReferenceNotes(notes: string) {
@@ -251,6 +285,31 @@ export default function App() {
     }
   }
 
+  function createSession() {
+    const session = createDesignSessionFromDraft({
+      prompt: initialPrompt,
+      artifactType: 'software',
+      directionId: 'systems',
+      tweaks: defaultTweaks,
+    });
+
+    setSessionCollection((current) => upsertDesignSession(current, session));
+    setCompareVersionId('');
+    setStatus('Nueva sesión creada');
+  }
+
+  function selectSession(sessionId: string) {
+    const session = sessionCollection.sessions.find((item) => item.id === sessionId);
+    if (!session) {
+      setStatus('No se pudo abrir la sesión');
+      return;
+    }
+
+    setSessionCollection((current) => ({ ...current, activeSessionId: sessionId }));
+    setCompareVersionId('');
+    setStatus(`Sesión activa: ${session.output?.name ?? session.draft.prompt}`);
+  }
+
   async function enhancePromptWithReferences() {
     const result = await enhancePrompt({ prompt, referenceAnalysis });
     if (result.applied.length === 0) {
@@ -274,13 +333,13 @@ export default function App() {
       tweaks,
       output,
     };
-    setDesignSession((current) => appendDesignSessionSnapshot(current, snapshot));
+    updateActiveSession((session) => appendDesignSessionSnapshot(session, snapshot));
     setStatus(`Versión guardada: ${output.name}`);
   }
 
   function restoreVersion(snapshot: VersionSnapshot) {
-    setDesignSession((current) =>
-      updateDesignSessionDraft(current, {
+    updateActiveSession((session) =>
+      updateDesignSessionDraft(session, {
         prompt: snapshot.prompt,
         artifactType: snapshot.artifactType,
         directionId: snapshot.directionId,
@@ -461,8 +520,12 @@ export default function App() {
           prompt={prompt}
           promptPresets={promptPresets}
           artifactType={artifactType}
+          activeSessionId={sessionCollection.activeSessionId}
+          recentSessions={recentSessions}
           versions={versions}
           compareVersionId={compareVersionId}
+          onCreateSession={createSession}
+          onSelectSession={selectSession}
           onPromptChange={changePrompt}
           onArtifactTypeChange={changeArtifactType}
           onSaveVersion={saveVersion}

@@ -9,7 +9,9 @@ import {
 import type { DesignSession, VersionSnapshot } from '../types/app';
 
 export const DESIGN_SESSION_STORAGE_KEY = 'designme.session';
+export const DESIGN_SESSIONS_STORAGE_KEY = 'designme.sessions';
 export const MAX_SESSION_SNAPSHOTS = 10;
+export const MAX_DESIGN_SESSIONS = 50;
 export const DESIGN_SESSION_SCHEMA_VERSION = 1;
 
 type Clock = () => string;
@@ -22,6 +24,11 @@ interface SessionOptions {
 
 export type VersionSnapshotDraft = Omit<VersionSnapshot, 'id' | 'at'> & Partial<Pick<VersionSnapshot, 'id' | 'at'>>;
 export type DesignSessionDraftPatch = Partial<Omit<BuildInput, 'tweaks'>> & { tweaks?: Partial<DesignTweaks> };
+
+export interface DesignSessionCollection {
+  activeSessionId: string;
+  sessions: DesignSession[];
+}
 
 const artifactTypes: ArtifactType[] = ['software', 'web', 'dashboard', 'mobile', 'deck', 'infographic'];
 const directionIds: DirectionId[] = ['systems', 'editorial', 'kinetic'];
@@ -135,6 +142,14 @@ function normalizeSnapshots(
     .slice(0, MAX_SESSION_SNAPSHOTS);
 }
 
+function sortSessionsByUpdatedAt(sessions: DesignSession[]): DesignSession[] {
+  return [...sessions].sort((first, second) => second.updatedAt.localeCompare(first.updatedAt));
+}
+
+function pruneSessions(sessions: DesignSession[]): DesignSession[] {
+  return sortSessionsByUpdatedAt(sessions).slice(0, MAX_DESIGN_SESSIONS);
+}
+
 function resolveOptions(options: SessionOptions = {}): Required<SessionOptions> {
   return {
     now: options.now ?? defaultNow,
@@ -209,6 +224,116 @@ export function migrateDesignSessionValue(
     output: isDesignOutput(value.output) ? value.output : undefined,
     snapshots,
   };
+}
+
+export function createDesignSessionFromDraft(
+  draft: BuildInput,
+  options: SessionOptions = {},
+  output?: DesignOutput,
+): DesignSession {
+  const session = createInitialDesignSession(draft, [], options);
+
+  return output ? { ...session, output } : session;
+}
+
+export function upsertDesignSession(collection: DesignSessionCollection, session: DesignSession): DesignSessionCollection {
+  const otherSessions = collection.sessions.filter((item) => item.id !== session.id);
+  const sessions = pruneSessions([session, ...otherSessions]);
+  const activeSessionId = sessions.some((item) => item.id === session.id) ? session.id : sessions[0]?.id;
+
+  return {
+    activeSessionId: activeSessionId ?? collection.activeSessionId,
+    sessions,
+  };
+}
+
+export function updateDesignSessionInCollection(
+  collection: DesignSessionCollection,
+  sessionId: string,
+  update: (session: DesignSession) => DesignSession,
+): DesignSessionCollection {
+  const session = collection.sessions.find((item) => item.id === sessionId);
+  if (!session) return collection;
+
+  return upsertDesignSession(collection, update(session));
+}
+
+export function listRecentDesignSessions(
+  collection: DesignSessionCollection,
+  limit: number = MAX_DESIGN_SESSIONS,
+): DesignSession[] {
+  return sortSessionsByUpdatedAt(collection.sessions).slice(0, Math.max(0, limit));
+}
+
+export function ensureActiveDesignSession(
+  collection: DesignSessionCollection,
+  currentInput: BuildInput,
+  options: SessionOptions = {},
+): DesignSessionCollection {
+  const sessions = pruneSessions(collection.sessions);
+  const activeSession = sessions.find((session) => session.id === collection.activeSessionId) ?? sessions[0];
+
+  if (activeSession) {
+    return {
+      activeSessionId: activeSession.id,
+      sessions,
+    };
+  }
+
+  const session = createInitialDesignSession(currentInput, [], options);
+  return {
+    activeSessionId: session.id,
+    sessions: [session],
+  };
+}
+
+export function migrateDesignSessionCollectionValue(
+  value: unknown,
+  currentInput: BuildInput,
+  legacySnapshots: unknown = [],
+  options: SessionOptions = {},
+): DesignSessionCollection {
+  const resolved = resolveOptions(options);
+
+  if (isRecord(value) && Array.isArray(value.sessions)) {
+    const sessions = pruneSessions(
+      value.sessions.map((session) => migrateDesignSessionValue(session, currentInput, [], resolved)),
+    );
+
+    return ensureActiveDesignSession(
+      {
+        activeSessionId: stringValue(value.activeSessionId) ?? sessions[0]?.id ?? '',
+        sessions,
+      },
+      currentInput,
+      resolved,
+    );
+  }
+
+  const session = migrateDesignSessionValue(value, currentInput, legacySnapshots, resolved);
+  return {
+    activeSessionId: session.id,
+    sessions: [session],
+  };
+}
+
+export function parseStoredDesignSessionCollection(
+  value: string,
+  currentInput: BuildInput,
+  legacySnapshots: unknown = [],
+  options: SessionOptions = {},
+): DesignSessionCollection {
+  const resolved = resolveOptions(options);
+
+  try {
+    return migrateDesignSessionCollectionValue(JSON.parse(value) as unknown, currentInput, legacySnapshots, resolved);
+  } catch {
+    const session = createInitialDesignSession(currentInput, legacySnapshots, resolved);
+    return {
+      activeSessionId: session.id,
+      sessions: [session],
+    };
+  }
 }
 
 export function updateDesignSessionDraft(

@@ -9,6 +9,7 @@ import {
 interface UseGenerateOptions {
   providerId: ProviderId;
   initialOutput?: DesignOutput;
+  resetKey?: string;
   onFinalOutput?(output: DesignOutput): void;
 }
 
@@ -24,19 +25,27 @@ function eventOutput(event: GenerateEvent, fallback: DesignOutput): DesignOutput
   return event.output ?? { ...fallback, html: event.html };
 }
 
-export function useGenerate(input: BuildInput, { providerId, initialOutput, onFinalOutput }: UseGenerateOptions): UseGenerateResult {
+export function useGenerate(
+  input: BuildInput,
+  { providerId, initialOutput, resetKey, onFinalOutput }: UseGenerateOptions,
+): UseGenerateResult {
   const fallbackOutput = useMemo(() => buildDesignProject(input), [input]);
   const [output, setOutput] = useState<DesignOutput>(() => initialOutput ?? fallbackOutput);
   const [events, setEvents] = useState<GenerateEvent[]>([]);
   const [running, setRunning] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const runIdRef = useRef(0);
+  const initialOutputRef = useRef<DesignOutput | undefined>(initialOutput);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
     setRunning(false);
   }, []);
+
+  useEffect(() => {
+    initialOutputRef.current = initialOutput;
+  }, [initialOutput, resetKey]);
 
   useEffect(() => {
     const provider = getProvider(providerId);
@@ -49,6 +58,7 @@ export function useGenerate(input: BuildInput, { providerId, initialOutput, onFi
     const start = window.setTimeout(
       () => {
         setEvents([]);
+        setOutput(initialOutputRef.current ?? fallbackOutput);
         setRunning(true);
 
         void (async () => {
@@ -82,7 +92,7 @@ export function useGenerate(input: BuildInput, { providerId, initialOutput, onFi
       window.clearTimeout(start);
       controller.abort();
     };
-  }, [fallbackOutput, input, onFinalOutput, providerId]);
+  }, [fallbackOutput, input, onFinalOutput, providerId, resetKey]);
 
   return { output, events, running, stop };
 }
