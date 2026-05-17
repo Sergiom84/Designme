@@ -1,4 +1,14 @@
-import { Columns2, Copy, Download, Maximize2, Monitor, RotateCcw, Smartphone, Tablet } from 'lucide-react';
+import {
+  Columns2,
+  Copy,
+  Download,
+  Maximize2,
+  MessageSquare,
+  Monitor,
+  RotateCcw,
+  Smartphone,
+  Tablet,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { PreviewMode, PreviewZoom } from '../types/app';
 import { es } from '../i18n';
@@ -10,10 +20,13 @@ interface CanvasToolbarProps {
   previewZoom: PreviewZoom;
   canvasOnly: boolean;
   hasCompare: boolean;
+  commentMode: boolean;
+  commentCount: number;
   providerPicker?: ReactNode;
   onPreviewModeChange(mode: PreviewMode): void;
   onPreviewZoomChange(zoom: PreviewZoom): void;
   onToggleCanvasOnly(): void;
+  onToggleCommentMode(): void;
   onClearCompare(): void;
   onResetView(): void;
   onCopyHandoff(): void;
@@ -28,10 +41,13 @@ export function CanvasToolbar({
   previewZoom,
   canvasOnly,
   hasCompare,
+  commentMode,
+  commentCount,
   providerPicker,
   onPreviewModeChange,
   onPreviewZoomChange,
   onToggleCanvasOnly,
+  onToggleCommentMode,
   onClearCompare,
   onResetView,
   onCopyHandoff,
@@ -102,8 +118,25 @@ export function CanvasToolbar({
           ))}
         </div>
 
-        <button type="button" className="icon-button" title={es.toolbar.resetView} aria-label={es.toolbar.resetView} onClick={onResetView}>
+        <button
+          type="button"
+          className="icon-button"
+          title={es.toolbar.resetView}
+          aria-label={es.toolbar.resetView}
+          onClick={onResetView}
+        >
           <RotateCcw size={17} aria-hidden />
+        </button>
+        <button
+          type="button"
+          className={`icon-button comment-mode-button${commentMode ? ' active' : ''}`}
+          title="Comentar preview"
+          aria-label="Comentar preview"
+          aria-pressed={commentMode}
+          onClick={onToggleCommentMode}
+        >
+          <MessageSquare size={17} aria-hidden />
+          {commentCount > 0 ? <span aria-label={`${commentCount} comentarios abiertos`}>{commentCount}</span> : null}
         </button>
         <button
           type="button"

@@ -13,6 +13,15 @@ import { ReferenceInspector } from './components/ReferenceInspector';
 import { TweakControls } from './components/TweakControls';
 import { enhancePrompt } from './ai';
 import {
+  PREVIEW_COMMENTS_STORAGE_KEY,
+  appendPreviewCommentsToPrompt,
+  createPreviewComment,
+  parseStoredPreviewComments,
+  resolvePreviewComment,
+  type PreviewCommentCollection,
+  type PreviewCommentTarget,
+} from './comments';
+import {
   buildDesignProject,
   defaultTweaks,
   type ArtifactType,
@@ -26,7 +35,13 @@ import { useGenerate } from './hooks/useGenerate';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useLocalStorageState } from './hooks/useLocalStorageState';
 import { usePreviewZoom } from './hooks/usePreviewZoom';
-import { getActiveProviderId, listProviders, setActiveProviderId, type ProviderId, type ProviderStatus } from './providers';
+import {
+  getActiveProviderId,
+  listProviders,
+  setActiveProviderId,
+  type ProviderId,
+  type ProviderStatus,
+} from './providers';
 import {
   analyzeReferenceNotes,
   emptyReferenceState,
@@ -131,11 +146,19 @@ export default function App() {
       deserialize: parseReferenceState,
     },
   );
+  const [previewComments, setPreviewComments] = useLocalStorageState<PreviewCommentCollection>(
+    PREVIEW_COMMENTS_STORAGE_KEY,
+    { comments: [] },
+    {
+      deserialize: parseStoredPreviewComments,
+    },
+  );
   const [previewMode, setPreviewMode] = useState<PreviewMode>('desktop');
   const [sideTab, setSideTab] = useState<SideTab>('directions');
   const [status, setStatus] = useState('Listo');
   const [exportPath, setExportPath] = useState('');
   const [canvasOnly, setCanvasOnly] = useState(false);
+  const [commentMode, setCommentMode] = useState(false);
   const [compareVersionId, setCompareVersionId] = useState('');
   const [aiUsed, setAiUsed] = useState(false);
   const [activeProviderId, setActiveProviderIdState] = useState<ProviderId>(() => getActiveProviderId());
@@ -172,9 +195,17 @@ export default function App() {
       })),
     [sessionCollection],
   );
+  const activePreviewComments = useMemo(
+    () => previewComments.comments.filter((comment) => comment.sessionId === designSession.id && !comment.resolvedAt),
+    [designSession.id, previewComments.comments],
+  );
+  const generationPrompt = useMemo(
+    () => appendPreviewCommentsToPrompt(prompt, activePreviewComments),
+    [activePreviewComments, prompt],
+  );
   const generationInput = useMemo<BuildInput>(
-    () => ({ prompt, artifactType, directionId, tweaks }),
-    [artifactType, directionId, prompt, tweaks],
+    () => ({ prompt: generationPrompt, artifactType, directionId, tweaks }),
+    [artifactType, directionId, generationPrompt, tweaks],
   );
   const persistGeneratedOutput = useCallback(
     (nextOutput: DesignOutput) => {
@@ -187,15 +218,17 @@ export default function App() {
     [setSessionCollection],
   );
 
-  const { output, events: generationEvents, running: generationRunning, stop: stopGeneration } = useGenerate(
-    generationInput,
-    {
-      providerId: activeProviderId,
-      initialOutput: designSession.output,
-      resetKey: designSession.id,
-      onFinalOutput: persistGeneratedOutput,
-    },
-  );
+  const {
+    output,
+    events: generationEvents,
+    running: generationRunning,
+    stop: stopGeneration,
+  } = useGenerate(generationInput, {
+    providerId: activeProviderId,
+    initialOutput: designSession.output,
+    resetKey: designSession.id,
+    onFinalOutput: persistGeneratedOutput,
+  });
 
   const compareSnapshot = versions.find((snapshot) => snapshot.id === compareVersionId);
   const compareOutput = useMemo(() => {
@@ -283,6 +316,29 @@ export default function App() {
     } catch (error) {
       setStatus(`No se pudo activar el provider: ${errorMessage(error)}`);
     }
+  }
+
+  function addPreviewComment(target: PreviewCommentTarget, note: string) {
+    if (!note.trim()) return;
+
+    setPreviewComments((current) => ({
+      comments: [
+        createPreviewComment({
+          sessionId: designSession.id,
+          target,
+          note,
+        }),
+        ...current.comments,
+      ],
+    }));
+    setStatus('Comentario añadido al siguiente run');
+  }
+
+  function resolvePreviewCommentById(commentId: string) {
+    setPreviewComments((current) => ({
+      comments: resolvePreviewComment(current.comments, commentId),
+    }));
+    setStatus('Comentario resuelto');
   }
 
   function createSession() {
@@ -541,6 +597,9 @@ export default function App() {
           previewZoom={previewZoom}
           zoomScale={zoomScale}
           canvasOnly={canvasOnly}
+          commentMode={commentMode}
+          commentCount={activePreviewComments.length}
+          comments={activePreviewComments}
           status={visibleStatus}
           exportPath={exportPath}
           providerPicker={
@@ -569,6 +628,9 @@ export default function App() {
           onPreviewModeChange={setPreviewMode}
           onPreviewZoomChange={setPreviewZoom}
           onToggleCanvasOnly={() => setCanvasOnly((current) => !current)}
+          onToggleCommentMode={() => setCommentMode((current) => !current)}
+          onCreatePreviewComment={addPreviewComment}
+          onResolvePreviewComment={resolvePreviewCommentById}
           onClearCompare={() => setCompareVersionId('')}
           onResetView={resetView}
           onCopyHandoff={copyHandoff}
