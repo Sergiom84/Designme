@@ -16,7 +16,7 @@
 textarea {
   width: 100%;
   resize: vertical;
-  min-height: 148px;
+  min-height: 178px;
   border: 1px solid rgba(25, 27, 31, 0.16);
   border-radius: var(--app-radius-md);
   padding: 12px;
@@ -57,18 +57,18 @@ textarea {
 
 .artifact-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .artifact-button {
-  min-height: 92px;
+  min-height: 76px;
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto auto;
   align-items: start;
-  gap: 6px;
-  padding: 12px;
-  text-align: left;
+  gap: 5px;
+  padding: 10px;
+  text-align: center;
 }
 
 .artifact-button svg {
@@ -76,12 +76,71 @@ textarea {
 }
 
 .artifact-button strong {
-  font-size: 14px;
+  font-size: 13px;
+}
+
+.provider-section {
+  gap: 12px;
+}
+
+.provider-section .provider-picker {
+  display: grid;
+  gap: 10px;
+}
+
+.provider-section .provider-picker-control {
+  display: grid;
+  gap: 6px;
+}
+
+.provider-section .provider-picker-control label {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #796145;
+}
+
+.provider-section .provider-picker select,
+.provider-section .command-button {
+  width: 100%;
+}
+
+.provider-section .provider-status-badge {
+  justify-self: stretch;
+  text-align: center;
+}
+
+.provider-section .setup-hints,
+.provider-section .local-openai-settings {
+  margin-top: 0;
+}
+
+.sessions-section,
+.versions-section {
+  padding-top: 14px;
+}
+
+.versions-section {
+  opacity: 0.86;
+}
+
+.versions-section .version-list {
+  max-height: 180px;
+  overflow: auto;
+}
+
+.sessions-section .session-list {
+  max-height: 158px;
+  overflow: auto;
+}
+
+.sessions-section .session-item > button,
+.version-item > button:first-child {
+  font-size: 13px;
 }
 
 .artifact-button span {
-  font-size: 12px;
-  line-height: 1.3;
+  display: none;
 }
 
 .section-title-row {

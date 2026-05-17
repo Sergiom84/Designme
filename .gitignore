@@ -4,6 +4,7 @@ release/
 exports/
 artifacts/
 .refs/
+.claude/
 coverage/
 test-results/
 playwright-report/

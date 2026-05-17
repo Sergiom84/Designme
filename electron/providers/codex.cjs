@@ -1,11 +1,123 @@
 const { spawn: nodeSpawn } = require('node:child_process');
+const fs = require('node:fs');
 const os = require('node:os');
+const path = require('node:path');
 const readline = require('node:readline');
 const { extractStandaloneHtmlDocument } = require('./htmlExtraction.cjs');
 
 const DEFAULT_TIMEOUT_MS = 2_500;
 const DEFAULT_KILL_TIMEOUT_MS = 5_000;
 const DEFAULT_COMMAND = 'codex';
+
+function windowsCliSearchDirs(env = process.env) {
+  if (os.platform() !== 'win32') {
+    return [];
+  }
+
+  const windowsDir = env.SystemRoot || env.windir || 'C:\\Windows';
+  const programFiles = env.ProgramFiles || process.env.ProgramFiles || 'C:\\Program Files';
+
+  return [
+    path.join(windowsDir, 'System32'),
+    windowsDir,
+    path.join(programFiles, 'nodejs'),
+    env.APPDATA && path.join(env.APPDATA, 'npm'),
+    env.LOCALAPPDATA && path.join(env.LOCALAPPDATA, 'Microsoft', 'WindowsApps'),
+    env.LOCALAPPDATA && path.join(env.LOCALAPPDATA, 'OpenAI', 'Codex', 'bin'),
+    'C:\\Program Files\\WindowsApps',
+  ].filter(Boolean);
+}
+
+function withCliPath(env = process.env) {
+  const pathKey = Object.keys(env).find((key) => key.toLowerCase() === 'path') || 'PATH';
+  const currentPath = env[pathKey] || '';
+  const extraPaths = windowsCliSearchDirs(env).filter((dir) => !currentPath.toLowerCase().includes(String(dir).toLowerCase()));
+
+  if (extraPaths.length === 0) {
+    return env;
+  }
+
+  return {
+    ...env,
+    [pathKey]: `${currentPath}${currentPath ? path.delimiter : ''}${extraPaths.join(path.delimiter)}`,
+  };
+}
+
+function findKnownWindowsExecutable(command, env = process.env) {
+  if (os.platform() !== 'win32' || command !== DEFAULT_COMMAND) {
+    return null;
+  }
+
+  const roots = [
+    env.LOCALAPPDATA && path.join(env.LOCALAPPDATA, 'OpenAI', 'Codex', 'bin'),
+    'C:\\Program Files\\WindowsApps',
+  ].filter(Boolean);
+
+  for (const root of roots) {
+    if (!fs.existsSync(root)) continue;
+    const stack = [root];
+    while (stack.length > 0) {
+      const dir = stack.pop();
+      let entries = [];
+      try {
+        entries = fs.readdirSync(dir, { withFileTypes: true });
+      } catch {
+        continue;
+      }
+
+      for (const entry of entries) {
+        const candidate = path.join(dir, entry.name);
+        if (entry.isFile() && entry.name.toLowerCase() === `${command}.exe`) {
+          return candidate;
+        }
+        if (entry.isDirectory() && /(?:codex|openai|resources|bin)/i.test(candidate)) {
+          stack.push(candidate);
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+function resolveWindowsCommand(command, env = process.env) {
+  if (os.platform() !== 'win32' || path.extname(command)) {
+    return command;
+  }
+
+  const knownExecutable = findKnownWindowsExecutable(path.basename(command).toLowerCase(), env);
+  if (knownExecutable) {
+    return knownExecutable;
+  }
+
+  if (path.dirname(command) !== '.') {
+    for (const extension of ['.exe', '.cmd', '.bat']) {
+      const candidate = `${command}${extension}`;
+      if (fs.existsSync(candidate)) {
+        return candidate;
+      }
+    }
+  }
+
+  const pathKey = Object.keys(env).find((key) => key.toLowerCase() === 'path') || 'PATH';
+  const searchDirs = String(env[pathKey] || '').split(path.delimiter).filter(Boolean);
+  const extensions = ['.exe', '.cmd', '.bat'];
+
+  for (const dir of searchDirs) {
+    for (const extension of extensions) {
+      const candidate = path.join(dir, `${command}${extension}`);
+      if (fs.existsSync(candidate)) {
+        return candidate;
+      }
+    }
+  }
+
+  return command;
+}
+
+function shouldUseWindowsShell(command) {
+  return os.platform() === 'win32' && /\.(?:cmd|bat)$/i.test(command);
+}
 
 function createTimeout(ms, onTimeout) {
   const timeout = setTimeout(onTimeout, ms);
@@ -72,10 +184,12 @@ function runCommand(command, args, options = {}) {
     });
 
     try {
-      child = spawn(command, args, {
+      const env = withCliPath(options.env || process.env);
+      const commandPath = resolveWindowsCommand(command, env);
+      child = spawn(commandPath, args, {
         cwd: options.cwd,
-        env: options.env,
-        shell: false,
+        env,
+        shell: shouldUseWindowsShell(commandPath),
         windowsHide: true,
         stdio: ['ignore', 'pipe', 'pipe'],
       });
@@ -112,9 +226,10 @@ async function detectCodex(options = {}) {
   const locator = platform === 'win32' ? 'where.exe' : 'which';
 
   try {
-    const locateResult = await runCommand(locator, [DEFAULT_COMMAND], { spawn, timeoutMs, env: options.env });
-    const commandPath = pickCodexCommand(locateResult.stdout);
-    const versionResult = await runCommand(commandPath, ['--version'], { spawn, timeoutMs, env: options.env });
+    const env = withCliPath(options.env || process.env);
+    const locateResult = await runCommand(locator, [DEFAULT_COMMAND], { spawn, timeoutMs, env });
+    const commandPath = resolveWindowsCommand(pickCodexCommand(locateResult.stdout), env);
+    const versionResult = await runCommand(commandPath, ['--version'], { spawn, timeoutMs, env });
     const detection = {
       available: true,
       command: commandPath,
@@ -123,7 +238,7 @@ async function detectCodex(options = {}) {
 
     if (options.checkStatus) {
       try {
-        const statusResult = await runCommand(commandPath, ['login', 'status'], { spawn, timeoutMs, env: options.env });
+        const statusResult = await runCommand(commandPath, ['login', 'status'], { spawn, timeoutMs, env });
         detection.status = firstNonEmptyLine(statusResult.stdout) || firstNonEmptyLine(statusResult.stderr) || null;
       } catch (error) {
         detection.statusError = error instanceof Error ? error.message : String(error);
@@ -333,7 +448,8 @@ function splitCallbacksAndOptions(callbacksOrOptions, maybeOptions) {
 function startCodexRun(request, callbacksOrOptions = {}, maybeOptions = {}) {
   const { callbacks, options } = splitCallbacksAndOptions(callbacksOrOptions, maybeOptions);
   const spawn = options.spawn || nodeSpawn;
-  const command = options.command || DEFAULT_COMMAND;
+  const env = withCliPath(options.env || process.env);
+  const command = options.command || resolveWindowsCommand(DEFAULT_COMMAND, env);
   const killTimeoutMs = options.killTimeoutMs || DEFAULT_KILL_TIMEOUT_MS;
   const prompt = requestToPrompt(request);
   const cwd = options.cwd || process.cwd();
@@ -357,8 +473,8 @@ function startCodexRun(request, callbacksOrOptions = {}, maybeOptions = {}) {
 
   const child = spawn(command, args, {
     cwd,
-    env: options.env,
-    shell: false,
+    env,
+    shell: shouldUseWindowsShell(command),
     windowsHide: true,
     stdio: ['pipe', 'pipe', 'pipe'],
   });
@@ -477,6 +593,9 @@ module.exports = {
   extractHtmlFromCodexText,
   normalizeCodexEvent,
   pickCodexCommand,
+  resolveWindowsCommand,
   runCommand,
+  shouldUseWindowsShell,
   startCodexRun,
+  withCliPath,
 };

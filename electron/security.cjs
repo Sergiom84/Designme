@@ -26,14 +26,14 @@ function contentSecurityPolicy(isDev) {
 
     return [
       "default-src 'self' http://127.0.0.1:5173",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://127.0.0.1:5173",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: http://127.0.0.1:5173",
       "style-src 'self' 'unsafe-inline' http://127.0.0.1:5173",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
       `connect-src ${connectSources.join(' ')}`,
       "object-src 'none'",
       "base-uri 'self'",
-      "frame-src 'self'",
+      "frame-src 'self' blob:",
     ].join('; ');
   }
 
@@ -41,14 +41,14 @@ function contentSecurityPolicy(isDev) {
 
   return [
     "default-src 'self'",
-    "script-src 'self'",
+    "script-src 'self' 'unsafe-inline' blob:",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
     `connect-src ${connectSources.join(' ')}`,
     "object-src 'none'",
     "base-uri 'self'",
-    "frame-src 'self'",
+    "frame-src 'self' blob:",
   ].join('; ');
 }
 

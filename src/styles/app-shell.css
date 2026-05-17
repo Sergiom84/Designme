@@ -2,9 +2,7 @@
   min-height: 100dvh;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  background:
-    linear-gradient(90deg, rgba(15, 118, 110, 0.06), transparent 30%),
-    linear-gradient(180deg, var(--app-surface-muted), var(--app-bg-muted));
+  background: var(--app-bg-muted);
 }
 
 .left-panel,
@@ -22,6 +20,7 @@
 }
 
 .right-panel {
+  display: none;
   border-top: 1px solid var(--app-border);
   padding: 14px;
 }
@@ -101,7 +100,7 @@
 
   .app-shell {
     height: 100dvh;
-    grid-template-columns: 350px minmax(0, 1fr) 360px;
+    grid-template-columns: 360px minmax(0, 1fr);
     overflow: hidden;
   }
 
@@ -111,20 +110,11 @@
     padding: 18px;
   }
 
-  .right-panel {
-    border-left: 1px solid var(--app-border);
-    border-top: 0;
-    padding: 14px;
-  }
 }
 
 @media (min-width: 1024px) and (max-width: 1279px) {
   .app-shell {
-    grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
-  }
-
-  .right-panel {
-    grid-column: 1 / -1;
+    grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
   }
 }
 

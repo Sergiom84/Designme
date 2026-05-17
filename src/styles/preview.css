@@ -2,10 +2,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  padding: 16px 18px;
+  gap: 14px;
+  padding: 14px 18px;
   border-bottom: 1px solid rgba(25, 27, 31, 0.12);
-  background: rgba(247, 243, 234, 0.8);
+  background: rgba(255, 253, 248, 0.86);
 }
 
 .canvas-toolbar h1 {
@@ -22,9 +22,13 @@
 .toolbar-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.toolbar-actions .secondary-control {
+  display: none;
 }
 
 .icon-segment,
@@ -60,7 +64,7 @@
   min-height: 0;
   display: grid;
   place-items: center;
-  padding: 18px;
+  padding: 14px;
   overflow: auto;
 }
 
@@ -73,12 +77,12 @@
   position: relative;
   width: calc(100% * var(--preview-scale));
   height: calc(100% * var(--preview-scale));
-  min-height: 520px;
+  min-height: 620px;
   overflow: hidden;
   border: 1px solid var(--app-border-strong);
   border-radius: var(--app-radius-md);
   background: var(--app-surface);
-  box-shadow: var(--app-shadow-lg);
+  box-shadow: none;
 }
 
 .mode-tablet .iframe-shell {
