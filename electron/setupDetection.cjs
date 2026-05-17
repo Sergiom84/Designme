@@ -93,14 +93,14 @@ async function detectLocalSetup(options = {}) {
     generatedAt: new Date().toISOString(),
     providers: [
       providerDetection({
-        id: 'claude-code',
+        id: 'claude-code-cli',
         label: 'Claude Code',
         configFound: claudeConfigFound,
         cli: claudeCli,
       }),
       {
         ...providerDetection({
-          id: 'codex',
+          id: 'codex-cli',
           label: 'Codex',
           configFound: codexAuthFound,
           cli: codexCli,

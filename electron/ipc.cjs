@@ -28,29 +28,54 @@ function assertTrustedSender(event, isDev) {
 }
 
 const providerStatusDetectors = {
-  'claude-code': () => detectClaudeCode({ checkStatus: true }),
-  codex: () => detectCodex({ checkStatus: true }),
+  'claude-code-cli': () => detectClaudeCode({ checkStatus: true }),
+  'codex-cli': () => detectCodex({ checkStatus: true }),
+  'anthropic-api': () => ({ available: Boolean(secretStoreForStatus?.get?.('anthropic-api.apiKey')) }),
+  'openai-api': () => ({ available: Boolean(secretStoreForStatus?.get?.('openai-api.apiKey')) }),
 };
 
+let secretStoreForStatus;
+
 function registerIpcHandlers(app, isDev, options = {}) {
-  const providerRuns = createProviderRunManager();
   const cspState = options.cspState;
+  const logger = options.logger;
   const secretStore = options.secretStore;
+  const providerRuns = createProviderRunManager({ secretStore });
+  secretStoreForStatus = secretStore;
 
   ipcMain.handle('designme:export-html', async (event, payload) => {
     assertTrustedSender(event, isDev);
     validateExportHtmlPayload(payload);
 
-    const { dir, filePath } = timestampedExportPath(app, payload.name, 'html');
-    await fs.mkdir(dir, { recursive: true });
-    await fs.writeFile(filePath, payload.html, 'utf8');
-    return { filePath, directory: dir };
+    try {
+      const { dir, filePath } = timestampedExportPath(app, payload.name, 'html');
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(filePath, payload.html, 'utf8');
+      logger?.info?.('HTML exported', { filePath });
+      return { filePath, directory: dir };
+    } catch (error) {
+      logger?.error?.('HTML export failed', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      throw error;
+    }
   });
 
   ipcMain.handle('designme:export-bundle', async (event, payload) => {
     assertTrustedSender(event, isDev);
     validateExportBundlePayload(payload);
-    return writeExportBundle(app, payload);
+    try {
+      const result = await writeExportBundle(app, payload);
+      logger?.info?.('Bundle exported', { filePath: result.filePath });
+      return result;
+    } catch (error) {
+      logger?.error?.('Bundle export failed', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      throw error;
+    }
   });
 
   ipcMain.handle('designme:open-exports', async (event) => {

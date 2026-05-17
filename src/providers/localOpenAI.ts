@@ -3,6 +3,7 @@ import {
   readLocalOpenAISettings,
   type LocalOpenAISettings,
 } from '../settings';
+import { buildAskMessages, parseAskResponse } from './shared/askFlow';
 import { INVALID_HTML_ERROR_MESSAGE, extractStandaloneHtmlDocument } from './htmlExtraction';
 import type { GenerateEvent, GenerateRequest, Provider, ProviderStatus } from './types';
 
@@ -29,6 +30,7 @@ function buildMessages(req: GenerateRequest): Array<{ role: 'system' | 'user'; c
         tweaks: req.tweaks,
         brief: req.brief,
         intent: req.intent,
+        workspace: req.workspace?.summary,
       }),
     },
   ];
@@ -182,6 +184,12 @@ export function createLocalOpenAIProvider(options: LocalOpenAIProviderOptions = 
   return {
     id: 'local-openai',
     label: 'Local OpenAI',
+    capabilities: {
+      ask: true,
+      multiIdea: true,
+      streaming: true,
+      toolCalls: false,
+    },
     async status(): Promise<ProviderStatus> {
       const settings = resolveOptions(options);
       const controller = new AbortController();
@@ -203,6 +211,22 @@ export function createLocalOpenAIProvider(options: LocalOpenAIProviderOptions = 
     },
     generate(req) {
       return generateWithSettings(resolveOptions(options), req);
+    },
+    async ask(req) {
+      const settings = resolveOptions(options);
+      const response = await fetch(`${normalizeBaseUrl(settings.baseUrl)}/chat/completions`, {
+        method: 'POST',
+        headers: buildHeaders(settings),
+        body: JSON.stringify({
+          model: settings.model,
+          messages: buildAskMessages(req),
+          stream: false,
+        }),
+        signal: req.signal,
+      });
+      if (!response.ok) return { questions: [] };
+      const payload = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
+      return parseAskResponse(payload.choices?.[0]?.message?.content ?? '');
     },
   };
 }

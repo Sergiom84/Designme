@@ -2,7 +2,7 @@ import { buildClaudeCodePrompt } from './claudeCodeOutput';
 import { createDesktopCliProvider } from './desktopCliBridge';
 
 export const claudeCodeProvider = createDesktopCliProvider({
-  id: 'claude-code',
+  id: 'claude-code-cli',
   label: 'Claude Code',
   buildPrompt: buildClaudeCodePrompt,
   failureMessage: 'Claude Code provider failed.',

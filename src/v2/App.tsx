@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
-import { buildDesignProject } from '../engine';
-import { listProviders } from '../providers';
+import { getProvider, listProviders } from '../providers';
+import { shouldAskFirst } from '../providers/shared/askFlow';
+import { generateIdeas as generateProviderIdeas } from '../providers/shared/multiIdea';
 import { CenterDashboard } from './layout/CenterDashboard';
 import { LeftRail } from './layout/LeftRail';
 import { RightInspector } from './layout/RightInspector';
@@ -8,13 +9,7 @@ import { Shell } from './layout/Shell';
 import { StatusBar } from './layout/StatusBar';
 import { TopBar } from './layout/TopBar';
 import { createChatTurn, createIdeaDraft, useV2Store } from './state/store';
-import type { Attachment, Idea } from './state/types';
-
-const variants = [
-  { title: 'Minimal editorial', prompt: 'Minimal/editorial variant. Calm hierarchy, sharp whitespace.' },
-  { title: 'Bold campaign', prompt: 'Bold/campaign variant. Strong contrast, memorable hero moments.' },
-  { title: 'Dense professional', prompt: 'Dense/professional variant. Scannable data, compact operations UI.' },
-];
+import type { Attachment } from './state/types';
 
 function digest(value: string): string {
   let hash = 0;
@@ -67,39 +62,44 @@ export default function App() {
   const activeIdea = ideas.find((idea) => idea.id === activeIdeaId) ?? ideas[0];
   const output = activeIdea?.designOutput;
 
-  function generateIdeas(prompt = project.draft.prompt) {
+  async function generateIdeas(prompt = project.draft.prompt) {
     const promptDigest = digest(prompt);
     setRunState('generating', `Generando 3 ideas con ${activeProviderId}`);
-    const nextIdeas: Idea[] = variants.map((variant, variantIndex) => {
-      const draft = createIdeaDraft({
+    const controller = new AbortController();
+    const pendingIdeas = [0, 1, 2].map((variantIndex) =>
+      createIdeaDraft({
         sessionId: project.id,
         variantIndex,
-        title: variant.title,
+        title: ['Minimal editorial', 'Bold campaign', 'Dense professional'][variantIndex],
         providerId: activeProviderId,
         promptDigest,
-      });
-      const designOutput = buildDesignProject({
-        ...project.draft,
-        prompt: `${prompt}\n\nVariant direction: ${variant.prompt}`,
-      });
-      return {
-        ...draft,
-        status: 'ready',
-        html: designOutput.html,
-        designOutput,
-      };
-    });
-    setIdeas(nextIdeas);
-    setActiveIdea(nextIdeas[0]?.id);
-    addTurn(
-      createChatTurn('assistant', `Generadas ${nextIdeas.length} variantes: ${nextIdeas.map((idea) => idea.title).join(', ')}.`, {
-        ideas: nextIdeas.map((idea) => idea.id),
       }),
     );
-    setRunState('ready', 'Variantes listas');
+    setIdeas(pendingIdeas);
+    setActiveIdea(pendingIdeas[0]?.id);
+    try {
+      const nextIdeas = await generateProviderIdeas({
+        sessionId: project.id,
+        providerId: activeProviderId,
+        buildInput: { ...project.draft, prompt },
+        workspace,
+        signal: controller.signal,
+        onIdea: upsertIdea,
+      });
+      setIdeas(nextIdeas);
+      setActiveIdea(nextIdeas[0]?.id);
+      addTurn(
+        createChatTurn('assistant', `Generadas ${nextIdeas.length} variantes: ${nextIdeas.map((idea) => idea.title).join(', ')}.`, {
+          ideas: nextIdeas.map((idea) => idea.id),
+        }),
+      );
+      setRunState('ready', 'Variantes listas');
+    } catch (error) {
+      setRunState('error', error instanceof Error ? error.message : 'Error generando ideas');
+    }
   }
 
-  function sendChat(text: string, attachments?: Attachment[]) {
+  async function sendChat(text: string, attachments?: Attachment[]) {
     if (text.startsWith('/clear')) {
       useV2Store.getState().setTurns([]);
       setRunState('idle', 'Chat limpio');
@@ -111,7 +111,21 @@ export default function App() {
     }
     patchDraft({ prompt: text });
     addTurn(createChatTurn('user', text, { attachments }));
-    generateIdeas(text);
+    const provider = getProvider(activeProviderId);
+    if ((text.startsWith('/ask') || shouldAskFirst(text)) && provider.ask) {
+      setRunState('asking', 'Preguntando antes de generar');
+      const response = await provider.ask({ prompt: text.replace(/^\/ask\s*/, ''), workspace, signal: new AbortController().signal });
+      if (response.questions.length > 0) {
+        addTurn(
+          createChatTurn('assistant', 'Antes de generar, necesito afinar esto:', {
+            askQuestions: response.questions,
+          }),
+        );
+        setRunState('ready', 'Preguntas listas');
+        return;
+      }
+    }
+    void generateIdeas(text);
   }
 
   function deleteIdea(id: string) {
@@ -145,13 +159,20 @@ export default function App() {
           onOpenProjects={() => setRunState('ready', 'Sessions drawer llega en base 4')}
         />
       }
-      left={<LeftRail turns={chatTurns} running={runState === 'generating'} onSend={sendChat} onStop={() => setRunState('idle', 'Generación detenida')} />}
+      left={
+        <LeftRail
+          turns={chatTurns}
+          running={runState === 'generating'}
+          onSend={(text, attachments) => void sendChat(text, attachments)}
+          onStop={() => setRunState('idle', 'Generación detenida')}
+        />
+      }
       center={
         <CenterDashboard
           ideas={ideas}
           activeIdeaId={activeIdeaId}
           onSelectIdea={setActiveIdea}
-          onGenerate={() => generateIdeas()}
+          onGenerate={() => void generateIdeas()}
           onDeleteIdea={deleteIdea}
         />
       }

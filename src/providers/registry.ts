@@ -2,11 +2,20 @@ import { claudeCodeProvider } from './claudeCode';
 import { codexProvider } from './codex';
 import { deterministicProvider } from './deterministic';
 import { localOpenAIProvider } from './localOpenAI';
+import { anthropicApiProvider } from './anthropicApi';
+import { openaiApiProvider } from './openaiApi';
 import type { Provider, ProviderId } from './types';
 
 const ACTIVE_PROVIDER_STORAGE_KEY = 'designme.activeProviderId';
 
-const providers: Provider[] = [deterministicProvider, localOpenAIProvider, claudeCodeProvider, codexProvider];
+const providers: Provider[] = [
+  deterministicProvider,
+  localOpenAIProvider,
+  anthropicApiProvider,
+  openaiApiProvider,
+  claudeCodeProvider,
+  codexProvider,
+];
 
 function canUseLocalStorage(): boolean {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
@@ -14,6 +23,12 @@ function canUseLocalStorage(): boolean {
 
 function isProviderId(value: string): value is ProviderId {
   return providers.some((provider) => provider.id === value);
+}
+
+function migrateProviderId(value: string | null): ProviderId | undefined {
+  if (value === 'claude-code') return 'claude-code-cli';
+  if (value === 'codex') return 'codex-cli';
+  return value && isProviderId(value) ? value : undefined;
 }
 
 export function listProviders(): Provider[] {
@@ -36,8 +51,8 @@ export function getActiveProviderId(): ProviderId {
   }
 
   try {
-    const storedId = window.localStorage.getItem(ACTIVE_PROVIDER_STORAGE_KEY);
-    return storedId && isProviderId(storedId) ? storedId : 'deterministic';
+    const storedId = migrateProviderId(window.localStorage.getItem(ACTIVE_PROVIDER_STORAGE_KEY));
+    return storedId ?? 'deterministic';
   } catch {
     return 'deterministic';
   }

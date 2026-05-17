@@ -1,6 +1,6 @@
 import type { GenerateEvent, GenerateRequest, Provider, ProviderId } from './types';
 
-type DesktopProviderId = Extract<ProviderId, 'claude-code' | 'codex'>;
+type DesktopProviderId = Extract<ProviderId, 'claude-code-cli' | 'codex-cli' | 'anthropic-api' | 'openai-api'>;
 type QueuedEvent = GenerateEvent | { type: 'stopped' };
 
 interface DesktopCliProviderOptions {
@@ -115,6 +115,7 @@ export function createDesktopCliProvider(options: DesktopCliProviderOptions): Pr
         tweaks: asRecord(req.tweaks),
         brief: asOptionalRecord(req.brief),
         intent: asOptionalRecord(req.intent),
+        workspace: asOptionalRecord(req.workspace),
       });
       runId = response.runId;
       for (const event of pendingEvents.get(runId) ?? []) {
@@ -154,6 +155,12 @@ export function createDesktopCliProvider(options: DesktopCliProviderOptions): Pr
   return {
     id: options.id,
     label: options.label,
+    capabilities: {
+      ask: options.id === 'anthropic-api' || options.id === 'openai-api',
+      multiIdea: true,
+      streaming: true,
+      toolCalls: options.id === 'claude-code-cli' || options.id === 'codex-cli',
+    },
     async status() {
       if (!window.designme?.providerStatus) {
         return 'error';

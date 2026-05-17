@@ -29,7 +29,13 @@ async function* generate(req: GenerateRequest): AsyncIterable<GenerateEvent> {
 
 export const deterministicProvider: Provider = {
   id: 'deterministic',
-  label: 'Deterministic',
+  label: 'Local',
+  capabilities: {
+    ask: false,
+    multiIdea: true,
+    streaming: false,
+    toolCalls: false,
+  },
   async status() {
     return 'ready';
   },

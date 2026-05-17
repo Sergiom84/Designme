@@ -13,14 +13,14 @@ const { validateProviderEventPayload, validateProviderStartPayload } = require('
 const INVALID_HTML_ERROR_MESSAGE = 'Provider did not return a complete standalone HTML document.';
 
 const providerHandlers = {
-  'claude-code': {
+  'claude-code-cli': {
     errorMessage: INVALID_HTML_ERROR_MESSAGE,
     extractHtml: extractHtmlFromClaudeText,
     notes: 'Generated with Claude Code.',
     startRun: startClaudeCodeRun,
     workspaceName: 'designme-claude-code',
   },
-  codex: {
+  'codex-cli': {
     errorMessage: INVALID_HTML_ERROR_MESSAGE,
     extractHtml: extractHtmlFromCodexText,
     notes: 'Generated with Codex.',
@@ -28,6 +28,82 @@ const providerHandlers = {
     workspaceName: 'designme-codex',
   },
 };
+
+function extractStandaloneHtml(text) {
+  const match = String(text || '').match(/<!doctype html[\s\S]*<\/html>/i);
+  return match?.[0];
+}
+
+async function fetchJson(url, options) {
+  const response = await fetch(url, options);
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`Cloud provider request failed with ${response.status}: ${text.slice(0, 240)}`);
+  }
+  return JSON.parse(text);
+}
+
+function createCloudProviderHandler(providerId, secretStore) {
+  const isOpenAI = providerId === 'openai-api';
+  const isAnthropic = providerId === 'anthropic-api';
+  if (!isOpenAI && !isAnthropic) return undefined;
+
+  return {
+    errorMessage: INVALID_HTML_ERROR_MESSAGE,
+    extractHtml: extractStandaloneHtml,
+    notes: isOpenAI ? 'Generated with OpenAI API.' : 'Generated with Anthropic API.',
+    workspaceName: isOpenAI ? 'designme-openai-api' : 'designme-anthropic-api',
+    async startRun({ prompt, signal }, events) {
+      const key = secretStore?.get?.(isOpenAI ? 'openai-api.apiKey' : 'anthropic-api.apiKey');
+      if (!key) {
+        throw new Error(`${isOpenAI ? 'OpenAI' : 'Anthropic'} API key is not configured.`);
+      }
+
+      if (isOpenAI) {
+        const json = await fetchJson('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${key}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4.1-mini',
+            messages: [
+              { role: 'system', content: 'Return one complete standalone HTML document only.' },
+              { role: 'user', content: prompt },
+            ],
+            temperature: 0.7,
+          }),
+          signal,
+        });
+        const text = json.choices?.[0]?.message?.content || '';
+        events.onToken?.(text);
+        events.onFinal?.({ text });
+        return { done: Promise.resolve({ finalText: text }) };
+      }
+
+      const json = await fetchJson('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': key,
+          'anthropic-version': '2023-06-01',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-3-5-sonnet-20241022',
+          max_tokens: 4096,
+          system: 'Return one complete standalone HTML document only.',
+          messages: [{ role: 'user', content: prompt }],
+        }),
+        signal,
+      });
+      const text = (json.content || []).map((block) => (block.type === 'text' ? block.text : '')).join('');
+      events.onToken?.(text);
+      events.onFinal?.({ text });
+      return { done: Promise.resolve({ finalText: text }) };
+    },
+  };
+}
 
 function providerWorkspace(workspaceName) {
   const workspace = path.join(os.tmpdir(), workspaceName);
@@ -43,7 +119,7 @@ async function startCliProviderRun(handler, { payload, signal, emit }) {
   emit({ type: 'started' });
 
   let emittedTerminal = false;
-  const run = handler.startRun(
+  const run = await handler.startRun(
     { prompt: payload.prompt, signal },
     {
       onToken(text) {
@@ -81,10 +157,10 @@ async function startCliProviderRun(handler, { payload, signal, emit }) {
   }
 }
 
-function createDefaultProviderAdapter() {
+function createDefaultProviderAdapter(options = {}) {
   return {
     async start({ payload, signal, emit }) {
-      const handler = providerHandlers[payload.providerId];
+      const handler = providerHandlers[payload.providerId] || createCloudProviderHandler(payload.providerId, options.secretStore);
       if (!handler) {
         emit({ type: 'error', message: `Provider ${payload.providerId} is not available in desktop IPC.` });
         return;
@@ -95,9 +171,12 @@ function createDefaultProviderAdapter() {
   };
 }
 
-function createProviderRunManager(adapter) {
+function createProviderRunManager(adapterOrOptions) {
   const runs = new Map();
-  const providerAdapter = adapter || createDefaultProviderAdapter();
+  const providerAdapter =
+    adapterOrOptions && typeof adapterOrOptions.start === 'function'
+      ? adapterOrOptions
+      : createDefaultProviderAdapter(adapterOrOptions || {});
 
   async function start(webContents, payload) {
     validateProviderStartPayload(payload);

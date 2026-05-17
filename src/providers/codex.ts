@@ -2,7 +2,7 @@ import { buildCodexPrompt } from './codexOutput';
 import { createDesktopCliProvider } from './desktopCliBridge';
 
 export const codexProvider = createDesktopCliProvider({
-  id: 'codex',
+  id: 'codex-cli',
   label: 'Codex',
   buildPrompt: buildCodexPrompt,
   failureMessage: 'Codex provider failed.',

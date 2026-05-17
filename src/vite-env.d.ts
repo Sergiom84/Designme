@@ -17,7 +17,13 @@ interface DesignmeExportBundlePayload {
   };
 }
 
-type DesignmeProviderId = 'deterministic' | 'local-openai' | 'claude-code' | 'codex';
+type DesignmeProviderId =
+  | 'deterministic'
+  | 'local-openai'
+  | 'anthropic-api'
+  | 'openai-api'
+  | 'claude-code-cli'
+  | 'codex-cli';
 type DesignmeProviderStatus = 'idle' | 'checking' | 'ready' | 'error';
 
 interface DesignmeProviderStartPayload {
@@ -28,6 +34,7 @@ interface DesignmeProviderStartPayload {
   tweaks: Record<string, unknown>;
   brief?: Record<string, unknown>;
   intent?: Record<string, unknown>;
+  workspace?: Record<string, unknown>;
 }
 
 interface DesignmeProviderStatusResult {
@@ -38,7 +45,7 @@ interface DesignmeProviderStatusResult {
 }
 
 interface DesignmeLocalSetupProvider {
-  id: Extract<DesignmeProviderId, 'claude-code' | 'codex'>;
+  id: Extract<DesignmeProviderId, 'claude-code-cli' | 'codex-cli'>;
   label: string;
   detected: boolean;
   ready: boolean;

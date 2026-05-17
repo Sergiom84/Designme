@@ -9,9 +9,16 @@ const MAX_PROVIDER_PROMPT_BYTES = 256 * 1024;
 const MAX_PROVIDER_TEXT_BYTES = 1024 * 1024;
 const MAX_PROVIDER_JSON_BYTES = 1024 * 1024;
 const BUNDLE_FILE_NAMES = ['index.html', 'styles.css', 'script.js', 'designme.json', 'handoff.md', 'README.md'];
-const PROVIDER_IDS = new Set(['deterministic', 'local-openai', 'claude-code', 'codex']);
+const PROVIDER_IDS = new Set([
+  'deterministic',
+  'local-openai',
+  'anthropic-api',
+  'openai-api',
+  'claude-code-cli',
+  'codex-cli',
+]);
 const PROVIDER_EVENT_TYPES = new Set(['started', 'token', 'tool-call', 'tool-result', 'final', 'error', 'stopped']);
-const LOCAL_SETUP_PROVIDER_IDS = new Set(['claude-code', 'codex']);
+const LOCAL_SETUP_PROVIDER_IDS = new Set(['claude-code-cli', 'codex-cli']);
 
 function byteLength(value) {
   return new TextEncoder().encode(String(value)).length;
@@ -121,6 +128,7 @@ function validateProviderStartPayload(payload) {
   assertPlainObject(payload.tweaks, 'Provider tweaks must be an object');
   assertOptionalPlainObject(payload.brief, 'Provider brief must be an object');
   assertOptionalPlainObject(payload.intent, 'Provider intent must be an object');
+  assertOptionalPlainObject(payload.workspace, 'Provider workspace must be an object');
 }
 
 function validateProviderStopPayload(payload) {
