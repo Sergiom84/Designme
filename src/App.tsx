@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AgentStream } from './components/AgentStream';
 import { AppShell } from './components/AppShell';
 import { CenterPanel } from './components/CenterPanel';
@@ -17,6 +17,7 @@ import {
   defaultTweaks,
   type ArtifactType,
   type BuildInput,
+  type DesignOutput,
   type DesignTweaks,
   type DirectionId,
 } from './engine/index';
@@ -32,7 +33,15 @@ import {
   parseReferenceState,
   type StoredReferenceState,
 } from './references';
-import type { PreviewMode, SideTab, VersionSnapshot } from './types/app';
+import {
+  DESIGN_SESSION_STORAGE_KEY,
+  appendDesignSessionSnapshot,
+  createInitialDesignSession,
+  parseStoredDesignSession,
+  updateDesignSessionDraft,
+  updateDesignSessionOutput,
+} from './sessions';
+import type { DesignSession, PreviewMode, SideTab, VersionSnapshot } from './types/app';
 
 const initialPrompt =
   'Crea un diseñador de apps, software y webs local-first: prompt a prototipo, con variaciones visuales, tweaks, crítica y export HTML.';
@@ -71,29 +80,40 @@ function parseVersions(value: string): VersionSnapshot[] {
   }
 }
 
+function readLocalStorageValue(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function readLegacyInput(): BuildInput {
+  return {
+    prompt: readLocalStorageValue('designme.prompt') ?? initialPrompt,
+    artifactType: parseArtifactType(readLocalStorageValue('designme.artifactType') ?? 'software'),
+    directionId: parseDirectionId(readLocalStorageValue('designme.directionId') ?? 'systems'),
+    tweaks: parseTweaks(readLocalStorageValue('designme.tweaks') ?? ''),
+  };
+}
+
+function readLegacyVersions(): VersionSnapshot[] {
+  const stored = readLocalStorageValue('designme.versions');
+  return stored ? parseVersions(stored) : [];
+}
+
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Error desconocido';
 }
 
 export default function App() {
-  const [prompt, setPrompt] = useLocalStorageState('designme.prompt', initialPrompt, {
-    serialize: (value) => value,
-    deserialize: (value) => value,
-  });
-  const [artifactType, setArtifactType] = useLocalStorageState<ArtifactType>('designme.artifactType', 'software', {
-    serialize: (value) => value,
-    deserialize: parseArtifactType,
-  });
-  const [directionId, setDirectionId] = useLocalStorageState<DirectionId>('designme.directionId', 'systems', {
-    serialize: (value) => value,
-    deserialize: parseDirectionId,
-  });
-  const [tweaks, setTweaks] = useLocalStorageState<DesignTweaks>('designme.tweaks', defaultTweaks, {
-    deserialize: parseTweaks,
-  });
-  const [versions, setVersions] = useLocalStorageState<VersionSnapshot[]>('designme.versions', [], {
-    deserialize: parseVersions,
-  });
+  const [designSession, setDesignSession] = useLocalStorageState<DesignSession>(
+    DESIGN_SESSION_STORAGE_KEY,
+    () => createInitialDesignSession(readLegacyInput(), readLegacyVersions()),
+    {
+      deserialize: (value) => parseStoredDesignSession(value, readLegacyInput(), readLegacyVersions()),
+    },
+  );
   const [referenceState, setReferenceState] = useLocalStorageState<StoredReferenceState>(
     'designme.references',
     emptyReferenceState,
@@ -113,6 +133,8 @@ export default function App() {
   const [providerStatuses, setProviderStatuses] = useState<Record<string, ProviderStatus>>({});
   const { previewZoom, setPreviewZoom, zoomScale, resetPreviewZoom } = usePreviewZoom();
 
+  const { artifactType, directionId, prompt, tweaks } = designSession.draft;
+  const versions = designSession.snapshots;
   const referenceAnalysis = useMemo(() => analyzeReferenceNotes(referenceState.notes), [referenceState.notes]);
   const providerList = useMemo(() => listProviders(), []);
   const providerOptions = useMemo<ProviderPickerOption[]>(
@@ -129,11 +151,19 @@ export default function App() {
     () => ({ prompt, artifactType, directionId, tweaks }),
     [artifactType, directionId, prompt, tweaks],
   );
+  const persistGeneratedOutput = useCallback(
+    (nextOutput: DesignOutput) => {
+      setDesignSession((current) => updateDesignSessionOutput(current, nextOutput));
+    },
+    [setDesignSession],
+  );
 
   const { output, events: generationEvents, running: generationRunning, stop: stopGeneration } = useGenerate(
     generationInput,
     {
       providerId: activeProviderId,
+      initialOutput: designSession.output,
+      onFinalOutput: persistGeneratedOutput,
     },
   );
 
@@ -174,7 +204,23 @@ export default function App() {
   }, [providerList, activeProviderId]);
 
   function patchTweaks(patch: Partial<DesignTweaks>) {
-    setTweaks((current) => ({ ...current, ...patch }));
+    setDesignSession((current) => updateDesignSessionDraft(current, { tweaks: patch }));
+  }
+
+  function changePrompt(nextPrompt: string) {
+    setDesignSession((current) => updateDesignSessionDraft(current, { prompt: nextPrompt }));
+  }
+
+  function changeArtifactType(nextArtifactType: ArtifactType) {
+    setDesignSession((current) => updateDesignSessionDraft(current, { artifactType: nextArtifactType }));
+  }
+
+  function changeDirection(nextDirectionId: DirectionId) {
+    setDesignSession((current) => updateDesignSessionDraft(current, { directionId: nextDirectionId }));
+  }
+
+  function resetTweaks(nextTweaks: DesignTweaks) {
+    setDesignSession((current) => updateDesignSessionDraft(current, { tweaks: nextTweaks }));
   }
 
   function changeReferenceNotes(notes: string) {
@@ -183,7 +229,7 @@ export default function App() {
 
   function applyReferencePreferences() {
     if (referenceAnalysis.preferences.directionId) {
-      setDirectionId(referenceAnalysis.preferences.directionId);
+      changeDirection(referenceAnalysis.preferences.directionId);
     }
     if (Object.keys(referenceAnalysis.preferences.tweaksPatch).length > 0) {
       patchTweaks(referenceAnalysis.preferences.tweaksPatch);
@@ -211,7 +257,7 @@ export default function App() {
       setStatus(result.disclosure);
       return;
     }
-    setPrompt(result.prompt);
+    changePrompt(result.prompt);
     setAiUsed(true);
     setReferenceState((current) => ({ ...current, lastAppliedAt: new Date().toISOString() }));
     setStatus('Brief mejorado localmente con referencias');
@@ -228,15 +274,20 @@ export default function App() {
       tweaks,
       output,
     };
-    setVersions((current) => [snapshot, ...current].slice(0, 10));
+    setDesignSession((current) => appendDesignSessionSnapshot(current, snapshot));
     setStatus(`Versión guardada: ${output.name}`);
   }
 
   function restoreVersion(snapshot: VersionSnapshot) {
-    setPrompt(snapshot.prompt);
-    setArtifactType(snapshot.artifactType);
-    setDirectionId(snapshot.directionId);
-    setTweaks(snapshot.tweaks);
+    setDesignSession((current) =>
+      updateDesignSessionDraft(current, {
+        prompt: snapshot.prompt,
+        artifactType: snapshot.artifactType,
+        directionId: snapshot.directionId,
+        tweaks: snapshot.tweaks,
+      }),
+    );
+    setCompareVersionId('');
     setStatus(`Versión restaurada: ${snapshot.name}`);
   }
 
@@ -385,9 +436,9 @@ export default function App() {
 
   const inspectorContent =
     sideTab === 'directions' ? (
-      <DirectionInspector output={output} directionId={directionId} onDirectionChange={setDirectionId} />
+      <DirectionInspector output={output} directionId={directionId} onDirectionChange={changeDirection} />
     ) : sideTab === 'tweaks' ? (
-      <TweakControls tweaks={tweaks} onPatch={patchTweaks} onReset={setTweaks} />
+      <TweakControls tweaks={tweaks} onPatch={patchTweaks} onReset={resetTweaks} />
     ) : sideTab === 'references' ? (
       <ReferenceInspector
         referenceState={referenceState}
@@ -412,8 +463,8 @@ export default function App() {
           artifactType={artifactType}
           versions={versions}
           compareVersionId={compareVersionId}
-          onPromptChange={setPrompt}
-          onArtifactTypeChange={setArtifactType}
+          onPromptChange={changePrompt}
+          onArtifactTypeChange={changeArtifactType}
           onSaveVersion={saveVersion}
           onRestoreVersion={restoreVersion}
           onCompareVersion={compareVersion}

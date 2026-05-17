@@ -8,6 +8,8 @@ import {
 
 interface UseGenerateOptions {
   providerId: ProviderId;
+  initialOutput?: DesignOutput;
+  onFinalOutput?(output: DesignOutput): void;
 }
 
 interface UseGenerateResult {
@@ -22,9 +24,9 @@ function eventOutput(event: GenerateEvent, fallback: DesignOutput): DesignOutput
   return event.output ?? { ...fallback, html: event.html };
 }
 
-export function useGenerate(input: BuildInput, { providerId }: UseGenerateOptions): UseGenerateResult {
+export function useGenerate(input: BuildInput, { providerId, initialOutput, onFinalOutput }: UseGenerateOptions): UseGenerateResult {
   const fallbackOutput = useMemo(() => buildDesignProject(input), [input]);
-  const [output, setOutput] = useState<DesignOutput>(fallbackOutput);
+  const [output, setOutput] = useState<DesignOutput>(() => initialOutput ?? fallbackOutput);
   const [events, setEvents] = useState<GenerateEvent[]>([]);
   const [running, setRunning] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -55,7 +57,9 @@ export function useGenerate(input: BuildInput, { providerId }: UseGenerateOption
               if (controller.signal.aborted || runIdRef.current !== runId) return;
               setEvents((current) => [...current, event]);
               if (event.type === 'final') {
-                setOutput(eventOutput(event, fallbackOutput));
+                const nextOutput = eventOutput(event, fallbackOutput);
+                setOutput(nextOutput);
+                onFinalOutput?.(nextOutput);
               }
             }
           } catch (error) {
@@ -78,7 +82,7 @@ export function useGenerate(input: BuildInput, { providerId }: UseGenerateOption
       window.clearTimeout(start);
       controller.abort();
     };
-  }, [fallbackOutput, input, providerId]);
+  }, [fallbackOutput, input, onFinalOutput, providerId]);
 
   return { output, events, running, stop };
 }
