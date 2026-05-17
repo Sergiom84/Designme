@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { getProvider, listProviders } from '../providers';
 import { shouldAskFirst } from '../providers/shared/askFlow';
 import { generateIdeas as generateProviderIdeas } from '../providers/shared/multiIdea';
@@ -22,6 +22,8 @@ function digest(value: string): string {
 }
 
 export default function App() {
+  const generationControllerRef = useRef<AbortController | null>(null);
+  const workspaceRescanTimerRef = useRef<number | undefined>();
   const {
     theme,
     project,
@@ -63,10 +65,60 @@ export default function App() {
   const activeIdea = ideas.find((idea) => idea.id === activeIdeaId) ?? ideas[0];
   const output = activeIdea?.designOutput;
 
+  const scanWorkspaceRoot = useCallback(
+    async (rootPath: string) => {
+      if (!window.designme?.codeWorkspaceIndex) {
+        setRunState('error', 'Workspace import sólo disponible en app desktop');
+        return;
+      }
+      const indexed = await window.designme.codeWorkspaceIndex({ rootPath });
+      const readFile = async (path: string) => {
+        if (!window.designme?.codeWorkspaceReadFile) return '';
+        const result = await window.designme.codeWorkspaceReadFile({ rootPath: indexed.rootPath, path });
+        return result.content;
+      };
+      const analysis = await analyzeWorkspace(indexed.files, readFile);
+      const snapshot = {
+        ...indexed,
+        analysis,
+        summary: '',
+      };
+      snapshot.summary = summarizeWorkspace(snapshot);
+      setWorkspace(snapshot);
+      return snapshot;
+    },
+    [setRunState, setWorkspace],
+  );
+
+  useEffect(() => {
+    if (!workspace?.rootPath || !window.designme?.onCodeWorkspaceChange) return undefined;
+
+    const unsubscribe = window.designme.onCodeWorkspaceChange((event) => {
+      setRunState('generating', `Workspace cambió: ${event.path}`);
+      window.clearTimeout(workspaceRescanTimerRef.current);
+      workspaceRescanTimerRef.current = window.setTimeout(() => {
+        void scanWorkspaceRoot(workspace.rootPath as string).then((snapshot) => {
+          if (snapshot) {
+            addTurn(createChatTurn('system', `<workspace_context>\n${snapshot.summary}\n</workspace_context>`));
+            setRunState('ready', 'Workspace re-analizado');
+          }
+        });
+      }, 500);
+    });
+
+    return () => {
+      window.clearTimeout(workspaceRescanTimerRef.current);
+      unsubscribe();
+      void window.designme?.codeWorkspaceUnwatch?.();
+    };
+  }, [addTurn, scanWorkspaceRoot, setRunState, workspace?.rootPath]);
+
   async function generateIdeas(prompt = project.draft.prompt) {
     const promptDigest = digest(prompt);
     setRunState('generating', `Generando 3 ideas con ${activeProviderId}`);
+    generationControllerRef.current?.abort();
     const controller = new AbortController();
+    generationControllerRef.current = controller;
     const pendingIdeas = [0, 1, 2].map((variantIndex) =>
       createIdeaDraft({
         sessionId: project.id,
@@ -87,6 +139,7 @@ export default function App() {
         signal: controller.signal,
         onIdea: upsertIdea,
       });
+      if (controller.signal.aborted) return;
       setIdeas(nextIdeas);
       setActiveIdea(nextIdeas[0]?.id);
       addTurn(
@@ -96,7 +149,15 @@ export default function App() {
       );
       setRunState('ready', 'Variantes listas');
     } catch (error) {
+      if (controller.signal.aborted) {
+        setRunState('idle', 'Generación detenida');
+        return;
+      }
       setRunState('error', error instanceof Error ? error.message : 'Error generando ideas');
+    } finally {
+      if (generationControllerRef.current === controller) {
+        generationControllerRef.current = null;
+      }
     }
   }
 
@@ -146,23 +207,17 @@ export default function App() {
       setRunState('idle', 'Importación cancelada');
       return;
     }
-    const indexed = await window.designme.codeWorkspaceIndex({ rootPath: picked.rootPath });
-    const readFile = async (path: string) => {
-      if (!window.designme?.codeWorkspaceReadFile) return '';
-      const result = await window.designme.codeWorkspaceReadFile({ rootPath: indexed.rootPath, path });
-      return result.content;
-    };
-    const analysis = await analyzeWorkspace(indexed.files, readFile);
-    const snapshot = {
-      ...indexed,
-      analysis,
-      summary: '',
-    };
-    snapshot.summary = summarizeWorkspace(snapshot);
-    setWorkspace(snapshot);
-    await window.designme.codeWorkspaceWatch?.({ rootPath: indexed.rootPath });
+    const snapshot = await scanWorkspaceRoot(picked.rootPath);
+    if (!snapshot) return;
+    await window.designme.codeWorkspaceWatch?.({ rootPath: snapshot.rootPath });
     addTurn(createChatTurn('system', `<workspace_context>\n${snapshot.summary}\n</workspace_context>`));
     setRunState('ready', 'Workspace analizado');
+  }
+
+  function stopGeneration() {
+    generationControllerRef.current?.abort();
+    generationControllerRef.current = null;
+    setRunState('idle', 'Generación detenida');
   }
 
   const tokenCount = useMemo(() => chatTurns.reduce((count, turn) => count + turn.text.length, 0), [chatTurns]);
@@ -186,7 +241,7 @@ export default function App() {
           turns={chatTurns}
           running={runState === 'generating'}
           onSend={(text, attachments) => void sendChat(text, attachments)}
-          onStop={() => setRunState('idle', 'Generación detenida')}
+          onStop={stopGeneration}
         />
       }
       center={

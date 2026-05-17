@@ -44,12 +44,19 @@ export async function generateIdeaVariant(input: {
   });
   idea = { ...idea, status: 'streaming' };
 
+  if (input.signal.aborted) {
+    return { ...idea, status: 'error', error: 'Generation aborted.' };
+  }
+
   for await (const event of provider.generate({
     ...input.buildInput,
     prompt: `${input.buildInput.prompt}\n\n${variant.system}`,
     workspace: input.workspace,
     signal: input.signal,
   })) {
+    if (input.signal.aborted) {
+      return { ...idea, status: 'error', error: 'Generation aborted.' };
+    }
     input.onEvent?.(event, idea);
     if (event.type === 'final') {
       html = event.html;
@@ -81,6 +88,9 @@ export async function generateIdeas(input: {
   count?: number;
   onIdea?(idea: Idea): void;
 }): Promise<Idea[]> {
+  if (input.signal.aborted) {
+    return [];
+  }
   const count = input.count ?? 3;
   const jobs = ideaVariants.slice(0, count).map(async (_variant, variantIndex) => {
     const idea = await generateIdeaVariant({ ...input, variantIndex });

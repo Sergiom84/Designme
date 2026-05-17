@@ -38,7 +38,7 @@ async function fetchJson(url, options) {
   const response = await fetch(url, options);
   const text = await response.text();
   if (!response.ok) {
-    throw new Error(`Cloud provider request failed with ${response.status}: ${text.slice(0, 240)}`);
+    throw new Error(`Cloud provider request failed with ${response.status}.`);
   }
   return JSON.parse(text);
 }

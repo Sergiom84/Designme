@@ -148,6 +148,7 @@ interface Window {
     codeWorkspaceIndex(payload: { rootPath: string }): Promise<DesignmeCodeWorkspaceIndexResult>;
     codeWorkspaceReadFile(payload: { rootPath: string; path: string }): Promise<{ content: string }>;
     codeWorkspaceWatch(payload: { rootPath: string }): Promise<{ watching: boolean }>;
+    codeWorkspaceUnwatch(): Promise<{ stopped: boolean }>;
     providerStart(payload: DesignmeProviderStartPayload): Promise<{ runId: string }>;
     providerStop(payload: { runId: string }): Promise<{ stopped: boolean }>;
     providerStatus(payload: { providerId: DesignmeProviderId }): Promise<DesignmeProviderStatusResult>;

@@ -143,8 +143,7 @@ async function readWorkspaceFile(rootPath, relPath) {
 
 function watchWorkspace(rootPath, webContents) {
   const root = normalizeRoot(rootPath);
-  const oldWatcher = watchers.get(webContents.id);
-  if (oldWatcher) oldWatcher.close();
+  closeWorkspaceWatcher(webContents);
   const watcher = chokidar.watch(root, {
     ignored: /(^|[\\/])(\.git|node_modules|dist|build|\.next|release|coverage)([\\/]|$)/,
     ignoreInitial: true,
@@ -157,15 +156,32 @@ function watchWorkspace(rootPath, webContents) {
       path: path.relative(root, changedPath).replace(/\\/g, '/'),
     });
   });
-  watchers.set(webContents.id, watcher);
-  webContents.once('destroyed', () => {
+  const onDestroyed = () => {
     watcher.close();
     watchers.delete(webContents.id);
-  });
+  };
+  if (typeof webContents.once === 'function') {
+    webContents.once('destroyed', onDestroyed);
+  }
+  watchers.set(webContents.id, { watcher, onDestroyed });
   return { watching: true };
 }
 
+function closeWorkspaceWatcher(webContents) {
+  const entry = watchers.get(webContents.id);
+  if (!entry) return { stopped: false };
+  entry.watcher.close();
+  watchers.delete(webContents.id);
+  if (typeof webContents.removeListener === 'function') {
+    webContents.removeListener('destroyed', entry.onDestroyed);
+  } else if (typeof webContents.off === 'function') {
+    webContents.off('destroyed', entry.onDestroyed);
+  }
+  return { stopped: true };
+}
+
 module.exports = {
+  closeWorkspaceWatcher,
   indexWorkspace,
   pickWorkspace,
   readWorkspaceFile,

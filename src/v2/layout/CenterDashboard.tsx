@@ -40,7 +40,7 @@ export function CenterDashboard({ ideas, activeIdeaId, onSelectIdea, onGenerate,
             </button>
           </div>
           {activeIdea.html ? (
-            <iframe className="v2-preview-frame" title={activeIdea.title} sandbox="allow-scripts" srcDoc={activeIdea.html} />
+            <iframe className="v2-preview-frame" title={activeIdea.title} sandbox="" srcDoc={activeIdea.html} />
           ) : (
             <div className="v2-preview-placeholder">Esperando HTML...</div>
           )}
@@ -77,7 +77,7 @@ export function CenterDashboard({ ideas, activeIdeaId, onSelectIdea, onGenerate,
           </header>
           <button className="v2-card-preview" type="button" onClick={() => onSelectIdea(idea.id)}>
             {idea.html ? (
-              <iframe title={`${idea.title} thumbnail`} sandbox="allow-scripts" srcDoc={idea.html} />
+              <iframe title={`${idea.title} thumbnail`} sandbox="" srcDoc={idea.html} />
             ) : (
               <span>Streaming...</span>
             )}

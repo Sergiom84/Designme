@@ -344,6 +344,7 @@ contextBridge.exposeInMainWorld('designme', {
     validateWorkspaceRootPayload(payload);
     return ipcRenderer.invoke('designme:code-workspace-watch', payload);
   },
+  codeWorkspaceUnwatch: () => ipcRenderer.invoke('designme:code-workspace-unwatch'),
   providerStart: (payload) => {
     validateProviderStartPayload(payload);
     return ipcRenderer.invoke('designme:provider-start', payload);

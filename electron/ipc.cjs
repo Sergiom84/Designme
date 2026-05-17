@@ -1,6 +1,7 @@
 const { clipboard, ipcMain, shell } = require('electron');
 const fs = require('node:fs/promises');
 const {
+  closeWorkspaceWatcher,
   indexWorkspace,
   pickWorkspace,
   readWorkspaceFile,
@@ -116,6 +117,11 @@ function registerIpcHandlers(app, isDev, options = {}) {
   ipcMain.handle('designme:code-workspace-watch', async (event, payload) => {
     assertTrustedSender(event, isDev);
     return watchWorkspace(payload?.rootPath, event.sender);
+  });
+
+  ipcMain.handle('designme:code-workspace-unwatch', async (event) => {
+    assertTrustedSender(event, isDev);
+    return closeWorkspaceWatcher(event.sender);
   });
 
   ipcMain.handle('designme:provider-start', async (event, payload) => {
