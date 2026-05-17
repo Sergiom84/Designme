@@ -26,6 +26,8 @@
     "package:win": "npm run build && electron-builder --win --publish never",
     "package:win:portable": "npm run build && electron-builder --win portable --publish never",
     "package:win:nsis": "npm run build && electron-builder --win nsis --publish never",
+    "package:mac": "npm run build && electron-builder --mac --publish never",
+    "package:linux": "npm run build && electron-builder --linux --publish never",
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {
@@ -81,6 +83,28 @@
     },
     "nsis": {
       "artifactName": "${productName}-${version}-win-${arch}-setup.${ext}"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "category": "public.app-category.developer-tools",
+      "artifactName": "${productName}-${version}-mac-${arch}.${ext}"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "tar.gz"
+      ],
+      "category": "Development",
+      "artifactName": "${productName}-${version}-linux-${arch}.${ext}"
     }
   }
 }
