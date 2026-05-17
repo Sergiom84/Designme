@@ -1,5 +1,5 @@
 import { Play, Square } from 'lucide-react';
-import { classNames } from '../utils/classNames';
+import { classNames } from '../../utils/classNames';
 
 export type ProviderStatus = 'idle' | 'checking' | 'ready' | 'warning' | 'error';
 

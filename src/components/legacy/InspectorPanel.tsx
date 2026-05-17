@@ -1,7 +1,7 @@
 import { FileCode2, Gauge, Image, Palette, SlidersHorizontal } from 'lucide-react';
 import type { KeyboardEvent, ReactNode } from 'react';
-import type { SideTab, SideTabOption } from '../types/app';
-import { es } from '../i18n';
+import type { SideTab, SideTabOption } from '../../types/app';
+import { es } from '../../i18n';
 
 const sideTabs: SideTabOption[] = [
   { id: 'directions', label: es.inspector.tabs.directions, icon: Palette },

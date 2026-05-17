@@ -1,8 +1,8 @@
 import { CheckCircle2, PlugZap, Search, X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import type { LocalOpenAISettings } from '../settings';
-import type { ProviderId } from '../providers';
-import { classNames } from '../utils/classNames';
+import type { LocalOpenAISettings } from '../../settings';
+import type { ProviderId } from '../../providers';
+import { classNames } from '../../utils/classNames';
 
 interface ProviderSetupHintsProps {
   detection?: DesignmeLocalSetupDetection;

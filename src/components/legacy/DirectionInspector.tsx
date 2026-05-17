@@ -1,8 +1,8 @@
 import { CheckCircle2, Layers } from 'lucide-react';
-import { getThemeById } from '../design-system/tokens';
-import { designDirections, domainLabels, goalLabels, type DesignOutput, type DirectionId } from '../engine/index';
-import { es } from '../i18n';
-import { classNames } from '../utils/classNames';
+import { getThemeById } from '../../design-system/tokens';
+import { designDirections, domainLabels, goalLabels, type DesignOutput, type DirectionId } from '../../engine/index';
+import { es } from '../../i18n';
+import { classNames } from '../../utils/classNames';
 
 interface DirectionInspectorProps {
   output: DesignOutput;

@@ -9,7 +9,7 @@ import {
   readSecret,
   writeSecret,
   type LocalOpenAISettings,
-} from '../settings';
+} from '../../settings';
 
 interface LocalOpenAISettingsProps {
   disabled?: boolean;

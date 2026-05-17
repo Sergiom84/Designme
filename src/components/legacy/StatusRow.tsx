@@ -1,4 +1,4 @@
-import { es } from '../i18n';
+import { es } from '../../i18n';
 
 interface StatusRowProps {
   status: string;

@@ -1,6 +1,6 @@
 import { RotateCcw, SlidersHorizontal } from 'lucide-react';
-import { defaultTweaks, type Density, type DesignTweaks, type Motion, type Tone } from '../engine/index';
-import { es } from '../i18n';
+import { defaultTweaks, type Density, type DesignTweaks, type Motion, type Tone } from '../../engine/index';
+import { es } from '../../i18n';
 
 interface TweakControlsProps {
   tweaks: DesignTweaks;

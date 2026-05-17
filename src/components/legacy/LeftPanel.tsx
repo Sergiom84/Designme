@@ -1,11 +1,11 @@
 import { AppWindow, ChartPie, Globe2, LayoutDashboard, Plus, Presentation, Save, Smartphone, Sparkles, Wand2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { artifactOptions, type ArtifactType } from '../engine/index';
-import { es } from '../i18n';
-import type { RecentSessionItem, VersionSnapshot } from '../types/app';
-import { classNames } from '../utils/classNames';
-import { formatTime } from '../utils/format';
+import { artifactOptions, type ArtifactType } from '../../engine/index';
+import { es } from '../../i18n';
+import type { RecentSessionItem, VersionSnapshot } from '../../types/app';
+import { classNames } from '../../utils/classNames';
+import { formatTime } from '../../utils/format';
 
 const artifactIcons: Record<ArtifactType, LucideIcon> = {
   software: AppWindow,

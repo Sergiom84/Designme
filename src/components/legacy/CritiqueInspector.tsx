@@ -1,7 +1,7 @@
 import { ClipboardCheck, Copy } from 'lucide-react';
-import type { Critique } from '../engine/index';
-import { es } from '../i18n';
-import type { QualityIssue, Severity } from '../quality';
+import type { Critique } from '../../engine/index';
+import { es } from '../../i18n';
+import type { QualityIssue, Severity } from '../../quality';
 
 interface CritiqueInspectorProps {
   critique: Critique;

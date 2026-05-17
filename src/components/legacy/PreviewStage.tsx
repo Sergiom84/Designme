@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import type { PreviewComment, PreviewCommentTarget } from '../comments';
-import type { PreviewMode } from '../types/app';
-import { classNames } from '../utils/classNames';
+import type { PreviewComment, PreviewCommentTarget } from '../../comments';
+import type { PreviewMode } from '../../types/app';
+import { classNames } from '../../utils/classNames';
 
 interface PreviewStageProps {
   previewMode: PreviewMode;

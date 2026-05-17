@@ -2,9 +2,9 @@ import type { ReactNode } from 'react';
 import { CanvasToolbar } from './CanvasToolbar';
 import { PreviewStage } from './PreviewStage';
 import { StatusRow } from './StatusRow';
-import type { PreviewComment, PreviewCommentTarget } from '../comments';
-import type { DesignOutput } from '../engine/index';
-import type { PreviewMode, PreviewZoom } from '../types/app';
+import type { PreviewComment, PreviewCommentTarget } from '../../comments';
+import type { DesignOutput } from '../../engine/index';
+import type { PreviewMode, PreviewZoom } from '../../types/app';
 
 interface CenterPanelProps {
   output: DesignOutput;

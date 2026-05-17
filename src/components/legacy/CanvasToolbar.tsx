@@ -8,8 +8,8 @@ import {
   Smartphone,
   Tablet,
 } from 'lucide-react';
-import type { PreviewMode, PreviewZoom } from '../types/app';
-import { es } from '../i18n';
+import type { PreviewMode, PreviewZoom } from '../../types/app';
+import { es } from '../../i18n';
 
 interface CanvasToolbarProps {
   title: string;

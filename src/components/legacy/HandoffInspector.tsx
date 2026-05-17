@@ -1,5 +1,5 @@
 import { Copy, FileCode2, FolderOpen } from 'lucide-react';
-import { es } from '../i18n';
+import { es } from '../../i18n';
 
 interface HandoffInspectorProps {
   handoffPrompt: string;

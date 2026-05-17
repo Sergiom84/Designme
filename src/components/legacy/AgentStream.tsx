@@ -1,6 +1,6 @@
 import { Activity, AlertTriangle, CheckCircle2, ChevronDown, Terminal, Wrench } from 'lucide-react';
-import type { GenerateEvent, ProviderId } from '../providers/types';
-import { classNames } from '../utils/classNames';
+import type { GenerateEvent, ProviderId } from '../../providers/types';
+import { classNames } from '../../utils/classNames';
 
 type StreamItem =
   | { id: string; type: 'tokens'; text: string }

@@ -1,6 +1,6 @@
 import { Image, Wand2 } from 'lucide-react';
-import { es } from '../i18n';
-import type { ReferenceAnalysis, StoredReferenceState } from '../references';
+import { es } from '../../i18n';
+import type { ReferenceAnalysis, StoredReferenceState } from '../../references';
 
 interface ReferenceInspectorProps {
   referenceState: StoredReferenceState;

@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AgentStream } from './components/AgentStream';
-import { AppShell } from './components/AppShell';
-import { CenterPanel } from './components/CenterPanel';
-import { CritiqueInspector } from './components/CritiqueInspector';
-import { DirectionInspector } from './components/DirectionInspector';
-import { HandoffInspector } from './components/HandoffInspector';
-import { InspectorPanel } from './components/InspectorPanel';
-import { LeftPanel } from './components/LeftPanel';
-import { LocalOpenAISettings } from './components/LocalOpenAISettings';
-import { ProviderPicker, type ProviderPickerOption } from './components/ProviderPicker';
-import { ProviderSetupHints } from './components/ProviderSetupHints';
-import { ReferenceInspector } from './components/ReferenceInspector';
-import { TweakControls } from './components/TweakControls';
-import { enhancePrompt } from './ai';
+import { AgentStream } from '../components/legacy/AgentStream';
+import { AppShell } from '../components/legacy/AppShell';
+import { CenterPanel } from '../components/legacy/CenterPanel';
+import { CritiqueInspector } from '../components/legacy/CritiqueInspector';
+import { DirectionInspector } from '../components/legacy/DirectionInspector';
+import { HandoffInspector } from '../components/legacy/HandoffInspector';
+import { InspectorPanel } from '../components/legacy/InspectorPanel';
+import { LeftPanel } from '../components/legacy/LeftPanel';
+import { LocalOpenAISettings } from '../components/legacy/LocalOpenAISettings';
+import { ProviderPicker, type ProviderPickerOption } from '../components/legacy/ProviderPicker';
+import { ProviderSetupHints } from '../components/legacy/ProviderSetupHints';
+import { ReferenceInspector } from '../components/legacy/ReferenceInspector';
+import { TweakControls } from '../components/legacy/TweakControls';
+import { enhancePrompt } from '../ai';
 import {
   PREVIEW_COMMENTS_STORAGE_KEY,
   appendPreviewCommentsToPrompt,
@@ -21,33 +21,33 @@ import {
   resolvePreviewComment,
   type PreviewCommentCollection,
   type PreviewCommentTarget,
-} from './comments';
+} from '../comments';
 import {
   buildDesignProject,
   type BuildInput,
   type DesignOutput,
-} from './engine/index';
-import { useDesignSessionActions } from './hooks/useDesignSessionActions';
-import { useExportActions } from './hooks/useExportActions';
-import { useGenerate } from './hooks/useGenerate';
-import { useIdbPersistedState } from './hooks/useIdbPersistedState';
-import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { useLocalStorageState } from './hooks/useLocalStorageState';
-import { usePreviewZoom } from './hooks/usePreviewZoom';
-import { useProviderRuntime } from './hooks/useProviderRuntime';
-import { useSetupDetection } from './hooks/useSetupDetection';
-import { getActiveProviderId, type ProviderId } from './providers';
+} from '../engine/index';
+import { useDesignSessionActions } from '../hooks/useDesignSessionActions';
+import { useExportActions } from '../hooks/useExportActions';
+import { useGenerate } from '../hooks/useGenerate';
+import { useIdbPersistedState } from '../hooks/useIdbPersistedState';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { useLocalStorageState } from '../hooks/useLocalStorageState';
+import { usePreviewZoom } from '../hooks/usePreviewZoom';
+import { useProviderRuntime } from '../hooks/useProviderRuntime';
+import { useSetupDetection } from '../hooks/useSetupDetection';
+import { getActiveProviderId, type ProviderId } from '../providers';
 import {
   analyzeReferenceNotes,
   emptyReferenceState,
   parseReferenceState,
   type StoredReferenceState,
-} from './references';
+} from '../references';
 import {
   applyLocalOpenAISettingsPatch,
   readLocalOpenAISettings,
   type LocalOpenAISettings as LocalOpenAISettingsValue,
-} from './settings';
+} from '../settings';
 import {
   DESIGN_SESSIONS_STORAGE_KEY,
   LEGACY_PROMPT_PRESETS,
@@ -60,8 +60,8 @@ import {
   updateDesignSessionInCollection,
   updateDesignSessionOutput,
   type DesignSessionCollection,
-} from './sessions';
-import type { DesignSession, PreviewMode, RecentSessionItem, SideTab, VersionSnapshot } from './types/app';
+} from '../sessions';
+import type { DesignSession, PreviewMode, RecentSessionItem, SideTab, VersionSnapshot } from '../types/app';
 
 export default function App() {
   // Sessions can grow large once each saved version embeds a full HTML
