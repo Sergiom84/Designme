@@ -3,7 +3,9 @@ const { contextBridge, ipcRenderer } = require('electron');
 const MAX_HTML_BYTES = 5 * 1024 * 1024;
 const MAX_TEXT_BYTES = 1024 * 1024;
 const MAX_BUNDLE_FILE_BYTES = 5 * 1024 * 1024;
-const MAX_PROVIDER_PROMPT_BYTES = 128 * 1024;
+// Mirror of `electron/validators.cjs`; bumped to 256 KiB so prompt + brief +
+// intent + retry hints fit even on long iterations.
+const MAX_PROVIDER_PROMPT_BYTES = 256 * 1024;
 const MAX_PROVIDER_TEXT_BYTES = 1024 * 1024;
 const MAX_PROVIDER_JSON_BYTES = 1024 * 1024;
 const BUNDLE_FILE_NAMES = ['index.html', 'styles.css', 'script.js', 'designme.json', 'handoff.md', 'README.md'];
@@ -197,6 +199,63 @@ function assertBoolean(value, message) {
   }
 }
 
+function validateCspStatePayload(payload) {
+  assertPlainObject(payload, 'Invalid CSP state payload');
+  assertBoolean(payload.allowLocalProvider, 'CSP allowLocalProvider must be boolean');
+}
+
+function validateCspStateResult(result) {
+  assertPlainObject(result, 'Invalid CSP state result');
+  assertBoolean(result.allowLocalProvider, 'CSP allowLocalProvider must be boolean');
+}
+
+const SECRET_KEY_PATTERN = /^[a-z0-9][a-z0-9._-]{0,63}$/i;
+const MAX_SECRET_VALUE_BYTES = 8 * 1024;
+
+function validateSecretKey(key) {
+  if (typeof key !== 'string' || !SECRET_KEY_PATTERN.test(key)) {
+    throw new Error('Secret key is invalid');
+  }
+}
+
+function validateSecretSetPayload(payload) {
+  assertPlainObject(payload, 'Invalid secret set payload');
+  validateSecretKey(payload.key);
+  if (typeof payload.value !== 'string') {
+    throw new Error('Secret value must be a string');
+  }
+  if (byteLength(payload.value) > MAX_SECRET_VALUE_BYTES) {
+    throw new Error('Secret value is too large');
+  }
+}
+
+function validateSecretKeyPayload(payload) {
+  assertPlainObject(payload, 'Invalid secret payload');
+  validateSecretKey(payload.key);
+}
+
+function validateSecretStatusResult(result) {
+  assertPlainObject(result, 'Invalid secret status result');
+  assertBoolean(result.ready, 'Secret status ready must be boolean');
+}
+
+function validateSecretSetResult(result) {
+  assertPlainObject(result, 'Invalid secret set result');
+  assertBoolean(result.stored, 'Secret set result stored must be boolean');
+}
+
+function validateSecretGetResult(result) {
+  assertPlainObject(result, 'Invalid secret get result');
+  if (result.value !== null && typeof result.value !== 'string') {
+    throw new Error('Secret value must be string or null');
+  }
+}
+
+function validateSecretDeleteResult(result) {
+  assertPlainObject(result, 'Invalid secret delete result');
+  assertBoolean(result.deleted, 'Secret delete result deleted must be boolean');
+}
+
 function validateLocalSetupDetectionResult(result) {
   assertPlainObject(result, 'Invalid local setup detection result');
   assertOptionalString(result.generatedAt, 'Local setup timestamp must be a string', 128);
@@ -267,6 +326,40 @@ contextBridge.exposeInMainWorld('designme', {
     const detection = await ipcRenderer.invoke('designme:detect-local-setup');
     validateLocalSetupDetectionResult(detection);
     return detection;
+  },
+  setCspState: async (payload) => {
+    validateCspStatePayload(payload);
+    const result = await ipcRenderer.invoke('designme:set-csp-state', payload);
+    validateCspStateResult(result);
+    return result;
+  },
+  getCspState: async () => {
+    const result = await ipcRenderer.invoke('designme:get-csp-state');
+    validateCspStateResult(result);
+    return result;
+  },
+  secretStatus: async () => {
+    const result = await ipcRenderer.invoke('designme:secret-status');
+    validateSecretStatusResult(result);
+    return result;
+  },
+  setSecret: async (payload) => {
+    validateSecretSetPayload(payload);
+    const result = await ipcRenderer.invoke('designme:secret-set', payload);
+    validateSecretSetResult(result);
+    return result;
+  },
+  getSecret: async (payload) => {
+    validateSecretKeyPayload(payload);
+    const result = await ipcRenderer.invoke('designme:secret-get', payload);
+    validateSecretGetResult(result);
+    return result;
+  },
+  deleteSecret: async (payload) => {
+    validateSecretKeyPayload(payload);
+    const result = await ipcRenderer.invoke('designme:secret-delete', payload);
+    validateSecretDeleteResult(result);
+    return result;
   },
   onProviderEvent: (listener) => {
     if (typeof listener !== 'function') {

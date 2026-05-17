@@ -1,6 +1,7 @@
 const { spawn: nodeSpawn } = require('node:child_process');
 const os = require('node:os');
 const readline = require('node:readline');
+const { extractStandaloneHtmlDocument } = require('./htmlExtraction.cjs');
 
 const DEFAULT_TIMEOUT_MS = 2_500;
 const DEFAULT_KILL_TIMEOUT_MS = 5_000;
@@ -287,10 +288,7 @@ function normalizeCodexEvent(event) {
 }
 
 function extractHtmlFromCodexText(text) {
-  const htmlFence = text.match(/```html\s*([\s\S]*?)```/i);
-  const candidate = htmlFence?.[1] || text;
-  const documentMatch = candidate.match(/<!doctype\s+html[\s\S]*?<\/html>/i);
-  return documentMatch?.[0]?.trim() || null;
+  return extractStandaloneHtmlDocument(text);
 }
 
 function createEmitter(callbacks) {

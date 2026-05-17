@@ -6,16 +6,22 @@ const { extractHtmlFromClaudeText, startClaudeCodeRun } = require('./providers/c
 const { extractHtmlFromCodexText, startCodexRun } = require('./providers/codex.cjs');
 const { validateProviderEventPayload, validateProviderStartPayload } = require('./validators.cjs');
 
+// Shared retry-signal message. Must match `INVALID_HTML_ERROR_MESSAGE` in
+// `src/providers/htmlExtraction.ts` so `useGenerate` can detect the error and
+// fire a single automatic retry with a stricter format hint, regardless of
+// which provider produced the failure.
+const INVALID_HTML_ERROR_MESSAGE = 'Provider did not return a complete standalone HTML document.';
+
 const providerHandlers = {
   'claude-code': {
-    errorMessage: 'Claude Code did not return a complete standalone HTML document.',
+    errorMessage: INVALID_HTML_ERROR_MESSAGE,
     extractHtml: extractHtmlFromClaudeText,
     notes: 'Generated with Claude Code.',
     startRun: startClaudeCodeRun,
     workspaceName: 'designme-claude-code',
   },
   codex: {
-    errorMessage: 'Codex did not return a complete standalone HTML document.',
+    errorMessage: INVALID_HTML_ERROR_MESSAGE,
     extractHtml: extractHtmlFromCodexText,
     notes: 'Generated with Codex.',
     startRun: startCodexRun,

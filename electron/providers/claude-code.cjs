@@ -1,6 +1,7 @@
 const { spawn: nodeSpawn } = require('node:child_process');
 const os = require('node:os');
 const readline = require('node:readline');
+const { extractStandaloneHtmlDocument } = require('./htmlExtraction.cjs');
 
 const DEFAULT_TIMEOUT_MS = 2_500;
 const DEFAULT_KILL_TIMEOUT_MS = 5_000;
@@ -103,13 +104,12 @@ async function detectClaudeCode(options = {}) {
       version: firstNonEmptyLine(versionResult.stdout) || firstNonEmptyLine(versionResult.stderr) || null,
     };
 
+    // Login/auth state is not introspectable via a side-effect-free CLI call
+    // (`/status` is a REPL slash command and `claude config get` requires args).
+    // Surface CLI presence + version only; an auth failure will surface from the
+    // first real run as a normal provider error event.
     if (options.checkStatus) {
-      try {
-        const statusResult = await runCommand(commandPath, ['/status'], { spawn, timeoutMs, env: options.env });
-        detection.status = firstNonEmptyLine(statusResult.stdout) || firstNonEmptyLine(statusResult.stderr) || null;
-      } catch (error) {
-        detection.statusError = error instanceof Error ? error.message : String(error);
-      }
+      detection.status = `CLI detected${detection.version ? ` (${detection.version})` : ''}.`;
     }
 
     return detection;
@@ -191,10 +191,7 @@ function normalizeClaudeEvent(event) {
 }
 
 function extractHtmlFromClaudeText(text) {
-  const htmlFence = text.match(/```html\s*([\s\S]*?)```/i);
-  const candidate = htmlFence?.[1] || text;
-  const documentMatch = candidate.match(/<!doctype\s+html[\s\S]*?<\/html>/i);
-  return documentMatch?.[0]?.trim() || null;
+  return extractStandaloneHtmlDocument(text);
 }
 
 function createEmitter(callbacks) {
@@ -249,7 +246,7 @@ function startClaudeCodeRun(request, callbacksOrOptions = {}, maybeOptions = {})
     '--input-format',
     'text',
     '--permission-mode',
-    'dontAsk',
+    'bypassPermissions',
     '--disallowedTools',
     'Bash',
     'Edit',

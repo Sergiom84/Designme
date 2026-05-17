@@ -1,7 +1,10 @@
 const MAX_HTML_BYTES = 5 * 1024 * 1024;
 const MAX_TEXT_BYTES = 1024 * 1024;
 const MAX_BUNDLE_FILE_BYTES = 5 * 1024 * 1024;
-const MAX_PROVIDER_PROMPT_BYTES = 128 * 1024;
+// Prompts can grow with brief + intent + preview comments + retry hints, so
+// allow 256 KiB rather than the original 128 KiB. Still small enough that the
+// IPC payload size stays bounded.
+const MAX_PROVIDER_PROMPT_BYTES = 256 * 1024;
 const MAX_PROVIDER_TEXT_BYTES = 1024 * 1024;
 const MAX_PROVIDER_JSON_BYTES = 1024 * 1024;
 const BUNDLE_FILE_NAMES = ['index.html', 'styles.css', 'script.js', 'designme.json', 'handoff.md', 'README.md'];
@@ -240,8 +243,39 @@ function validateClipboardText(text) {
   }
 }
 
+function validateCspStatePayload(payload) {
+  assertPlainObject(payload, 'Invalid CSP state payload');
+  assertBoolean(payload.allowLocalProvider, 'CSP allowLocalProvider must be boolean');
+}
+
+const SECRET_KEY_PATTERN = /^[a-z0-9][a-z0-9._-]{0,63}$/i;
+const MAX_SECRET_VALUE_BYTES = 8 * 1024;
+
+function validateSecretKey(key) {
+  if (typeof key !== 'string' || !SECRET_KEY_PATTERN.test(key)) {
+    throw new Error('Secret key is invalid');
+  }
+}
+
+function validateSecretSetPayload(payload) {
+  assertPlainObject(payload, 'Invalid secret set payload');
+  validateSecretKey(payload.key);
+  if (typeof payload.value !== 'string') {
+    throw new Error('Secret value must be a string');
+  }
+  if (byteLength(payload.value) > MAX_SECRET_VALUE_BYTES) {
+    throw new Error('Secret value is too large');
+  }
+}
+
+function validateSecretKeyPayload(payload) {
+  assertPlainObject(payload, 'Invalid secret payload');
+  validateSecretKey(payload.key);
+}
+
 module.exports = {
   validateClipboardText,
+  validateCspStatePayload,
   validateExportBundlePayload,
   validateExportHtmlPayload,
   validateProviderEventPayload,
@@ -249,4 +283,6 @@ module.exports = {
   validateProviderStartPayload,
   validateProviderStopPayload,
   validateProviderStatusPayload,
+  validateSecretKeyPayload,
+  validateSecretSetPayload,
 };

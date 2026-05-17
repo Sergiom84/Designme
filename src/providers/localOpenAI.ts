@@ -3,6 +3,7 @@ import {
   readLocalOpenAISettings,
   type LocalOpenAISettings,
 } from '../settings';
+import { INVALID_HTML_ERROR_MESSAGE, extractStandaloneHtmlDocument } from './htmlExtraction';
 import type { GenerateEvent, GenerateRequest, Provider, ProviderStatus } from './types';
 
 const STATUS_TIMEOUT_MS = 2_000;
@@ -10,11 +11,6 @@ type LocalOpenAIProviderOptions = Partial<LocalOpenAISettings> | (() => LocalOpe
 
 function normalizeBaseUrl(baseUrl: string): string {
   return baseUrl.replace(/\/+$/, '');
-}
-
-function extractHtml(content: string): string {
-  const fenced = content.match(/```(?:html)?\s*([\s\S]*?)```/i);
-  return (fenced?.[1] ?? content).trim();
 }
 
 function buildMessages(req: GenerateRequest): Array<{ role: 'system' | 'user'; content: string }> {
@@ -156,9 +152,15 @@ async function* generateWithSettings(
       yield { type: 'token', text: token };
     }
 
+    const html = extractStandaloneHtmlDocument(content);
+    if (!html) {
+      yield { type: 'error', message: INVALID_HTML_ERROR_MESSAGE };
+      return;
+    }
+
     yield {
       type: 'final',
-      html: extractHtml(content),
+      html,
       notes: `Generated with local OpenAI-compatible model ${settings.model}.`,
     };
   } catch (error) {

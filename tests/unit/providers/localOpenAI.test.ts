@@ -93,8 +93,8 @@ describe('localOpenAIProvider', () => {
   it('posts a streaming chat completion request and yields tokens plus final HTML', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       streamResponse([
-        'data: {"choices":[{"delta":{"content":"```html\\n<div"}}]}\n\n',
-        'data: {"choices":[{"delta":{"content":" class=\\"app\\">Hi</div>\\n```"}}]}\n\n',
+        'data: {"choices":[{"delta":{"content":"```html\\n<!doctype html>"}}]}\n\n',
+        'data: {"choices":[{"delta":{"content":"<html><body>Hi</body></html>\\n```"}}]}\n\n',
         'data: [DONE]\n\n',
       ]),
     );
@@ -123,14 +123,34 @@ describe('localOpenAIProvider', () => {
     expect(body).toMatchObject({ model: 'local-model', stream: true });
     expect(body.messages[1]?.content).toContain('quiet analytics dashboard');
     expect(events).toEqual([
-      { type: 'token', text: '```html\n<div' },
-      { type: 'token', text: ' class="app">Hi</div>\n```' },
+      { type: 'token', text: '```html\n<!doctype html>' },
+      { type: 'token', text: '<html><body>Hi</body></html>\n```' },
       {
         type: 'final',
-        html: '<div class="app">Hi</div>',
+        html: '<!doctype html><html><body>Hi</body></html>',
         notes: 'Generated with local OpenAI-compatible model local-model.',
       },
     ]);
+  });
+
+  it('yields an error when the LLM response is not a standalone HTML document', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        streamResponse([
+          'data: {"choices":[{"delta":{"content":"Sure, here is some text without HTML."}}]}\n\n',
+          'data: [DONE]\n\n',
+        ]),
+      ),
+    );
+
+    const provider = createLocalOpenAIProvider({ baseUrl: 'http://localhost:1234/v1' });
+    const events = await collectEvents(provider.generate(makeRequest()));
+
+    expect(events.at(-1)).toEqual({
+      type: 'error',
+      message: 'Provider did not return a complete standalone HTML document.',
+    });
   });
 
   it('parses SSE events split across network chunks', async () => {
@@ -139,7 +159,7 @@ describe('localOpenAIProvider', () => {
       vi.fn().mockResolvedValue(
         streamResponse([
           'data: {"choices":[{"delta":{"content":"<!doctype html>"}}]}',
-          '\n\ndata: {"choices":[{"delta":{"content":"<html></html>"}}]}\n\n',
+          '\n\ndata: {"choices":[{"delta":{"content":"<html><body>Hi</body></html>"}}]}\n\n',
         ]),
       ),
     );
@@ -149,7 +169,7 @@ describe('localOpenAIProvider', () => {
 
     expect(events.at(-1)).toMatchObject({
       type: 'final',
-      html: '<!doctype html><html></html>',
+      html: '<!doctype html><html><body>Hi</body></html>',
     });
   });
 

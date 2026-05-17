@@ -3,6 +3,7 @@ export { buildClaudeCodePrompt, extractHtmlFromClaudeCodeOutput } from './claude
 export { codexProvider } from './codex';
 export { buildCodexPrompt, extractHtmlFromCodexOutput } from './codexOutput';
 export { deterministicProvider } from './deterministic';
+export { INVALID_HTML_ERROR_MESSAGE, extractStandaloneHtmlDocument } from './htmlExtraction';
 export { createLocalOpenAIProvider, localOpenAIProvider } from './localOpenAI';
 export {
   getActiveProviderId,
