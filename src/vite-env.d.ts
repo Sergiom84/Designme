@@ -37,6 +37,35 @@ interface DesignmeProviderStatusResult {
   detail?: string;
 }
 
+interface DesignmeLocalSetupProvider {
+  id: Extract<DesignmeProviderId, 'claude-code' | 'codex'>;
+  label: string;
+  detected: boolean;
+  ready: boolean;
+  configFound: boolean;
+  cliFound: boolean;
+  authFound?: boolean;
+  version?: string;
+  detail?: string;
+}
+
+interface DesignmeLocalOpenAISetup {
+  id: 'ollama';
+  label: string;
+  detected: boolean;
+  ready: boolean;
+  configFound: boolean;
+  baseUrl: string;
+  model?: string;
+  detail?: string;
+}
+
+interface DesignmeLocalSetupDetection {
+  generatedAt?: string;
+  providers: DesignmeLocalSetupProvider[];
+  localOpenAI: DesignmeLocalOpenAISetup;
+}
+
 type DesignmeProviderEvent =
   | { runId: string; type: 'started' }
   | { runId: string; type: 'token'; text: string }
@@ -55,6 +84,7 @@ interface Window {
     providerStart(payload: DesignmeProviderStartPayload): Promise<{ runId: string }>;
     providerStop(payload: { runId: string }): Promise<{ stopped: boolean }>;
     providerStatus(payload: { providerId: DesignmeProviderId }): Promise<DesignmeProviderStatusResult>;
+    detectLocalSetup(): Promise<DesignmeLocalSetupDetection>;
     onProviderEvent(listener: (event: DesignmeProviderEvent) => void): () => void;
   };
 }

@@ -6,10 +6,12 @@ const { createProviderRunManager } = require('./providerRuns.cjs');
 const { detectClaudeCode } = require('./providers/claude-code.cjs');
 const { detectCodex } = require('./providers/codex.cjs');
 const { isAllowedAppUrl } = require('./security.cjs');
+const { detectLocalSetup } = require('./setupDetection.cjs');
 const {
   validateClipboardText,
   validateExportBundlePayload,
   validateExportHtmlPayload,
+  validateLocalSetupDetectionResult,
   validateProviderStartPayload,
   validateProviderStatusPayload,
   validateProviderStopPayload,
@@ -78,7 +80,11 @@ function registerIpcHandlers(app, isDev) {
 
     const detectProvider = providerStatusDetectors[payload.providerId];
     if (!detectProvider) {
-      return { providerId: payload.providerId, status: 'error', detail: 'Provider status is not available in desktop IPC.' };
+      return {
+        providerId: payload.providerId,
+        status: 'error',
+        detail: 'Provider status is not available in desktop IPC.',
+      };
     }
 
     const detection = await detectProvider();
@@ -88,6 +94,13 @@ function registerIpcHandlers(app, isDev) {
       version: detection.version,
       detail: detection.status || detection.statusError || detection.error,
     };
+  });
+
+  ipcMain.handle('designme:detect-local-setup', async (event) => {
+    assertTrustedSender(event, isDev);
+    const detection = await detectLocalSetup();
+    validateLocalSetupDetectionResult(detection);
+    return detection;
   });
 }
 

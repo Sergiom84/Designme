@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_LOCAL_OPENAI_SETTINGS,
   LOCAL_OPENAI_SETTINGS_STORAGE_KEY,
+  applyLocalOpenAISettingsPatch,
   parseLocalOpenAISettings,
   parseStoredLocalOpenAISettings,
   persistLocalOpenAISettings,
@@ -86,5 +87,32 @@ describe('local OpenAI settings', () => {
       apiKey: '',
       timeoutMs: 30000,
     });
+  });
+
+  it('applies Ollama import patches without persisting API keys', () => {
+    const storage = new MemoryStorage();
+    const current = {
+      baseUrl: 'https://gateway.example/v1',
+      model: 'remote-model',
+      apiKey: 'session-only',
+      timeoutMs: 60000,
+    };
+
+    const next = applyLocalOpenAISettingsPatch(
+      current,
+      {
+        baseUrl: 'http://127.0.0.1:11434/v1',
+        model: 'llama3.2:latest',
+      },
+      storage,
+    );
+
+    expect(next).toEqual({
+      baseUrl: 'http://127.0.0.1:11434/v1',
+      model: 'llama3.2:latest',
+      apiKey: 'session-only',
+      timeoutMs: 60000,
+    });
+    expect(storage.getItem(LOCAL_OPENAI_SETTINGS_STORAGE_KEY)).not.toContain('session-only');
   });
 });

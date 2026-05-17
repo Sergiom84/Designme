@@ -1,20 +1,27 @@
 import { KeyRound, ServerCog } from 'lucide-react';
 import { useState } from 'react';
-import {
-  persistLocalOpenAISettings,
-  readLocalOpenAISettings,
-  type LocalOpenAISettings,
-} from '../settings';
+import { persistLocalOpenAISettings, readLocalOpenAISettings, type LocalOpenAISettings } from '../settings';
 
 interface LocalOpenAISettingsProps {
   disabled?: boolean;
+  settings?: LocalOpenAISettings;
+  onSettingsChange?(settings: LocalOpenAISettings): void;
 }
 
-export function LocalOpenAISettings({ disabled = false }: LocalOpenAISettingsProps) {
-  const [settings, setSettings] = useState<LocalOpenAISettings>(() => readLocalOpenAISettings());
+export function LocalOpenAISettings({
+  disabled = false,
+  settings: controlledSettings,
+  onSettingsChange,
+}: LocalOpenAISettingsProps) {
+  const [uncontrolledSettings, setUncontrolledSettings] = useState<LocalOpenAISettings>(() =>
+    readLocalOpenAISettings(),
+  );
+  const settings = controlledSettings ?? uncontrolledSettings;
 
   function patchSettings(patch: Partial<LocalOpenAISettings>) {
-    setSettings((current) => persistLocalOpenAISettings({ ...current, ...patch }));
+    const nextSettings = persistLocalOpenAISettings({ ...settings, ...patch });
+    setUncontrolledSettings(nextSettings);
+    onSettingsChange?.(nextSettings);
   }
 
   return (

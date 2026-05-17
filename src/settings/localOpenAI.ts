@@ -110,3 +110,11 @@ export function persistLocalOpenAISettings(
 
   return parsed;
 }
+
+export function applyLocalOpenAISettingsPatch(
+  current: LocalOpenAISettings,
+  patch: Partial<LocalOpenAISettings>,
+  storage = getDefaultStorage(),
+): LocalOpenAISettings {
+  return persistLocalOpenAISettings({ ...current, ...patch }, storage);
+}

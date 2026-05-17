@@ -9,6 +9,7 @@ const MAX_PROVIDER_JSON_BYTES = 1024 * 1024;
 const BUNDLE_FILE_NAMES = ['index.html', 'styles.css', 'script.js', 'designme.json', 'handoff.md', 'README.md'];
 const PROVIDER_IDS = new Set(['deterministic', 'local-openai', 'claude-code', 'codex']);
 const PROVIDER_EVENT_TYPES = new Set(['started', 'token', 'tool-call', 'tool-result', 'final', 'error', 'stopped']);
+const LOCAL_SETUP_PROVIDER_IDS = new Set(['claude-code', 'codex']);
 
 function byteLength(value) {
   return new TextEncoder().encode(String(value)).length;
@@ -145,7 +146,10 @@ function validateProviderEventPayload(payload) {
 
   if (payload.type === 'tool-call') {
     assertString(payload.name, 'Provider tool name must be a string', 256);
-    if (payload.args !== undefined && jsonByteLength(payload.args, 'Provider tool args are invalid') > MAX_PROVIDER_JSON_BYTES) {
+    if (
+      payload.args !== undefined &&
+      jsonByteLength(payload.args, 'Provider tool args are invalid') > MAX_PROVIDER_JSON_BYTES
+    ) {
       throw new Error('Provider tool args are too large');
     }
     return;
@@ -164,7 +168,10 @@ function validateProviderEventPayload(payload) {
 
   if (payload.type === 'final') {
     assertString(payload.html, 'Provider final html must be a string', MAX_HTML_BYTES);
-    if (payload.output !== undefined && jsonByteLength(payload.output, 'Provider output is invalid') > MAX_PROVIDER_JSON_BYTES) {
+    if (
+      payload.output !== undefined &&
+      jsonByteLength(payload.output, 'Provider output is invalid') > MAX_PROVIDER_JSON_BYTES
+    ) {
       throw new Error('Provider output is too large');
     }
     if (payload.notes !== undefined) {
@@ -176,6 +183,58 @@ function validateProviderEventPayload(payload) {
   if (payload.type === 'error') {
     assertString(payload.message, 'Provider error message must be a string', 4096);
   }
+}
+
+function assertOptionalString(value, message, maxBytes = MAX_PROVIDER_TEXT_BYTES) {
+  if (value !== undefined) {
+    assertString(value, message, maxBytes);
+  }
+}
+
+function assertBoolean(value, message) {
+  if (typeof value !== 'boolean') {
+    throw new Error(message);
+  }
+}
+
+function validateLocalSetupDetectionResult(result) {
+  assertPlainObject(result, 'Invalid local setup detection result');
+  assertOptionalString(result.generatedAt, 'Local setup timestamp must be a string', 128);
+
+  if (!Array.isArray(result.providers) || result.providers.length > 2) {
+    throw new Error('Local setup providers are invalid');
+  }
+
+  for (const provider of result.providers) {
+    assertPlainObject(provider, 'Invalid local setup provider');
+    assertString(provider.id, 'Local setup provider id must be a string', 64);
+    if (!LOCAL_SETUP_PROVIDER_IDS.has(provider.id)) {
+      throw new Error('Local setup provider id is invalid');
+    }
+    assertString(provider.label, 'Local setup provider label must be a string', 128);
+    assertBoolean(provider.detected, 'Local setup provider detected must be boolean');
+    assertBoolean(provider.ready, 'Local setup provider ready must be boolean');
+    assertBoolean(provider.configFound, 'Local setup provider configFound must be boolean');
+    assertBoolean(provider.cliFound, 'Local setup provider cliFound must be boolean');
+    if (provider.authFound !== undefined) {
+      assertBoolean(provider.authFound, 'Local setup provider authFound must be boolean');
+    }
+    assertOptionalString(provider.version, 'Local setup provider version must be a string', 512);
+    assertOptionalString(provider.detail, 'Local setup provider detail must be a string', 4096);
+  }
+
+  assertPlainObject(result.localOpenAI, 'Invalid local setup localOpenAI');
+  assertString(result.localOpenAI.id, 'Local setup localOpenAI id must be a string', 64);
+  if (result.localOpenAI.id !== 'ollama') {
+    throw new Error('Local setup localOpenAI id is invalid');
+  }
+  assertString(result.localOpenAI.label, 'Local setup localOpenAI label must be a string', 128);
+  assertBoolean(result.localOpenAI.detected, 'Local setup localOpenAI detected must be boolean');
+  assertBoolean(result.localOpenAI.ready, 'Local setup localOpenAI ready must be boolean');
+  assertBoolean(result.localOpenAI.configFound, 'Local setup localOpenAI configFound must be boolean');
+  assertString(result.localOpenAI.baseUrl, 'Local setup localOpenAI baseUrl must be a string', 512);
+  assertOptionalString(result.localOpenAI.model, 'Local setup localOpenAI model must be a string', 512);
+  assertOptionalString(result.localOpenAI.detail, 'Local setup localOpenAI detail must be a string', 4096);
 }
 
 contextBridge.exposeInMainWorld('designme', {
@@ -203,6 +262,11 @@ contextBridge.exposeInMainWorld('designme', {
   providerStatus: (payload) => {
     validateProviderStatusPayload(payload);
     return ipcRenderer.invoke('designme:provider-status', payload);
+  },
+  detectLocalSetup: async () => {
+    const detection = await ipcRenderer.invoke('designme:detect-local-setup');
+    validateLocalSetupDetectionResult(detection);
+    return detection;
   },
   onProviderEvent: (listener) => {
     if (typeof listener !== 'function') {

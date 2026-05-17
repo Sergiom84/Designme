@@ -9,6 +9,7 @@ import { InspectorPanel } from './components/InspectorPanel';
 import { LeftPanel } from './components/LeftPanel';
 import { LocalOpenAISettings } from './components/LocalOpenAISettings';
 import { ProviderPicker, type ProviderPickerOption } from './components/ProviderPicker';
+import { ProviderSetupHints } from './components/ProviderSetupHints';
 import { ReferenceInspector } from './components/ReferenceInspector';
 import { TweakControls } from './components/TweakControls';
 import { enhancePrompt } from './ai';
@@ -48,6 +49,11 @@ import {
   parseReferenceState,
   type StoredReferenceState,
 } from './references';
+import {
+  applyLocalOpenAISettingsPatch,
+  readLocalOpenAISettings,
+  type LocalOpenAISettings as LocalOpenAISettingsValue,
+} from './settings';
 import {
   DESIGN_SESSIONS_STORAGE_KEY,
   appendDesignSessionSnapshot,
@@ -165,6 +171,12 @@ export default function App() {
   const [activeProviderId, setActiveProviderIdState] = useState<ProviderId>(() => getActiveProviderId());
   const [agentStreamVisible, setAgentStreamVisible] = useState(() => getActiveProviderId() !== 'deterministic');
   const [providerStatuses, setProviderStatuses] = useState<Record<string, ProviderStatus>>({});
+  const [localOpenAISettings, setLocalOpenAISettings] = useState<LocalOpenAISettingsValue>(() =>
+    readLocalOpenAISettings(),
+  );
+  const [setupDetection, setSetupDetection] = useState<DesignmeLocalSetupDetection | undefined>();
+  const [setupChecking, setSetupChecking] = useState(false);
+  const [setupDismissed, setSetupDismissed] = useState(false);
   const { previewZoom, setPreviewZoom, zoomScale, resetPreviewZoom } = usePreviewZoom();
 
   const designSession = useMemo<DesignSession>(() => {
@@ -269,6 +281,22 @@ export default function App() {
     };
   }, [providerList, activeProviderId]);
 
+  async function refreshLocalSetups(options: { markChecking?: boolean } = {}) {
+    if (!window.designme?.detectLocalSetup || setupChecking) return;
+    if (options.markChecking ?? true) {
+      setSetupChecking(true);
+    }
+    try {
+      const detection = await window.designme.detectLocalSetup();
+      setSetupDetection(detection);
+      setSetupDismissed(false);
+    } catch {
+      setSetupDetection(undefined);
+    } finally {
+      setSetupChecking(false);
+    }
+  }
+
   function updateActiveSession(update: (session: DesignSession) => DesignSession) {
     setSessionCollection((current) => updateDesignSessionInCollection(current, current.activeSessionId, update));
   }
@@ -324,6 +352,18 @@ export default function App() {
   function runActiveProvider() {
     setGenerationRunKey((current) => current + 1);
     setStatus(`Generando con ${activeProvider?.label ?? activeProviderId}`);
+  }
+
+  function updateLocalOpenAISettings(nextSettings: LocalOpenAISettingsValue) {
+    setLocalOpenAISettings(nextSettings);
+  }
+
+  function useOllama(settings: Partial<LocalOpenAISettingsValue>) {
+    const nextSettings = applyLocalOpenAISettingsPatch(localOpenAISettings, settings);
+    setLocalOpenAISettings(nextSettings);
+    changeProvider('local-openai');
+    setSetupDismissed(true);
+    setStatus('Ollama aplicado como provider local');
   }
 
   function addPreviewComment(target: PreviewCommentTarget, note: string) {
@@ -621,7 +661,26 @@ export default function App() {
                 onGenerate={runActiveProvider}
                 onStop={stopGeneration}
               />
-              <LocalOpenAISettings disabled={generationRunning} />
+              <ProviderSetupHints
+                detection={setupDetection}
+                activeProviderId={activeProviderId}
+                localOpenAISettings={localOpenAISettings}
+                dismissed={setupDismissed}
+                checking={setupChecking}
+                disabled={generationRunning}
+                onActivateProvider={(providerId) => {
+                  changeProvider(providerId);
+                  setSetupDismissed(true);
+                }}
+                onUseOllama={useOllama}
+                onRefresh={() => void refreshLocalSetups({ markChecking: true })}
+                onDismiss={() => setSetupDismissed(true)}
+              />
+              <LocalOpenAISettings
+                disabled={generationRunning}
+                settings={localOpenAISettings}
+                onSettingsChange={updateLocalOpenAISettings}
+              />
             </>
           }
           agentStream={
