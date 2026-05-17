@@ -7,13 +7,13 @@ import {
 
 export function renderMetricCards(brief: DerivedBrief): string {
   const metrics = [
-    ['Clarity', '92', 'brief coverage'],
-    ['Momentum', '+18%', 'next actions'],
-    ['Risk', '3', 'items to resolve'],
+    ['Claridad', '92', 'cobertura del brief'],
+    ['Impulso', '+18%', 'siguientes acciones'],
+    ['Riesgo', '3', 'temas por resolver'],
   ];
 
   return metrics
-    .map(([label, value, caption]) => renderMetricCard(label, value, `${caption} for ${brief.name}`))
+    .map(([label, value, caption]) => renderMetricCard(label, value, `${caption} para ${brief.name}`))
     .join('');
 }
 

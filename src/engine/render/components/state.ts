@@ -4,7 +4,7 @@ export function renderEmptyState(title: string, body: string): string {
   return `<div class="state-block empty-state"><strong>${escapeHtml(title)}</strong><p>${escapeHtml(body)}</p></div>`;
 }
 
-export function renderLoadingState(label = 'Loading'): string {
+export function renderLoadingState(label = 'Cargando'): string {
   return `<div class="state-block loading-state" role="status"><span></span><strong>${escapeHtml(label)}</strong></div>`;
 }
 

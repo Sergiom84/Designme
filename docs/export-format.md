@@ -1,14 +1,23 @@
-# Export Format
+# Formato De Exportación
 
-Designme supports two local-first exports.
+Designme mantiene dos salidas local-first: un HTML autónomo y un paquete editable.
 
-## Standalone HTML
+## HTML Autónomo
 
-`Export HTML` writes one self-contained `.html` file. It includes the generated markup, CSS, script, tweak dock and UX metadata.
+El botón `Exportar HTML` escribe un `.html` autocontenido. Incluye:
 
-## Bundle
+- markup generado;
+- CSS completo;
+- script del prototipo;
+- dock de ajustes standalone;
+- metadatos UX en el `body`;
+- `<!doctype html>` y viewport.
 
-`Export bundle` writes a folder:
+El archivo abre directamente en navegador y no necesita servidor.
+
+## Paquete
+
+El botón `Exportar paquete` escribe una carpeta con archivos separados:
 
 ```txt
 Designme Export/
@@ -20,11 +29,83 @@ Designme Export/
   README.md
 ```
 
-- `index.html` opens directly in a browser without a server.
-- `styles.css` contains the extracted generated CSS.
-- `script.js` contains the extracted standalone interactions.
-- `designme.json` contains prompt, artifact type, direction, theme, tweaks, UX intent and quality report.
-- `handoff.md` is ready to paste into Codex, Claude or another design/dev agent.
-- `README.md` explains how to continue the export.
+## Archivos
 
-Electron validates the bundle file names and writes only the expected files inside the safe exports directory.
+- `index.html`: versión enlazada a `styles.css` y `script.js`.
+- `styles.css`: CSS extraído del HTML generado.
+- `script.js`: interacciones standalone del prototipo.
+- `designme.json`: prompt, artefacto, dirección, tema, ajustes, intención UX y reporte de calidad.
+- `handoff.md`: contexto listo para pegar en Codex, Claude u otro agente.
+- `README.md`: notas mínimas para continuar iterando.
+
+## Manifest
+
+`designme.json` se construye en `src/export/createManifest.ts` y conserva:
+
+- versión del formato;
+- fecha de creación;
+- nombre del diseño;
+- tipo de artefacto;
+- dirección y tema;
+- ajustes visuales;
+- brief resumido;
+- intención UX;
+- puntuación e incidencias de calidad;
+- resumen de referencias locales, si se usaron;
+- metadata del provider usado.
+
+Ejemplo reducido:
+
+```json
+{
+  "version": "0.2.0",
+  "createdAt": "2026-05-17T00:00:00.000Z",
+  "name": "Signal Desk",
+  "artifactType": "dashboard",
+  "directionId": "systems",
+  "themeId": "systems",
+  "tweaks": {
+    "density": "balanced",
+    "tone": "light",
+    "motion": "measured",
+    "radius": 6,
+    "showDevice": true
+  },
+  "brief": {
+    "prompt": "Dashboard para un CRM...",
+    "summary": "hacer visible el estado real para equipos comerciales.",
+    "audience": "equipos comerciales",
+    "objective": "hacer visible el estado real",
+    "sections": ["Resumen", "Panel de señales"],
+    "features": ["Pipeline por etapa", "Deals bloqueados"]
+  },
+  "intent": {
+    "domain": "crm",
+    "goal": "decide",
+    "primaryAction": "Tomar decisión"
+  },
+  "quality": {
+    "total": 8,
+    "issues": []
+  },
+  "references": {
+    "used": true,
+    "count": 1,
+    "summary": "Referencia detectada: sistemas, contraste.",
+    "keywords": ["sistemas", "contraste"]
+  },
+  "ai": {
+    "providerId": "local-openai",
+    "used": true,
+    "localOnly": true
+  }
+}
+```
+
+`ai.providerId` puede ser `deterministic`, `local-openai`, `claude-code` o `codex`. `localOnly` indica si Designme considera que el flujo permanece local desde la perspectiva de la app; en `local-openai` depende de que el `baseUrl` configurado sea realmente local.
+
+El manifest puede crecer, pero no debe perder estos campos base porque los consume el handoff y la documentación de export.
+
+## Seguridad
+
+Electron nunca acepta rutas de salida arbitrarias. El renderer envía nombre y contenido; `electron/paths.cjs` resuelve la ruta segura y `electron/validators.cjs` limita payloads y nombres de archivo.

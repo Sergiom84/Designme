@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            script: package:linux
+            artifact: linux
+          - os: macos-latest
+            script: package:mac
+            artifact: mac
+          - os: windows-latest
+            script: package:win
+            artifact: win
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Package
+        run: npm run ${{ matrix.script }}
+        env:
+          # electron-builder still tries to talk to the GitHub release API even
+          # with `--publish never` if `GH_TOKEN` is set. Leaving it unset keeps
+          # the build offline and lets us upload artifacts via the workflow.
+          GH_TOKEN: ''
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: designme-${{ matrix.artifact }}
+          path: |
+            release/*.exe
+            release/*.dmg
+            release/*.zip
+            release/*.AppImage
+            release/*.tar.gz
+          if-no-files-found: warn
+          retention-days: 30

@@ -1,5 +1,6 @@
 import { ClipboardCheck, Copy } from 'lucide-react';
-import type { Critique } from '../engine';
+import type { Critique } from '../engine/index';
+import { es } from '../i18n';
 import type { QualityIssue, Severity } from '../quality';
 
 interface CritiqueInspectorProps {
@@ -13,7 +14,7 @@ export function CritiqueInspector({ critique, onCopyCritique }: CritiqueInspecto
       <div className="score-lockup">
         <ClipboardCheck size={22} aria-hidden />
         <strong>{critique.total}/10</strong>
-        <span>Expert pass</span>
+        <span>{es.inspector.critique.expertPass}</span>
       </div>
       <div className="score-list">
         {critique.scores.map((score) => (
@@ -26,16 +27,16 @@ export function CritiqueInspector({ critique, onCopyCritique }: CritiqueInspecto
       </div>
       <div className="issue-summary">
         <strong>{critique.issues.length}</strong>
-        <span>issues detectados por reglas locales</span>
+        <span>{es.inspector.critique.issuesDetected}</span>
         <button type="button" className="command-button" onClick={onCopyCritique}>
           <Copy size={16} aria-hidden />
-          <span>Copiar crítica</span>
+          <span>{es.inspector.critique.copy}</span>
         </button>
       </div>
       <QualityIssueList issues={critique.issues} />
-      <CritiqueBlock title="Keep" items={critique.keep} />
-      <CritiqueBlock title="Fix" items={critique.fix} />
-      <CritiqueBlock title="Quick wins" items={critique.quickWins} />
+      <CritiqueBlock title={es.inspector.critique.keep} items={critique.keep} />
+      <CritiqueBlock title={es.inspector.critique.fix} items={critique.fix} />
+      <CritiqueBlock title={es.inspector.critique.quickWins} items={critique.quickWins} />
     </section>
   );
 }
@@ -54,17 +55,17 @@ function CritiqueBlock({ title, items }: { title: string; items: string[] }) {
 }
 
 const severityLabels: Record<Severity, string> = {
-  error: 'Error',
-  warning: 'Warning',
-  info: 'Info',
+  error: es.inspector.critique.severity.error,
+  warning: es.inspector.critique.severity.warning,
+  info: es.inspector.critique.severity.info,
 };
 
 function QualityIssueList({ issues }: { issues: QualityIssue[] }) {
   if (issues.length === 0) {
     return (
       <div className="issue-empty">
-        <strong>No blocking issues</strong>
-        <span>La pasada determinista no ha encontrado problemas de calidad.</span>
+        <strong>{es.inspector.critique.noBlockingIssues}</strong>
+        <span>{es.inspector.critique.noBlockingIssuesDetail}</span>
       </div>
     );
   }

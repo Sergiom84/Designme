@@ -13,9 +13,9 @@ function exportIssues(context: QualityContext): QualityIssue[] {
       id: 'export-doctype',
       category: 'export',
       severity: 'error',
-      title: 'Standalone export is missing a doctype',
-      detail: 'The HTML export should open predictably in browsers.',
-      suggestedFix: 'Keep <!doctype html> as the first bytes of the generated export.',
+      title: 'La exportación autónoma no tiene doctype',
+      detail: 'El HTML exportado debería abrirse de forma predecible en navegadores.',
+      suggestedFix: 'Mantén <!doctype html> como los primeros bytes del export generado.',
     });
   }
   if (!context.html.includes('<meta name="viewport"')) {
@@ -23,9 +23,9 @@ function exportIssues(context: QualityContext): QualityIssue[] {
       id: 'export-viewport',
       category: 'export',
       severity: 'warning',
-      title: 'Viewport meta is missing',
-      detail: 'Responsive previews and exported HTML need a viewport declaration.',
-      suggestedFix: 'Add a viewport meta tag in the HTML document head.',
+      title: 'Falta la meta viewport',
+      detail: 'Las vistas adaptables y el HTML exportado necesitan declaración de viewport.',
+      suggestedFix: 'Añade una meta viewport en el head del documento HTML.',
     });
   }
   if (!context.html.includes('data-ux-domain=') || !context.html.includes('data-ux-goal=')) {
@@ -33,9 +33,9 @@ function exportIssues(context: QualityContext): QualityIssue[] {
       id: 'export-ux-metadata',
       category: 'export',
       severity: 'info',
-      title: 'UX metadata is not embedded',
-      detail: 'Agents and future export bundles benefit from intent metadata in the HTML.',
-      suggestedFix: 'Keep data-ux-domain and data-ux-goal on the body element.',
+      title: 'Los metadatos UX no están embebidos',
+      detail: 'Los agentes y futuros paquetes de exportación se benefician de la metadata de intención en el HTML.',
+      suggestedFix: 'Mantén data-ux-domain y data-ux-goal en el elemento body.',
     });
   }
   return issues;
@@ -64,16 +64,16 @@ export function analyzeDesignOutput(context: QualityContext): QualityReport {
     scores,
     issues,
     keep: [
-      `Detected ${domainLabels[context.intent.domain]} / ${goalLabels[context.intent.goal]}, so the critique can judge against real UX intent.`,
-      `The ${context.direction.name.toLowerCase()} direction still gives the concept a clear visual contract.`,
-      'Generated HTML remains standalone and keeps UX metadata for future handoff/export work.',
-      'Reusable render components now make buttons, lists, navigation and metrics easier to audit consistently.',
+      `Se detectó ${domainLabels[context.intent.domain]} / ${goalLabels[context.intent.goal]}, así que la crítica puede evaluar contra una intención UX real.`,
+      `La dirección ${context.direction.name.toLowerCase()} mantiene un contrato visual claro para el concepto.`,
+      'El HTML generado sigue siendo autónomo y conserva metadatos UX para handoff/exportación.',
+      'Los componentes de render reutilizables facilitan auditar botones, listas, navegación y métricas.',
     ],
-    fix: fix.length > 0 ? fix : ['No blocking quality issues found in the deterministic pass. Keep testing with real content.'],
+    fix: fix.length > 0 ? fix : ['No se encontraron problemas bloqueantes en la pasada determinista. Sigue probando con contenido real.'],
     quickWins: [
-      'Resolve error-severity issues before visual polish.',
-      'Replace any warning about generic copy with domain-specific language from the prompt.',
-      'Open desktop, tablet and mobile preview after changing layout density.',
+      'Resuelve las incidencias con severidad error antes del pulido visual.',
+      'Sustituye cualquier aviso de copy genérico por lenguaje específico del dominio.',
+      'Abre escritorio, tablet y móvil después de cambiar la densidad de layout.',
     ],
   };
 }

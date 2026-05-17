@@ -4,6 +4,9 @@ release/
 exports/
 artifacts/
 .refs/
+coverage/
+test-results/
+playwright-report/
 /plan_mejoras_designme.md
 *.log
 .DS_Store

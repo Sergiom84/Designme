@@ -1,0 +1,11 @@
+node_modules/
+dist/
+release/
+exports/
+artifacts/
+.refs/
+coverage/
+test-results/
+playwright-report/
+.claude/
+package-lock.json

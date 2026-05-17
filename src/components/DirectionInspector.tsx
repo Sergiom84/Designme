@@ -1,6 +1,7 @@
 import { CheckCircle2, Layers } from 'lucide-react';
 import { getThemeById } from '../design-system/tokens';
-import { designDirections, domainLabels, goalLabels, type DesignOutput, type DirectionId } from '../engine';
+import { designDirections, domainLabels, goalLabels, type DesignOutput, type DirectionId } from '../engine/index';
+import { es } from '../i18n';
 import { classNames } from '../utils/classNames';
 
 interface DirectionInspectorProps {
@@ -15,17 +16,17 @@ export function DirectionInspector({ output, directionId, onDirectionChange }: D
       <div className="section-heading">
         <Layers size={18} aria-hidden />
         <div>
-          <strong>Design direction advisor</strong>
-          <span>Tres rutas con intención distinta.</span>
+          <strong>{es.inspector.directions.title}</strong>
+          <span>{es.inspector.directions.subtitle}</span>
         </div>
       </div>
       <div className="intent-card">
         <div>
-          <span>Dominio</span>
+          <span>{es.inspector.directions.domain}</span>
           <strong>{domainLabels[output.intent.domain]}</strong>
         </div>
         <div>
-          <span>Objetivo UX</span>
+          <span>{es.inspector.directions.uxGoal}</span>
           <strong>{goalLabels[output.intent.goal]}</strong>
         </div>
         <p>{output.intent.userMentalModel}</p>
@@ -35,7 +36,7 @@ export function DirectionInspector({ output, directionId, onDirectionChange }: D
           ))}
         </ul>
       </div>
-      <div className="direction-list" role="group" aria-label="Direcciones visuales">
+      <div className="direction-list" role="group" aria-label={es.inspector.directions.visualDirectionsLabel}>
         {designDirections.map((direction) => {
           const theme = getThemeById(direction.themeId);
           return (

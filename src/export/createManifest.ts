@@ -2,6 +2,7 @@ import type { ExportBundleBuildInput, ExportManifest } from './types';
 
 export function createManifest({ output, input, createdAt = new Date().toISOString() }: ExportBundleBuildInput): ExportManifest {
   return {
+    schemaVersion: 1,
     version: '0.2.0',
     createdAt,
     name: output.name,
@@ -23,5 +24,15 @@ export function createManifest({ output, input, createdAt = new Date().toISOStri
       scores: output.critique.scores,
       issues: output.critique.issues,
     },
+    references: input.references
+      ? {
+          used: input.references.references.length > 0,
+          count: input.references.references.length,
+          summary: input.references.summary,
+          keywords: input.references.keywords,
+          preferences: input.references.preferences,
+        }
+      : undefined,
+    ai: input.ai,
   };
 }

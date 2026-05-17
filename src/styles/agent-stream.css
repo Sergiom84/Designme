@@ -1,0 +1,232 @@
+.agent-stream {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md);
+  background: rgba(255, 253, 248, 0.78);
+}
+
+.agent-stream.is-collapsed {
+  padding: 10px 12px;
+}
+
+.agent-stream-header {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.agent-stream-header > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.agent-stream-header strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-stream-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agent-stream-status {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--app-border-strong);
+  border-radius: var(--app-radius-sm);
+  padding: 0 9px;
+  background: var(--app-surface-muted);
+  color: var(--app-text-subtle);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.agent-stream-status::before {
+  width: 7px;
+  height: 7px;
+  margin-right: 7px;
+  border-radius: 999px;
+  background: currentColor;
+  content: '';
+}
+
+.agent-stream-status.is-running {
+  border-color: rgba(15, 118, 110, 0.32);
+  background: rgba(15, 118, 110, 0.1);
+  color: #0f766e;
+}
+
+.agent-stream-list {
+  max-height: 340px;
+  display: grid;
+  gap: 8px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.agent-stream-item {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 10px;
+  border: 1px solid var(--app-border-soft);
+  border-radius: var(--app-radius-md);
+  background: rgba(247, 243, 234, 0.66);
+}
+
+.agent-stream-item > svg {
+  margin-top: 2px;
+  color: var(--app-accent);
+}
+
+.agent-stream-item p,
+.agent-stream-item small {
+  margin: 0;
+  color: #48443d;
+  line-height: 1.42;
+}
+
+.agent-stream-item p,
+.agent-stream-details pre {
+  overflow-wrap: anywhere;
+}
+
+.agent-stream-item.is-token p,
+.agent-stream-details pre {
+  white-space: pre-wrap;
+}
+
+.agent-stream-item.is-final {
+  border-color: rgba(15, 118, 110, 0.3);
+  background: rgba(15, 118, 110, 0.08);
+}
+
+.agent-stream-item.is-final div {
+  display: grid;
+  gap: 4px;
+}
+
+.agent-stream-item.is-final small {
+  color: var(--app-text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.agent-stream-item.is-error {
+  border-color: rgba(185, 28, 28, 0.3);
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.agent-stream-item.is-error > svg {
+  color: #991b1b;
+}
+
+.agent-stream-details {
+  min-width: 0;
+}
+
+.agent-stream-details summary {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(86px, auto) minmax(0, 1fr) 16px;
+  gap: 8px;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+}
+
+.agent-stream-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.agent-stream-details summary > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.agent-stream-details strong,
+.agent-stream-details small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-stream-details small {
+  color: var(--app-text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.agent-stream-details code {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-stream-details summary > svg {
+  color: var(--app-text-muted);
+  transition: transform 140ms ease;
+}
+
+.agent-stream-details[open] summary > svg {
+  transform: rotate(180deg);
+}
+
+.agent-stream-details pre {
+  max-height: 220px;
+  overflow: auto;
+  margin: 10px 0 0;
+  border: 1px solid var(--app-border-soft);
+  border-radius: var(--app-radius-sm);
+  padding: 10px;
+  background: var(--app-surface);
+  color: var(--app-text);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.agent-stream-empty {
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px dashed var(--app-border-strong);
+  border-radius: var(--app-radius-md);
+  color: var(--app-text-muted);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+@media (max-width: 760px) {
+  .agent-stream-header {
+    align-items: stretch;
+  }
+
+  .agent-stream-details summary {
+    grid-template-columns: minmax(0, 1fr) 16px;
+  }
+
+  .agent-stream-details code {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}

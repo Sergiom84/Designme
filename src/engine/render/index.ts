@@ -5,6 +5,7 @@ import { renderDeck } from './deck';
 import { renderInfographic } from './infographic';
 import { renderMobile } from './mobile';
 import { renderSoftware } from './software';
+import { selectRenderVariation } from './variations';
 import { renderWeb } from './web';
 
 export function renderArtifact(
@@ -13,10 +14,12 @@ export function renderArtifact(
   tweaks: DesignTweaks,
   intent: UXIntent,
 ): string {
-  if (type === 'dashboard') return renderDashboard(brief, intent);
-  if (type === 'web') return renderWeb(brief, intent);
-  if (type === 'mobile') return renderMobile(brief, tweaks.showDevice, intent);
-  if (type === 'deck') return renderDeck(brief, intent);
-  if (type === 'infographic') return renderInfographic(brief, intent);
-  return renderSoftware(brief, intent);
+  const variation = selectRenderVariation(brief, type, intent);
+
+  if (type === 'dashboard') return renderDashboard(brief, intent, variation);
+  if (type === 'web') return renderWeb(brief, intent, variation);
+  if (type === 'mobile') return renderMobile(brief, tweaks.showDevice, intent, variation);
+  if (type === 'deck') return renderDeck(brief, intent, variation);
+  if (type === 'infographic') return renderInfographic(brief, intent, variation);
+  return renderSoftware(brief, intent, variation);
 }

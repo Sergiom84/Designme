@@ -1,14 +1,22 @@
-import type { ArtifactType, Critique, DesignDirection, DesignOutput, DesignTweaks, DirectionId } from '../engine';
+import type { ArtifactType, Critique, DesignDirection, DesignOutput, DesignTweaks, DirectionId } from '../engine/index';
 import type { UXIntent } from '../engine/intent/types';
+import type { ReferenceAnalysis } from '../references';
 
 export interface ExportBuildInput {
   prompt: string;
   artifactType: ArtifactType;
   directionId: DirectionId;
   tweaks: DesignTweaks;
+  references?: ReferenceAnalysis;
+  ai?: {
+    providerId: string;
+    used: boolean;
+    localOnly: boolean;
+  };
 }
 
 export interface ExportManifest {
+  schemaVersion: 1;
   version: string;
   createdAt: string;
   name: string;
@@ -26,6 +34,18 @@ export interface ExportManifest {
   };
   intent: UXIntent;
   quality: Pick<Critique, 'total' | 'scores' | 'issues'>;
+  references?: {
+    used: boolean;
+    count: number;
+    summary: string;
+    keywords: string[];
+    preferences: ReferenceAnalysis['preferences'];
+  };
+  ai?: {
+    providerId: string;
+    used: boolean;
+    localOnly: boolean;
+  };
 }
 
 export interface ExportBundleFileMap {

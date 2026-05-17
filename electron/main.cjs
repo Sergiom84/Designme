@@ -1,11 +1,31 @@
 const path = require('node:path');
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, safeStorage } = require('electron');
+const { createCspState } = require('./cspState.cjs');
 const { registerIpcHandlers } = require('./ipc.cjs');
+const { createSecretStore } = require('./secretStore.cjs');
 const { configureWindowSecurity } = require('./security.cjs');
 
 const isDev = process.argv.includes('--dev');
 
+let cspState;
+let secretStore;
+
+function ensureCspState() {
+  if (!cspState) {
+    cspState = createCspState({ userDataDir: app.getPath('userData') });
+  }
+  return cspState;
+}
+
+function ensureSecretStore() {
+  if (!secretStore) {
+    secretStore = createSecretStore({ userDataDir: app.getPath('userData'), safeStorage });
+  }
+  return secretStore;
+}
+
 async function createWindow() {
+  const state = ensureCspState();
   const win = new BrowserWindow({
     width: 1480,
     height: 960,
@@ -22,7 +42,7 @@ async function createWindow() {
     },
   });
 
-  configureWindowSecurity(win, isDev);
+  configureWindowSecurity(win, isDev, { getCspState: () => state.get() });
 
   if (isDev) {
     await win.loadURL('http://127.0.0.1:5173');
@@ -31,9 +51,13 @@ async function createWindow() {
   }
 }
 
-registerIpcHandlers(app, isDev);
-
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  registerIpcHandlers(app, isDev, {
+    cspState: ensureCspState(),
+    secretStore: ensureSecretStore(),
+  });
+  return createWindow();
+});
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {

@@ -13,8 +13,8 @@ export const domainRules: DomainRule[] = [
     domain: 'crm',
     label: 'CRM / ventas',
     patterns: [/crm/i, /ventas/i, /sales/i, /pipeline/i, /deals?/i, /leads?/i],
-    mentalModel: 'Pipeline, owners, bloqueos y siguiente acción comercial.',
-    risks: ['No esconder deals bloqueados detrás de métricas agregadas.', 'Mostrar owner y urgencia junto a cada riesgo.'],
+    mentalModel: 'Pipeline, responsables, bloqueos y siguiente acción comercial.',
+    risks: ['No esconder deals bloqueados detrás de métricas agregadas.', 'Mostrar responsable y urgencia junto a cada riesgo.'],
   },
   {
     domain: 'finance',

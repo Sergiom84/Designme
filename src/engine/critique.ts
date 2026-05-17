@@ -20,11 +20,11 @@ export function buildAssumptions(
   intent: UXIntent,
 ): string[] {
   return [
-    `Audience: ${brief.audience}.`,
-    `Goal: ${brief.objective}.`,
-    `Intent: ${domainLabels[intent.domain]} / ${goalLabels[intent.goal]}.`,
-    `Primary action: ${intent.primaryAction}.`,
-    `Direction: ${direction.name}, because it fits ${direction.bestFor.toLowerCase()}.`,
-    'No API key is required; this pass is deterministic and local.',
+    `Audiencia: ${brief.audience}.`,
+    `Objetivo: ${brief.objective}.`,
+    `Intención: ${domainLabels[intent.domain]} / ${goalLabels[intent.goal]}.`,
+    `Acción primaria: ${intent.primaryAction}.`,
+    `Dirección: ${direction.name}, porque encaja con ${direction.bestFor.toLowerCase()}.`,
+    'No requiere API key; esta pasada es determinista y local.',
   ];
 }

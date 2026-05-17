@@ -15,7 +15,7 @@ export function renderFeatureList(items: string[], limit = 5): string {
     .join('');
 }
 
-export function renderTaskList(items: string[], states: string[] = ['ready', 'needs input']): string {
+export function renderTaskList(items: string[], states: string[] = ['listo', 'necesita input']): string {
   return items
     .slice(0, 5)
     .map((item, index) =>
@@ -34,7 +34,7 @@ export function renderTimeline(items: string[], limit = 5): string {
     .map((item, index) =>
       renderButton({
         label: item,
-        html: `<span>${escapeHtml(item)}</span><small>${index === 0 ? 'live' : 'queued'}</small>`,
+        html: `<span>${escapeHtml(item)}</span><small>${index === 0 ? 'en vivo' : 'en cola'}</small>`,
         variant: 'step',
         active: index === 0,
         attributes: { 'data-screen': index },

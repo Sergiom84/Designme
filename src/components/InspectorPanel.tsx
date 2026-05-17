@@ -1,12 +1,14 @@
-import { FileCode2, Gauge, Palette, SlidersHorizontal } from 'lucide-react';
+import { FileCode2, Gauge, Image, Palette, SlidersHorizontal } from 'lucide-react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import type { SideTab, SideTabOption } from '../types/app';
+import { es } from '../i18n';
 
 const sideTabs: SideTabOption[] = [
-  { id: 'directions', label: 'Direcciones', icon: Palette },
-  { id: 'tweaks', label: 'Tweaks', icon: SlidersHorizontal },
-  { id: 'critique', label: 'Crítica', icon: Gauge },
-  { id: 'handoff', label: 'Handoff', icon: FileCode2 },
+  { id: 'directions', label: es.inspector.tabs.directions, icon: Palette },
+  { id: 'tweaks', label: es.inspector.tabs.tweaks, icon: SlidersHorizontal },
+  { id: 'references', label: es.inspector.tabs.references, icon: Image },
+  { id: 'critique', label: es.inspector.tabs.critique, icon: Gauge },
+  { id: 'handoff', label: es.inspector.tabs.handoff, icon: FileCode2 },
 ];
 
 interface InspectorPanelProps {
@@ -38,7 +40,7 @@ export function InspectorPanel({ sideTab, onSideTabChange, children }: Inspector
 
   return (
     <aside className="right-panel">
-      <nav className="tab-row" role="tablist" aria-label="Inspector tabs" aria-orientation="horizontal">
+      <nav className="tab-row" role="tablist" aria-label={es.inspector.tabsLabel} aria-orientation="horizontal">
         {sideTabs.map((tab, index) => {
           const Icon = tab.icon;
           return (

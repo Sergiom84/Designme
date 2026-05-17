@@ -41,7 +41,7 @@ export function renderSegmentedControl(label: string, items: string[], activeInd
 
 export function renderNav(brand: string, links: string[], actionLabel: string): string {
   return `
-    <nav class="site-nav" aria-label="Primary">
+    <nav class="site-nav" aria-label="Principal">
       <strong>${escapeHtml(brand)}</strong>
       ${links.map((link) => `<span>${escapeHtml(link)}</span>`).join('')}
       ${renderButton({ label: actionLabel })}

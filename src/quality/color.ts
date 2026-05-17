@@ -23,9 +23,9 @@ export function analyzeColor(context: QualityContext): QualityIssue[] {
       issue(
         'contrast-base-text',
         'error',
-        'Base text contrast is below normal-copy target',
-        `Text/background contrast is ${baseContrast}:1 for the ${theme.name} theme.`,
-        'Darken text or lighten the page background in the theme tokens.',
+        'El contraste del texto base está por debajo del objetivo',
+        `El contraste texto/fondo es ${baseContrast}:1 en el tema ${theme.name}.`,
+        'Oscurece el texto o aclara el fondo en los tokens del tema.',
       ),
     );
   }
@@ -35,9 +35,9 @@ export function analyzeColor(context: QualityContext): QualityIssue[] {
       issue(
         'contrast-accent-ui',
         'warning',
-        'Accent action contrast is weak',
-        `Accent text/action contrast is ${accentContrast}:1.`,
-        'Adjust accent or accentText so important UI elements clear at least 3:1.',
+        'El contraste de la acción principal es débil',
+        `El contraste entre accentText y accent es ${accentContrast}:1.`,
+        'Ajusta accent o accentText para que los elementos importantes superen al menos 3:1.',
       ),
     );
   }
@@ -47,9 +47,9 @@ export function analyzeColor(context: QualityContext): QualityIssue[] {
       issue(
         'contrast-color-mix-manual-check',
         'info',
-        'Mixed colors need viewport verification',
-        'Generated CSS uses color-mix for muted text, borders and panels, which cannot be fully scored from tokens alone.',
-        'Keep the automated token contrast check, then verify muted labels in the browser for the selected tone.',
+        'Los colores mezclados requieren verificación visual',
+        'El CSS generado usa color-mix para texto secundario, bordes y paneles; no se puede puntuar solo desde tokens.',
+        'Mantén el chequeo automático de contraste y verifica las etiquetas secundarias en navegador.',
       ),
     );
   }

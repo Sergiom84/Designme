@@ -30,9 +30,9 @@ export function analyzeAccessibility(context: QualityContext): QualityIssue[] {
       makeIssue(
         'a11y-button-name',
         'error',
-        'Some buttons have no accessible name',
-        `${unnamedButtons.length} button(s) rely on visuals only.`,
-        'Give every button visible text or an aria-label.',
+        'Hay botones sin nombre accesible',
+        `${unnamedButtons.length} botón(es) dependen solo de lo visual.`,
+        'Da a cada botón texto visible o un aria-label.',
         'button',
       ),
     );
@@ -43,9 +43,9 @@ export function analyzeAccessibility(context: QualityContext): QualityIssue[] {
       makeIssue(
         'a11y-focus-visible',
         'error',
-        'Focus state is missing',
-        'Keyboard users need a visible focus ring in the exported prototype.',
-        'Add a button:focus-visible rule with a clear outline and offset.',
+        'Falta estado de foco visible',
+        'Los usuarios de teclado necesitan un anillo de foco visible en el prototipo exportado.',
+        'Añade una regla button:focus-visible con outline claro y separación.',
         'style',
       ),
     );
@@ -56,9 +56,9 @@ export function analyzeAccessibility(context: QualityContext): QualityIssue[] {
       makeIssue(
         'a11y-segmented-role',
         'warning',
-        'Segmented control lacks a group role',
-        'The generated segmented control should expose its purpose to assistive tech.',
-        'Render segmented controls with role="group" and an aria-label.',
+        'El control segmentado no declara su grupo',
+        'El control segmentado generado debería exponer su propósito a tecnologías de asistencia.',
+        'Renderiza controles segmentados con role="group" y aria-label.',
         '.segmented',
       ),
     );
@@ -69,9 +69,9 @@ export function analyzeAccessibility(context: QualityContext): QualityIssue[] {
       makeIssue(
         'a11y-active-state',
         'warning',
-        'Active state is visual only',
-        'Selected buttons should expose state without relying only on color.',
-        'Add aria-pressed or aria-selected to active controls.',
+        'El estado activo es solo visual',
+        'Los botones seleccionados deberían comunicar estado sin depender solo del color.',
+        'Añade aria-pressed o aria-selected a los controles activos.',
         '.segmented button',
       ),
     );
@@ -82,9 +82,9 @@ export function analyzeAccessibility(context: QualityContext): QualityIssue[] {
       makeIssue(
         'a11y-nav-label',
         'info',
-        'Navigation label can be clearer',
-        'Named navigation helps users distinguish app, slide, and mobile sections.',
-        'Add aria-label to every nav landmark.',
+        'La navegación puede tener una etiqueta más clara',
+        'Nombrar cada navegación ayuda a distinguir secciones de app, slides o móvil.',
+        'Añade aria-label a cada landmark nav.',
         'nav',
       ),
     );

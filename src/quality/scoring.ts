@@ -1,11 +1,11 @@
 import type { QualityCategory, QualityIssue, QualityScore, Severity } from './types';
 
 const scoreLabels: Array<{ label: string; categories: QualityCategory[] }> = [
-  { label: 'Accessibility', categories: ['accessibility', 'interaction'] },
-  { label: 'Contrast', categories: ['contrast'] },
-  { label: 'Hierarchy', categories: ['hierarchy', 'layout'] },
+  { label: 'Accesibilidad', categories: ['accessibility', 'interaction'] },
+  { label: 'Contraste', categories: ['contrast'] },
+  { label: 'Jerarquía', categories: ['hierarchy', 'layout'] },
   { label: 'Copy', categories: ['copy'] },
-  { label: 'Export', categories: ['export'] },
+  { label: 'Exportación', categories: ['export'] },
 ];
 
 const severityPenalty: Record<Severity, number> = {

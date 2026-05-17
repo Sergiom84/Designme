@@ -34,7 +34,7 @@ export const palettes: Record<ThemeId, RawPalette> = {
     paper: '#f2f5ef',
     surface: '#fbfcf8',
     subtle: '#d8dfd6',
-    accent: '#d76642',
+    accent: '#a84226',
     secondary: '#16858f',
     highlight: '#b6cf50',
   },
