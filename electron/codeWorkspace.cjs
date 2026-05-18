@@ -2,7 +2,6 @@ const { createHash } = require('node:crypto');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { dialog } = require('electron');
-const chokidar = require('chokidar');
 const ignore = require('ignore');
 
 const MAX_FILE_BYTES = 1024 * 1024;
@@ -141,9 +140,15 @@ async function readWorkspaceFile(rootPath, relPath) {
   return { content: await fs.readFile(target, 'utf8') };
 }
 
-function watchWorkspace(rootPath, webContents) {
+async function loadChokidar() {
+  const mod = await import('chokidar');
+  return mod.default || mod;
+}
+
+async function watchWorkspace(rootPath, webContents) {
   const root = normalizeRoot(rootPath);
   closeWorkspaceWatcher(webContents);
+  const chokidar = await loadChokidar();
   const watcher = chokidar.watch(root, {
     ignored: /(^|[\\/])(\.git|node_modules|dist|build|\.next|release|coverage)([\\/]|$)/,
     ignoreInitial: true,
