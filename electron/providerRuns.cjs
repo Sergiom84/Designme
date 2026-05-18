@@ -2,8 +2,6 @@ const { randomUUID } = require('node:crypto');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const Anthropic = require('@anthropic-ai/sdk');
-const OpenAI = require('openai');
 const { extractHtmlFromClaudeText, startClaudeCodeRun } = require('./providers/claude-code.cjs');
 const { extractHtmlFromCodexText, startCodexRun } = require('./providers/codex.cjs');
 const { extractStandaloneHtmlDocument } = require('./providers/htmlExtraction.cjs');
@@ -71,6 +69,7 @@ function anthropicTextDelta(event) {
 }
 
 async function streamOpenAI({ apiKey, config, prompt, signal }, events) {
+  const OpenAI = require('openai');
   const client = new OpenAI({
     apiKey,
     baseURL: config.baseUrl,
@@ -101,6 +100,7 @@ async function streamOpenAI({ apiKey, config, prompt, signal }, events) {
 }
 
 async function streamAnthropic({ apiKey, config, prompt, signal }, events) {
+  const Anthropic = require('@anthropic-ai/sdk');
   const client = new Anthropic({
     apiKey,
     baseURL: config.baseUrl,
