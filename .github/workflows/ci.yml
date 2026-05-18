@@ -51,7 +51,26 @@ jobs:
         run: npm ci
 
       - name: Test shard
-        run: npm run test:ci:shard -- ${{ matrix.shard }}
+        run: npm run test:ci:shard -- ${{ matrix.shard }} --exclude tests/unit/quality/generatedHtmlQuality.test.ts
+
+  html-quality:
+    name: Generated HTML quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test generated HTML quality
+        run: npx vitest run --maxWorkers=1 tests/unit/quality/generatedHtmlQuality.test.ts
 
   e2e:
     name: Playwright (chromium)
