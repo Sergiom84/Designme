@@ -5,8 +5,8 @@ on:
   pull_request:
 
 jobs:
-  unit:
-    name: Unit + lint + typecheck
+  quality:
+    name: Typecheck + lint + audit
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -27,20 +27,31 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Test shard 1
-        run: npm run test:ci:shard -- 1/4
-
-      - name: Test shard 2
-        run: npm run test:ci:shard -- 2/4
-
-      - name: Test shard 3
-        run: npm run test:ci:shard -- 3/4
-
-      - name: Test shard 4
-        run: npm run test:ci:shard -- 4/4
-
       - name: Security audit
         run: npm run security:audit
+
+  unit:
+    name: Unit tests (${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ['1/4', '2/4', '3/4', '4/4']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test shard
+        run: npm run test:ci:shard -- ${{ matrix.shard }}
 
   e2e:
     name: Playwright (chromium)
