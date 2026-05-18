@@ -1,4 +1,5 @@
 import { createRequire } from 'node:module';
+import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 const require = createRequire(import.meta.url);
@@ -22,13 +23,12 @@ describe('local setup detection', () => {
 
   it('detects Claude, Codex, and Ollama signals without returning secrets', async () => {
     const homeDir = 'C:\\Users\\sergi';
+    const claudeConfigPath = path.join(homeDir, '.claude', 'config.json');
+    const codexAuthPath = path.join(homeDir, '.codex', 'auth.json');
+    const ollamaConfigPath = path.join(homeDir, '.config', 'ollama');
     const detection = await detectLocalSetup({
       homeDir,
-      access: accessFor([
-        'C:\\Users\\sergi\\.claude\\config.json',
-        'C:\\Users\\sergi\\.codex\\auth.json',
-        'C:\\Users\\sergi\\.config\\ollama',
-      ]),
+      access: accessFor([claudeConfigPath, codexAuthPath, ollamaConfigPath]),
       detectClaudeCode: vi.fn(async () => ({
         available: true,
         version: 'claude 1.2.3',
