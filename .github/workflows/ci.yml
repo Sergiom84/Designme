@@ -27,8 +27,17 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Test
-        run: npm run test:ci
+      - name: Test shard 1
+        run: npm run test:ci:shard -- 1/4
+
+      - name: Test shard 2
+        run: npm run test:ci:shard -- 2/4
+
+      - name: Test shard 3
+        run: npm run test:ci:shard -- 3/4
+
+      - name: Test shard 4
+        run: npm run test:ci:shard -- 4/4
 
       - name: Security audit
         run: npm run security:audit

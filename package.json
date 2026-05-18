@@ -16,6 +16,7 @@
     "format": "prettier --write .",
     "test": "vitest run --coverage --maxWorkers=2",
     "test:ci": "vitest run --maxWorkers=1",
+    "test:ci:shard": "vitest run --maxWorkers=1 --shard",
     "test:unit": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
