@@ -2,8 +2,6 @@ const { randomUUID } = require('node:crypto');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { extractHtmlFromClaudeText, startClaudeCodeRun } = require('./providers/claude-code.cjs');
-const { extractHtmlFromCodexText, startCodexRun } = require('./providers/codex.cjs');
 const { extractStandaloneHtmlDocument } = require('./providers/htmlExtraction.cjs');
 const { validateProviderEventPayload, validateProviderStartPayload } = require('./validators.cjs');
 
@@ -25,22 +23,32 @@ const DEFAULT_CLOUD_PROVIDER_CONFIGS = {
   },
 };
 
-const providerHandlers = {
-  'claude-code-cli': {
-    errorMessage: INVALID_HTML_ERROR_MESSAGE,
-    extractHtml: extractHtmlFromClaudeText,
-    notes: 'Generated with Claude Code.',
-    startRun: startClaudeCodeRun,
-    workspaceName: 'designme-claude-code',
-  },
-  'codex-cli': {
-    errorMessage: INVALID_HTML_ERROR_MESSAGE,
-    extractHtml: extractHtmlFromCodexText,
-    notes: 'Generated with Codex.',
-    startRun: startCodexRun,
-    workspaceName: 'designme-codex',
-  },
-};
+let providerHandlers;
+
+function getProviderHandlers() {
+  if (!providerHandlers) {
+    const { extractHtmlFromClaudeText, startClaudeCodeRun } = require('./providers/claude-code.cjs');
+    const { extractHtmlFromCodexText, startCodexRun } = require('./providers/codex.cjs');
+    providerHandlers = {
+      'claude-code-cli': {
+        errorMessage: INVALID_HTML_ERROR_MESSAGE,
+        extractHtml: extractHtmlFromClaudeText,
+        notes: 'Generated with Claude Code.',
+        startRun: startClaudeCodeRun,
+        workspaceName: 'designme-claude-code',
+      },
+      'codex-cli': {
+        errorMessage: INVALID_HTML_ERROR_MESSAGE,
+        extractHtml: extractHtmlFromCodexText,
+        notes: 'Generated with Codex.',
+        startRun: startCodexRun,
+        workspaceName: 'designme-codex',
+      },
+    };
+  }
+
+  return providerHandlers;
+}
 
 function cleanText(value, fallback) {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
@@ -222,7 +230,7 @@ function createDefaultProviderAdapter(options = {}) {
   return {
     async start({ payload, signal, emit }) {
       const handler =
-        providerHandlers[payload.providerId] || createCloudProviderHandler(payload.providerId, options.secretStore);
+        getProviderHandlers()[payload.providerId] || createCloudProviderHandler(payload.providerId, options.secretStore);
       if (!handler) {
         emit({ type: 'error', message: `Provider ${payload.providerId} is not available in desktop IPC.` });
         return;
