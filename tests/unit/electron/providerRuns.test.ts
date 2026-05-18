@@ -66,11 +66,19 @@ describe('provider run manager', () => {
   it('only lets the owning webContents stop a run', async () => {
     const owner = makeWebContents(1);
     const other = makeWebContents(2);
-    const manager = createProviderRunManager();
+    let releaseRun: () => void = () => {};
+    const runStarted = new Promise<void>((resolve) => {
+      releaseRun = resolve;
+    });
+    const manager = createProviderRunManager({
+      start: () => runStarted,
+    });
     const { runId } = await manager.start(owner.webContents, makeStartPayload());
 
     expect(manager.stop(other.webContents, runId)).toEqual({ stopped: false });
     expect(manager.stop(owner.webContents, runId)).toEqual({ stopped: true });
+    releaseRun();
+    await Promise.resolve();
     expect(owner.sent[owner.sent.length - 1]).toEqual({
       channel: 'designme:provider-event',
       payload: { runId, type: 'stopped' },
