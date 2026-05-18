@@ -43,6 +43,11 @@ const providerStatusDetectors = {
 
 let secretStoreForStatus;
 
+function namedProviderPayload(providerId, payload) {
+  const record = payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : {};
+  return { ...record, providerId };
+}
+
 function registerIpcHandlers(app, isDev, options = {}) {
   const cspState = options.cspState;
   const logger = options.logger;
@@ -128,6 +133,20 @@ function registerIpcHandlers(app, isDev, options = {}) {
     assertTrustedSender(event, isDev);
     validateProviderStartPayload(payload);
     return providerRuns.start(event.sender, payload);
+  });
+
+  ipcMain.handle('provider:anthropic:generate', async (event, payload) => {
+    assertTrustedSender(event, isDev);
+    const startPayload = namedProviderPayload('anthropic-api', payload);
+    validateProviderStartPayload(startPayload);
+    return providerRuns.start(event.sender, startPayload);
+  });
+
+  ipcMain.handle('provider:openai:generate', async (event, payload) => {
+    assertTrustedSender(event, isDev);
+    const startPayload = namedProviderPayload('openai-api', payload);
+    validateProviderStartPayload(startPayload);
+    return providerRuns.start(event.sender, startPayload);
   });
 
   ipcMain.handle('designme:provider-stop', async (event, payload) => {

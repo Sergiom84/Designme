@@ -9,6 +9,8 @@ export const DEFAULT_LOCAL_OPENAI_SETTINGS: LocalOpenAISettings = {
   timeoutMs: 60_000,
 };
 
+let sessionApiKey = '';
+
 interface StorageLike {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
@@ -91,11 +93,20 @@ export function readLocalOpenAISettings(storage = getDefaultStorage()): LocalOpe
   }
 }
 
+export function setLocalOpenAISessionApiKey(value: string): void {
+  sessionApiKey = cleanText(value) || '';
+}
+
+export function readLocalOpenAIRuntimeSettings(storage = getDefaultStorage()): LocalOpenAISettings {
+  return { ...readLocalOpenAISettings(storage), apiKey: sessionApiKey };
+}
+
 export function persistLocalOpenAISettings(
   settings: LocalOpenAISettings,
   storage = getDefaultStorage(),
 ): LocalOpenAISettings {
   const parsed = parseLocalOpenAISettings(settings);
+  setLocalOpenAISessionApiKey(parsed.apiKey ?? '');
 
   if (!storage) {
     return parsed;

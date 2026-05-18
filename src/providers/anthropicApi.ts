@@ -1,5 +1,6 @@
 import { buildProviderPrompt } from './shared/providerPrompt';
 import { createDesktopCliProvider } from './desktopCliBridge';
+import { readApiProviderSettings } from '../settings';
 
 export const anthropicApiProvider = createDesktopCliProvider({
   id: 'anthropic-api',
@@ -7,4 +8,5 @@ export const anthropicApiProvider = createDesktopCliProvider({
   buildPrompt: buildProviderPrompt,
   failureMessage: 'Anthropic API provider failed.',
   unavailableMessage: 'Anthropic API provider is available only in the desktop app.',
+  providerConfig: () => readApiProviderSettings('anthropic-api'),
 });

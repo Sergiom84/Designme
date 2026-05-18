@@ -1,8 +1,4 @@
-import {
-  DEFAULT_LOCAL_OPENAI_SETTINGS,
-  readLocalOpenAISettings,
-  type LocalOpenAISettings,
-} from '../settings';
+import { DEFAULT_LOCAL_OPENAI_SETTINGS, readLocalOpenAIRuntimeSettings, type LocalOpenAISettings } from '../settings';
 import { buildAskMessages, parseAskResponse } from './shared/askFlow';
 import { INVALID_HTML_ERROR_MESSAGE, extractStandaloneHtmlDocument } from './htmlExtraction';
 import type { GenerateEvent, GenerateRequest, Provider, ProviderStatus } from './types';
@@ -37,9 +33,7 @@ function buildMessages(req: GenerateRequest): Array<{ role: 'system' | 'user'; c
 }
 
 function resolveOptions(options: LocalOpenAIProviderOptions): LocalOpenAISettings {
-  return typeof options === 'function'
-    ? options()
-    : { ...DEFAULT_LOCAL_OPENAI_SETTINGS, ...options };
+  return typeof options === 'function' ? options() : { ...DEFAULT_LOCAL_OPENAI_SETTINGS, ...options };
 }
 
 function buildHeaders(settings: LocalOpenAISettings): HeadersInit {
@@ -180,7 +174,9 @@ async function* generateWithSettings(
   }
 }
 
-export function createLocalOpenAIProvider(options: LocalOpenAIProviderOptions = readLocalOpenAISettings): Provider {
+export function createLocalOpenAIProvider(
+  options: LocalOpenAIProviderOptions = readLocalOpenAIRuntimeSettings,
+): Provider {
   return {
     id: 'local-openai',
     label: 'Local OpenAI',

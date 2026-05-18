@@ -2,6 +2,10 @@ import type { GenerateEvent, GenerateRequest, Provider, ProviderId } from './typ
 
 type DesktopProviderId = Extract<ProviderId, 'claude-code-cli' | 'codex-cli' | 'anthropic-api' | 'openai-api'>;
 type QueuedEvent = GenerateEvent | { type: 'stopped' };
+interface ProviderConfigPayload {
+  baseUrl?: string;
+  model?: string;
+}
 
 interface DesktopCliProviderOptions {
   id: DesktopProviderId;
@@ -9,6 +13,7 @@ interface DesktopCliProviderOptions {
   buildPrompt(req: GenerateRequest): string;
   failureMessage: string;
   unavailableMessage: string;
+  providerConfig?(): ProviderConfigPayload;
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -116,6 +121,7 @@ export function createDesktopCliProvider(options: DesktopCliProviderOptions): Pr
         brief: asOptionalRecord(req.brief),
         intent: asOptionalRecord(req.intent),
         workspace: asOptionalRecord(req.workspace),
+        providerConfig: options.providerConfig?.(),
       });
       runId = response.runId;
       for (const event of pendingEvents.get(runId) ?? []) {

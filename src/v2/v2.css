@@ -14,7 +14,13 @@
   display: grid;
   grid-template-rows: 56px minmax(0, 1fr) 32px;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
 }
 
 .v2-shell--light {
@@ -429,12 +435,169 @@
   background: var(--accent-2);
 }
 
+.v2-status-dot.is-checking {
+  background: var(--accent-2);
+}
+
 .v2-status-dot.is-ready {
   background: var(--accent);
 }
 
 .v2-status-dot.is-error {
   background: var(--danger);
+}
+
+.v2-provider-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(6, 7, 10, 0.62);
+  color: var(--text, #f4f0e8);
+}
+
+.v2-provider-dialog {
+  width: min(900px, 100%);
+  max-height: min(720px, calc(100vh - 44px));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  background: var(--panel, #171a21);
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.42);
+}
+
+.v2-provider-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+}
+
+.v2-provider-dialog__header h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.v2-provider-dialog__status,
+.v2-provider-dialog__tabs button,
+.v2-provider-dialog__actions,
+.v2-provider-dialog__link,
+.v2-provider-dialog__key-field {
+  display: flex;
+  align-items: center;
+}
+
+.v2-provider-dialog__status {
+  gap: 7px;
+  color: var(--muted, #a7adbb);
+  font-size: 12px;
+}
+
+.v2-provider-dialog__body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+}
+
+.v2-provider-dialog__tabs {
+  padding: 10px;
+  border-right: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+  overflow: auto;
+}
+
+.v2-provider-dialog__tabs button {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 9px;
+  min-height: 36px;
+  margin-bottom: 6px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text, #f4f0e8);
+  cursor: pointer;
+  text-align: left;
+}
+
+.v2-provider-dialog__tabs button.is-active {
+  background: var(--panel-2, #20242d);
+  border-color: var(--line, rgba(255, 255, 255, 0.1));
+}
+
+.v2-provider-dialog__panel {
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+}
+
+.v2-provider-dialog__form {
+  display: grid;
+  gap: 14px;
+  max-width: 560px;
+}
+
+.v2-provider-dialog__form label,
+.v2-provider-dialog__field {
+  display: grid;
+  gap: 6px;
+  color: var(--muted, #a7adbb);
+}
+
+.v2-provider-dialog__field strong {
+  color: var(--text, #f4f0e8);
+  font-size: 14px;
+}
+
+.v2-provider-dialog__form input {
+  min-height: 36px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  background: var(--panel-2, #20242d);
+  color: var(--text, #f4f0e8);
+}
+
+.v2-provider-dialog__form input[readonly] {
+  color: var(--muted, #a7adbb);
+}
+
+.v2-provider-dialog__key-field {
+  gap: 8px;
+}
+
+.v2-provider-dialog__key-field svg {
+  flex: 0 0 auto;
+  color: var(--muted, #a7adbb);
+}
+
+.v2-provider-dialog__actions {
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.v2-provider-dialog__link {
+  gap: 6px;
+  min-height: 32px;
+  color: var(--accent, #2ec4b6);
+  text-decoration: none;
+}
+
+.v2-provider-dialog__detail,
+.v2-provider-dialog__message {
+  color: var(--muted, #a7adbb);
+  line-height: 1.45;
+}
+
+.v2-provider-dialog__message {
+  margin: 16px 0 0;
 }
 
 @media (max-width: 1180px) {
@@ -458,5 +621,22 @@
 
   .v2-focus {
     grid-template-columns: 1fr;
+  }
+
+  .v2-provider-dialog__body {
+    grid-template-columns: 1fr;
+  }
+
+  .v2-provider-dialog__tabs {
+    display: flex;
+    gap: 6px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+  }
+
+  .v2-provider-dialog__tabs button {
+    width: auto;
+    min-width: max-content;
+    margin-bottom: 0;
   }
 }

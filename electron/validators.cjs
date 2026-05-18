@@ -69,6 +69,16 @@ function validateProviderId(providerId) {
   }
 }
 
+function validateProviderConfigPayload(config) {
+  assertOptionalPlainObject(config, 'Provider config must be an object');
+  if (config === undefined) return;
+  if ('apiKey' in config) {
+    throw new Error('Provider config must not include API keys');
+  }
+  assertOptionalString(config.baseUrl, 'Provider config base URL must be a string', 512);
+  assertOptionalString(config.model, 'Provider config model must be a string', 512);
+}
+
 function validateProviderStartPayload(payload) {
   assertPlainObject(payload, 'Invalid provider start payload');
   validateProviderId(payload.providerId);
@@ -79,6 +89,7 @@ function validateProviderStartPayload(payload) {
   assertOptionalPlainObject(payload.brief, 'Provider brief must be an object');
   assertOptionalPlainObject(payload.intent, 'Provider intent must be an object');
   assertOptionalPlainObject(payload.workspace, 'Provider workspace must be an object');
+  validateProviderConfigPayload(payload.providerConfig);
 }
 
 function validateProviderStopPayload(payload) {
@@ -179,6 +190,7 @@ function validateLocalSetupDetectionResult(result) {
     if (provider.authFound !== undefined) {
       assertBoolean(provider.authFound, 'Local setup provider authFound must be boolean');
     }
+    assertOptionalString(provider.command, 'Local setup provider command must be a string', 4096);
     assertOptionalString(provider.version, 'Local setup provider version must be a string', 512);
     assertOptionalString(provider.detail, 'Local setup provider detail must be a string', 4096);
   }

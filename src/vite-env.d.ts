@@ -35,6 +35,10 @@ interface DesignmeProviderStartPayload {
   brief?: Record<string, unknown>;
   intent?: Record<string, unknown>;
   workspace?: Record<string, unknown>;
+  providerConfig?: {
+    baseUrl?: string;
+    model?: string;
+  };
 }
 
 interface DesignmeProviderStatusResult {
@@ -52,6 +56,7 @@ interface DesignmeLocalSetupProvider {
   configFound: boolean;
   cliFound: boolean;
   authFound?: boolean;
+  command?: string;
   version?: string;
   detail?: string;
 }

@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { getProvider, listProviders } from '../providers';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { getProvider, listProviders, type ProviderId } from '../providers';
+import { useSetupDetection } from '../hooks/useSetupDetection';
 import { shouldAskFirst } from '../providers/shared/askFlow';
 import { generateIdeas as generateProviderIdeas } from '../providers/shared/multiIdea';
 import { CenterDashboard } from './layout/CenterDashboard';
@@ -8,6 +9,7 @@ import { RightInspector } from './layout/RightInspector';
 import { Shell } from './layout/Shell';
 import { StatusBar } from './layout/StatusBar';
 import { TopBar } from './layout/TopBar';
+import { ProviderConfigDialog } from './providers/ProviderConfigDialog';
 import { createChatTurn, createIdeaDraft, useV2Store } from './state/store';
 import type { Attachment } from './state/types';
 import { analyzeWorkspace, summarizeWorkspace } from './workspace/analyzer';
@@ -23,7 +25,14 @@ function digest(value: string): string {
 
 export default function App() {
   const generationControllerRef = useRef<AbortController | null>(null);
+  const setupDetectionRequestedRef = useRef(false);
   const workspaceRescanTimerRef = useRef<number | undefined>();
+  const [providerConfigOpen, setProviderConfigOpen] = useState(false);
+  const {
+    detection: setupDetection,
+    checking: setupDetectionChecking,
+    refresh: refreshSetupDetection,
+  } = useSetupDetection();
   const {
     theme,
     project,
@@ -48,19 +57,33 @@ export default function App() {
     setDesignMd,
   } = useV2Store();
 
+  const refreshProviderStatuses = useCallback(
+    (providerId?: ProviderId) => {
+      const providers = providerId ? [getProvider(providerId)] : listProviders();
+      providers.forEach((provider) => {
+        setProviderStatus(provider.id, 'checking');
+        void provider
+          .status()
+          .then((status) => setProviderStatus(provider.id, status))
+          .catch(() => setProviderStatus(provider.id, 'error'));
+      });
+    },
+    [setProviderStatus],
+  );
+
   useEffect(() => {
     document.documentElement.dataset.designmeTheme = theme;
   }, [theme]);
 
   useEffect(() => {
-    listProviders().forEach((provider) => {
-      setProviderStatus(provider.id, 'checking');
-      void provider
-        .status()
-        .then((status) => setProviderStatus(provider.id, status))
-        .catch(() => setProviderStatus(provider.id, 'error'));
-    });
-  }, [setProviderStatus]);
+    refreshProviderStatuses();
+  }, [activeProviderId, refreshProviderStatuses]);
+
+  useEffect(() => {
+    if (setupDetectionRequestedRef.current) return;
+    setupDetectionRequestedRef.current = true;
+    void refreshSetupDetection({ markChecking: false });
+  }, [refreshSetupDetection]);
 
   const activeIdea = ideas.find((idea) => idea.id === activeIdeaId) ?? ideas[0];
   const output = activeIdea?.designOutput;
@@ -114,6 +137,13 @@ export default function App() {
   }, [addTurn, scanWorkspaceRoot, setRunState, workspace?.rootPath]);
 
   async function generateIdeas(prompt = project.draft.prompt) {
+    if (activeProviderId !== 'deterministic' && providerStatuses[activeProviderId] !== 'ready') {
+      const provider = getProvider(activeProviderId);
+      setProviderConfigOpen(true);
+      setRunState('error', `${provider.label} necesita configuración antes de generar`);
+      return;
+    }
+
     const promptDigest = digest(prompt);
     setRunState('generating', `Generando 3 ideas con ${activeProviderId}`);
     generationControllerRef.current?.abort();
@@ -143,9 +173,13 @@ export default function App() {
       setIdeas(nextIdeas);
       setActiveIdea(nextIdeas[0]?.id);
       addTurn(
-        createChatTurn('assistant', `Generadas ${nextIdeas.length} variantes: ${nextIdeas.map((idea) => idea.title).join(', ')}.`, {
-          ideas: nextIdeas.map((idea) => idea.id),
-        }),
+        createChatTurn(
+          'assistant',
+          `Generadas ${nextIdeas.length} variantes: ${nextIdeas.map((idea) => idea.title).join(', ')}.`,
+          {
+            ideas: nextIdeas.map((idea) => idea.id),
+          },
+        ),
       );
       setRunState('ready', 'Variantes listas');
     } catch (error) {
@@ -176,7 +210,11 @@ export default function App() {
     const provider = getProvider(activeProviderId);
     if ((text.startsWith('/ask') || shouldAskFirst(text)) && provider.ask) {
       setRunState('asking', 'Preguntando antes de generar');
-      const response = await provider.ask({ prompt: text.replace(/^\/ask\s*/, ''), workspace, signal: new AbortController().signal });
+      const response = await provider.ask({
+        prompt: text.replace(/^\/ask\s*/, ''),
+        workspace,
+        signal: new AbortController().signal,
+      });
       if (response.questions.length > 0) {
         addTurn(
           createChatTurn('assistant', 'Antes de generar, necesito afinar esto:', {
@@ -220,53 +258,82 @@ export default function App() {
     setRunState('idle', 'Generación detenida');
   }
 
+  const recheckProviders = useCallback(async () => {
+    await refreshSetupDetection();
+    refreshProviderStatuses();
+  }, [refreshProviderStatuses, refreshSetupDetection]);
+
+  const handleProviderConfigSaved = useCallback(
+    (providerId: ProviderId) => {
+      refreshProviderStatuses(providerId);
+      setRunState('ready', 'Configuración de provider guardada');
+    },
+    [refreshProviderStatuses, setRunState],
+  );
+
   const tokenCount = useMemo(() => chatTurns.reduce((count, turn) => count + turn.text.length, 0), [chatTurns]);
 
   return (
-    <Shell
-      theme={theme}
-      topBar={
-        <TopBar
+    <>
+      <Shell
+        theme={theme}
+        topBar={
+          <TopBar
+            activeProviderId={activeProviderId}
+            providerStatuses={providerStatuses}
+            projectTitle={project.title}
+            theme={theme}
+            onProviderChange={setProvider}
+            onThemeChange={setTheme}
+            onOpenProviderConfig={() => setProviderConfigOpen(true)}
+            onOpenProjects={() => setRunState('ready', 'Sessions drawer llega en base 4')}
+          />
+        }
+        left={
+          <LeftRail
+            turns={chatTurns}
+            running={runState === 'generating'}
+            onSend={(text, attachments) => void sendChat(text, attachments)}
+            onStop={stopGeneration}
+          />
+        }
+        center={
+          <CenterDashboard
+            ideas={ideas}
+            activeIdeaId={activeIdeaId}
+            onSelectIdea={setActiveIdea}
+            onGenerate={() => void generateIdeas()}
+            onDeleteIdea={deleteIdea}
+          />
+        }
+        right={
+          <RightInspector
+            activeIdea={activeIdea}
+            designMd={project.designMd}
+            output={output}
+            tweaks={project.draft.tweaks}
+            workspace={workspace}
+            onDesignMdChange={setDesignMd}
+            onImportWorkspace={() => void importWorkspace()}
+            onPatchTweaks={(tweaks) => patchDraft({ tweaks })}
+            onRescanWorkspace={() => void importWorkspace()}
+          />
+        }
+        status={<StatusBar ideaCount={ideas.length} state={runState} text={statusText} tokenCount={tokenCount} />}
+      />
+      {providerConfigOpen ? (
+        <ProviderConfigDialog
+          open={providerConfigOpen}
           activeProviderId={activeProviderId}
           providerStatuses={providerStatuses}
-          projectTitle={project.title}
           theme={theme}
-          onProviderChange={setProvider}
-          onThemeChange={setTheme}
-          onOpenProjects={() => setRunState('ready', 'Sessions drawer llega en base 4')}
+          detection={setupDetection}
+          checking={setupDetectionChecking}
+          onClose={() => setProviderConfigOpen(false)}
+          onRecheck={recheckProviders}
+          onSaved={handleProviderConfigSaved}
         />
-      }
-      left={
-        <LeftRail
-          turns={chatTurns}
-          running={runState === 'generating'}
-          onSend={(text, attachments) => void sendChat(text, attachments)}
-          onStop={stopGeneration}
-        />
-      }
-      center={
-        <CenterDashboard
-          ideas={ideas}
-          activeIdeaId={activeIdeaId}
-          onSelectIdea={setActiveIdea}
-          onGenerate={() => void generateIdeas()}
-          onDeleteIdea={deleteIdea}
-        />
-      }
-      right={
-        <RightInspector
-          activeIdea={activeIdea}
-          designMd={project.designMd}
-          output={output}
-          tweaks={project.draft.tweaks}
-          workspace={workspace}
-          onDesignMdChange={setDesignMd}
-          onImportWorkspace={() => void importWorkspace()}
-          onPatchTweaks={(tweaks) => patchDraft({ tweaks })}
-          onRescanWorkspace={() => void importWorkspace()}
-        />
-      }
-      status={<StatusBar ideaCount={ideas.length} state={runState} text={statusText} tokenCount={tokenCount} />}
-    />
+      ) : null}
+    </>
   );
 }

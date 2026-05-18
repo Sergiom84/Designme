@@ -62,6 +62,7 @@ function providerDetection({ id, label, configFound, cli }) {
     ready,
     configFound: Boolean(configFound),
     cliFound: Boolean(cli.available),
+    command: typeof cli.command === 'string' ? cli.command : undefined,
     version: typeof cli.version === 'string' ? cli.version : undefined,
     detail:
       cli.status || cli.statusError || cli.error || (configFound ? 'Local config found.' : 'No local setup detected.'),

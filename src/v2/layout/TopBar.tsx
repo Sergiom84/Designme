@@ -9,6 +9,7 @@ interface TopBarProps {
   theme: ThemeMode;
   onProviderChange(providerId: ProviderId): void;
   onThemeChange(theme: ThemeMode): void;
+  onOpenProviderConfig(): void;
   onOpenProjects(): void;
 }
 
@@ -19,13 +20,16 @@ export function TopBar({
   theme,
   onProviderChange,
   onThemeChange,
+  onOpenProviderConfig,
   onOpenProjects,
 }: TopBarProps) {
   const providers = listProviders();
+  const activeProviderStatus = providerStatuses[activeProviderId] ?? 'idle';
 
   function changeProvider(value: string) {
     const providerId = value as ProviderId;
     setActiveProviderId(providerId);
+    void window.designme?.setCspState?.({ allowLocalProvider: providerId === 'local-openai' }).catch(() => undefined);
     onProviderChange(providerId);
   }
 
@@ -39,6 +43,12 @@ export function TopBar({
         <strong>Designme</strong>
       </div>
       <label className="v2-provider-picker">
+        <span
+          role="status"
+          className={`v2-status-dot is-${activeProviderStatus}`}
+          title={`Provider status: ${activeProviderStatus}`}
+          aria-label={`Provider status: ${activeProviderStatus}`}
+        />
         <span>Provider</span>
         <select value={activeProviderId} onChange={(event) => changeProvider(event.target.value)}>
           {providers.map((provider) => (
@@ -59,7 +69,7 @@ export function TopBar({
       >
         {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
       </button>
-      <button className="v2-icon-button" type="button" title="Provider settings">
+      <button className="v2-icon-button" type="button" title="Provider settings" onClick={onOpenProviderConfig}>
         <Settings size={18} />
       </button>
     </header>

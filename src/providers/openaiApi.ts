@@ -1,5 +1,6 @@
 import { buildProviderPrompt } from './shared/providerPrompt';
 import { createDesktopCliProvider } from './desktopCliBridge';
+import { readApiProviderSettings } from '../settings';
 
 export const openaiApiProvider = createDesktopCliProvider({
   id: 'openai-api',
@@ -7,4 +8,5 @@ export const openaiApiProvider = createDesktopCliProvider({
   buildPrompt: buildProviderPrompt,
   failureMessage: 'OpenAI API provider failed.',
   unavailableMessage: 'OpenAI API provider is available only in the desktop app.',
+  providerConfig: () => readApiProviderSettings('openai-api'),
 });
